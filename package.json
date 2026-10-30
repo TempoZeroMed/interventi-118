@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "test": "node --test",
-    "e2e": "node --test --test-concurrency=1 tests/e2e/app.e2e.mjs"
+    "e2e": "node --test --test-concurrency=1 tests/e2e/app.e2e.mjs",
+    "pubblica": "sh tools/pubblica.sh"
   }
 }

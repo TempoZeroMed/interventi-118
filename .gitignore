@@ -10,3 +10,6 @@ test-results/
 __pycache__/
 .impeccable/review/
 .impeccable/build/
+
+# Cartella temporanea della pubblicazione su Cloudflare
+_site/

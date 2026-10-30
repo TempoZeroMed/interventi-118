@@ -30,7 +30,7 @@ test('ogni file in cache esiste davvero (un file mancante fa fallire l\'installa
   assert.deepEqual(inesistenti, []);
 });
 
-test('il manifest punta a icone esistenti e funziona nella sottocartella di GitHub Pages', () => {
+test('il manifest punta a icone esistenti e funziona anche in una sottocartella del sito', () => {
   const m = JSON.parse(leggi('manifest.webmanifest'));
   assert.ok(m.icons.some((i) => i.sizes === '512x512' && i.purpose === 'maskable'));
   for (const i of m.icons) assert.ok(existsSync(new URL(i.src, radice)), i.src);
@@ -43,8 +43,8 @@ test('nessuna risorsa esterna: script, fogli di stile e import solo locali', () 
   assert.deepEqual(esterni, []);
 });
 
-test('il workflow di GitHub Pages pubblica tutti i file messi in cache, e solo quelli dell\'app', () => {
-  const riga = /cp -R (.+) _site\//.exec(leggi('.github/workflows/pages.yml'))[1].split(/\s+/);
+test('la pubblicazione su Cloudflare pubblica tutti i file messi in cache, e solo quelli dell\'app', () => {
+  const riga = /git archive HEAD (.+?) \|/.exec(leggi('tools/pubblica.sh'))[1].split(/\s+/);
   const scoperti = inCache.filter((f) => f !== './' && !riga.some((voce) => f === voce || f.startsWith(`${voce}/`)));
   assert.deepEqual(scoperti, [], `file dell'app non pubblicati: ${scoperti.join(', ')}`);
   const vietati = riga.filter((voce) => /^(data|tests|tools|docs|\.impeccable|\.claude)$|\.(md|xlsx|json)$/.test(voce));

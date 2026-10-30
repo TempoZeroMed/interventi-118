@@ -23,7 +23,7 @@ Gli screenshot usano dati inventati.
 1. [Avvio in locale](#avvio-in-locale)
 2. [Primo import dei dati dall'Excel](#primo-import-dei-dati-dallexcel)
 3. [Volo ed elisoccorso](#volo-ed-elisoccorso)
-4. [Pubblicazione su GitHub Pages](#pubblicazione-su-github-pages)
+4. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
 5. [Installazione su iPhone](#installazione-su-iphone)
 6. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
 7. [Test](#test)
@@ -133,45 +133,51 @@ Se modifichi uno di quegli interventi sul telefono tra l'export del punto 1 e l'
 
 ---
 
-## Pubblicazione su GitHub Pages
+## Pubblicazione su Cloudflare Pages
 
-L'app è un insieme di file statici: GitHub Pages la ospita gratis, a un indirizzo come
-`https://<utente>.github.io/<repository>/`.
+L'app è un insieme di file statici: Cloudflare la ospita gratis, a un indirizzo tutto suo:
+<https://interventi-118.grucce.workers.dev>. I nuovi progetti di Cloudflare Pages ora fanno parte di Cloudflare
+Workers, da qui `workers.dev`; `grucce` è il nome scelto per l'account Cloudflare.
+Un indirizzo che non condivide con altre app conta: il browser separa dati e cache per indirizzo.
 
-**Cosa viene pubblicato.** Il workflow `.github/workflows/pages.yml` pubblica **solo i file dell'app**:
+Si pubblica dal Mac, con un comando:
 
-- `index.html`, `manifest.webmanifest`, `sw.js`;
-- le cartelle `css/`, `js/`, `vendor/`, `icons/`.
+```bash
+npm run pubblica
+```
+
+Il comando ([tools/pubblica.sh](tools/pubblica.sh)):
+
+1. si ferma se non sei su `main` o se ci sono modifiche senza commit;
+2. esegue i test;
+3. copia dall'ultimo commit **solo i file dell'app** in una cartella temporanea fuori dal progetto: `index.html`, `manifest.webmanifest`, `sw.js` e le cartelle `css/`, `js/`, `vendor/`, `icons/`;
+4. li carica su Cloudflare con Wrangler, lanciato da quella cartella e senza configurazione automatica;
+5. controlla che dati, Excel e file di progetto rispondano 404; se uno risponde, toglie subito la pubblicazione.
+
+**Non lanciare mai Wrangler nella cartella del progetto.** Con la configurazione automatica pubblicherebbe tutta la cartella, dati reali compresi.
 
 Test, strumenti, documenti e appunti di progetto restano nel repository ma non finiscono sul sito.
-Prima di ogni pubblicazione il workflow esegue i test.
 
-**Privacy.** Con il piano gratuito di GitHub, Pages funziona solo su repository **pubblici**; per un repository privato serve GitHub Pro. Nel repository c'è solo il codice: i dati reali sono esclusi da `.gitignore`. Il sito pubblicato non riceve né contiene dati: ogni dispositivo tiene i suoi in locale.
+**Privacy.** I dati reali sono esclusi da `.gitignore` e il comando pubblica solo file presenti nei commit, quindi non possono finire online. Il sito pubblicato non riceve né contiene dati: ogni dispositivo tiene i suoi in locale. Il push su GitHub non pubblica niente: serve solo a tenere una copia del codice.
 
 ### Prima pubblicazione
 
-1. Su <https://github.com/new> crea un repository, per esempio `interventi-118`, senza README.
-2. Collega e invia il codice dalla cartella del progetto (sostituisci `<utente>`):
+1. Collega il Mac al tuo account Cloudflare, da una cartella fuori dal progetto (si apre il browser per il consenso):
 
    ```bash
-   git remote add origin https://github.com/<utente>/interventi-118.git
+   cd ~ && npx wrangler@4.156.0 login
    ```
 
-   ```bash
-   git push -u origin main
-   ```
-
-3. Su GitHub, nel repository, apri **Settings → Pages**. In "Build and deployment" scegli **Source: GitHub Actions**.
-4. Dalla scheda **Actions** controlla che "Pubblica su GitHub Pages" finisca in verde. L'indirizzo dell'app compare nel riepilogo e in Settings → Pages.
+2. Pubblica con `npm run pubblica`: la prima volta crea anche il progetto. L'indirizzo dell'app compare alla fine.
 
 ### Aggiornare l'app
 
 1. Modifica i file.
 2. In `sw.js` cambia `VERSIONE`, per esempio `interventi118-v1.0.1`: è il segnale che fa scaricare la nuova copia ai dispositivi.
-3. Fai il commit e `git push`. Il workflow ripubblica da solo.
+3. Fai il commit su `main` e lancia `npm run pubblica`.
 4. Sui dispositivi la nuova versione arriva alla seconda apertura dell'app: la prima scarica i file, la seconda li usa.
 
-Se aggiungi un file all'app, inseriscilo nell'elenco `FILE` di `sw.js`; se aggiungi una cartella, anche nella riga `cp` del workflow. Un test (`tests/pwa.test.js`) segnala se te ne dimentichi.
+Se aggiungi un file all'app, inseriscilo nell'elenco `FILE` di `sw.js`; se aggiungi una cartella, anche nella riga `git archive` di `tools/pubblica.sh`. Un test (`tests/pwa.test.js`) segnala se te ne dimentichi.
 
 ---
 

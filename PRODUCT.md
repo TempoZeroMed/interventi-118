@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Static HTML + CSS + vanilla JavaScript (ES modules), no build step. Only allowed libraries, as local copies in `vendor/`: Chart.js (charts) and SheetJS CE 0.20.3 (xlsx export). Installable PWA hosted on GitHub Pages, data in IndexedDB. Decided in `prompt_app_interventi_118.md`.
+Static HTML + CSS + vanilla JavaScript (ES modules), no build step. Only allowed libraries, as local copies in `vendor/`: Chart.js (charts) and SheetJS CE 0.20.3 (xlsx export). Installable PWA hosted on Cloudflare Pages (own domain, published from the Mac with `npm run pubblica`), data in IndexedDB. Decided in `prompt_app_interventi_118.md`.
 
 ## Users
 
