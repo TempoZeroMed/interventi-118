@@ -2,8 +2,9 @@
 import { stato, interventi } from '../stato.js';
 import { calcolaStatistiche } from '../core/statistiche.js';
 import { calcolaStatisticheVolo } from '../core/volo.js';
+import { descriviPeriodo } from '../core/domande.js';
 import { isDataValida } from '../core/campi.js';
-import { h, riempi, icona, impostaBanda, codice, numero, conteggio, pct, pctGia, meseLungo, dataBreve } from './dom.js';
+import { h, riempi, icona, impostaBanda, codice, numero, conteggio, pct, pctGia } from './dom.js';
 import { caricaScript, CHART } from './file.js';
 import { impostaFiltri } from './elenco.js';
 import { disegnaVolo } from './volo.js';
@@ -14,18 +15,6 @@ let grafici = [];
 
 const anniDisponibili = () => [...new Set(interventi().map((r) => r.data).filter(isDataValida).map((d) => Number(d.slice(0, 4))))]
   .sort((a, b) => b - a);
-
-function descrizione(p) {
-  if (p.tipo === 'anno') return `Anno ${p.anno}`;
-  if (p.tipo === 'mese') return `${meseLungo(p.mese)} ${p.anno}`;
-  if (p.tipo === 'intervallo') {
-    if (p.da && p.a) return `Dal ${dataBreve(p.da)} al ${dataBreve(p.a)}`;
-    if (p.da) return `Dal ${dataBreve(p.da)}`;
-    if (p.a) return `Fino al ${dataBreve(p.a)}`;
-    return 'Intervallo libero';
-  }
-  return 'Tutto l\'archivio';
-}
 
 export function mostra(main) {
   const anni = anniDisponibili();
@@ -77,7 +66,7 @@ export function mostra(main) {
   }
 
   async function disegna() {
-    impostaBanda('Statistiche', descrizione(periodo));
+    impostaBanda('Statistiche', descriviPeriodo(periodo));
     grafici.forEach((g) => g.destroy());
     grafici = [];
     if (!interventi().length) {

@@ -7,7 +7,7 @@ import { avvisi, indiceMissioni, TIPI_AVVISO } from './controlli.js';
 
 export const NOMI_MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 export const FASCE_ETA = [['0–17', 0, 17], ['18–40', 18, 40], ['41–65', 41, 65], ['66–80', 66, 80], ['oltre 80', 81, 200]];
-const ANNULLATI = ['Annullato da CO', 'Non Raggiungibile'];
+export const ANNULLATI = ['Annullato da CO', 'Non Raggiungibile'];
 
 /** ROUND di Excel: metà lontano da zero, sul valore a 15 cifre significative. */
 export function arrotondaExcel(x, cifre = 0) {

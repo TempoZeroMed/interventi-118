@@ -1,6 +1,9 @@
 // Domande all'archivio: schema della query che Claude produce dalla domanda scritta, validazione ed esecuzione.
 // Condiviso tra l'app (che calcola la risposta sul dispositivo) e il Worker (che valida ciò che Claude risponde).
 import { CAMPI, isDataValida } from './campi.js';
+import { calcolati } from './calcolati.js';
+import { filtraPeriodo, vociTabella, FASCE_ETA, ANNULLATI, media, mediana, arrotondaExcel } from './statistiche.js';
+import { meseLungo, dataBreve } from '../ui/dom.js';
 
 export const MISURE = [
   'interventi', 'valutati', 'trasportati', 'durataMedia', 'durataMediana', 'durataMax',
@@ -145,4 +148,187 @@ export function estraiJson(testo) {
     }
   }
   return null;
+}
+
+// ---------------------------------------------------------------- esecuzione sul dispositivo
+
+const SENZA_DATA = '—';
+const GRUPPI_DATA = ['giorno', 'mese', 'anno', 'giornoSettimana'];
+const LISTA_DEL_CAMPO = Object.fromEntries(CAMPI.filter((c) => c.lista).map((c) => [c.chiave, c.lista]));
+const due = (n) => String(n).padStart(2, '0');
+
+/** Come la banda delle Statistiche: "Anno 2026", "luglio 2026", "Dal 01/01/2026 al 31/03/2026", "Tutto l'archivio". */
+export function descriviPeriodo(p) {
+  if (p.tipo === 'anno') return `Anno ${p.anno}`;
+  if (p.tipo === 'mese') return `${meseLungo(p.mese)} ${p.anno}`;
+  if (p.tipo === 'intervallo') {
+    if (p.da && p.a) return `Dal ${dataBreve(p.da)} al ${dataBreve(p.a)}`;
+    if (p.da) return `Dal ${dataBreve(p.da)}`;
+    if (p.a) return `Fino al ${dataBreve(p.a)}`;
+    return 'Intervallo libero';
+  }
+  return 'Tutto l\'archivio';
+}
+
+function giornoSettimana(data) {
+  if (!isDataValida(data)) return null;
+  const [a, m, g] = data.split('-').map(Number);
+  return GIORNI_SETTIMANA[(new Date(a, m - 1, g).getDay() + 6) % 7];
+}
+
+const fasciaEta = (eta) => (typeof eta === 'number' ? FASCE_ETA.find(([, da, a]) => eta >= da && eta <= a)?.[0] ?? null : null);
+const numeroONull = (x) => (typeof x === 'number' && Number.isFinite(x) ? x : null);
+
+/** Chiave del gruppo per una riga { r, c }: null se il valore manca ("—" per i gruppi di data). */
+function chiaveDi({ r, c }, gruppo) {
+  const data = isDataValida(r.data) ? r.data : null;
+  let k;
+  if (gruppo === 'ora') k = c.ora === null ? null : due(c.ora);
+  else if (gruppo === 'giornoSettimana') k = giornoSettimana(r.data);
+  else if (gruppo === 'giorno') k = data;
+  else if (gruppo === 'mese') k = data?.slice(0, 7) ?? null;
+  else if (gruppo === 'anno') k = data?.slice(0, 4) ?? null;
+  else if (gruppo === 'comune') k = normalizzaTesto(r.comune) || null;
+  else if (gruppo === 'fasciaEta') k = fasciaEta(r.eta);
+  else k = String(r[gruppo] ?? '').trim() || null;
+  return k === null && GRUPPI_DATA.includes(gruppo) ? SENZA_DATA : k;
+}
+
+function etichetta(gruppo, chiave, grafie) {
+  if (chiave === SENZA_DATA) return 'Senza data';
+  if (gruppo === 'ora') return `Ore ${chiave}`;
+  if (gruppo === 'giorno') return dataBreve(chiave);
+  if (gruppo === 'mese') return `${meseLungo(Number(chiave.slice(5, 7)))} ${chiave.slice(0, 4)}`;
+  if (gruppo === 'comune') return grafie.get(chiave) ?? chiave;
+  return chiave;
+}
+
+/** Ordine naturale delle chiavi: tutte le ore, i giorni e le fasce; date crescenti; voci nell'ordine della lista. */
+function chiaviInOrdine(gruppo, presenti, liste) {
+  const coda = presenti.has(SENZA_DATA) ? [SENZA_DATA] : [];
+  const usate = [...presenti].filter((k) => k !== SENZA_DATA);
+  if (gruppo === 'ora') return Array.from({ length: 24 }, (_, i) => due(i));
+  if (gruppo === 'giornoSettimana') return [...GIORNI_SETTIMANA, ...coda];
+  if (gruppo === 'fasciaEta') return FASCE_ETA.map(([voce]) => voce);
+  if (['giorno', 'mese', 'anno'].includes(gruppo)) return [...usate.sort(), ...coda];
+  if (gruppo === 'comune') return usate.sort((a, b) => a.localeCompare(b, 'it'));
+  return vociTabella(liste[LISTA_DEL_CAMPO[gruppo]], usate).filter((k) => presenti.has(k));
+}
+
+/** Divide le righe per gruppo, nell'ordine naturale. Le righe senza data restano fuori se `senzaData` è falso. */
+function raggruppa(righe, gruppo, liste, senzaData) {
+  const perChiave = new Map();
+  const grafie = new Map();
+  for (const riga of righe) {
+    const k = chiaveDi(riga, gruppo);
+    if (k === null || (k === SENZA_DATA && !senzaData)) continue;
+    if (!perChiave.has(k)) perChiave.set(k, []);
+    perChiave.get(k).push(riga);
+    if (gruppo === 'comune' && !grafie.has(k)) grafie.set(k, String(riga.r.comune).trim());
+  }
+  return chiaviInOrdine(gruppo, new Set(perChiave.keys()), liste)
+    .map((chiave) => ({ chiave, etichetta: etichetta(gruppo, chiave, grafie), righe: perChiave.get(chiave) ?? [] }));
+}
+
+function valoreFiltro({ r, c }, campo) {
+  if (campo === 'durata') return c.durata;
+  if (campo === 'ora') return c.ora;
+  if (campo === 'giornoSettimana') return giornoSettimana(r.data);
+  if (campo === 'eta' || campo === 'tempoVolo') return numeroONull(r[campo]);
+  return r[campo] ?? '';
+}
+
+function passa(riga, { campo, op, valore }) {
+  const v = valoreFiltro(riga, campo);
+  const uguale = (x) => {
+    if (CAMPI_NUMERICI.includes(campo)) return v !== null && v === Number(x);
+    if (campo === 'giornoSettimana') return v !== null && normalizzaTesto(v).slice(0, 3) === normalizzaTesto(x).slice(0, 3);
+    return normalizzaTesto(v) === normalizzaTesto(x);
+  };
+  if (op === '=') return uguale(valore);
+  if (op === '!=') return !uguale(valore);
+  if (op === 'in') return valore.some(uguale);
+  if (v === null) return false;
+  return { '>': v > valore, '>=': v >= valore, '<': v < valore, '<=': v <= valore }[op];
+}
+
+function seleziona(records, periodo, filtri) {
+  return filtraPeriodo(records, periodo).map((r) => ({ r, c: calcolati(r) })).filter((riga) => filtri.every((f) => passa(riga, f)));
+}
+
+const contaValutati = (righe) => righe.filter(({ r }) => !ANNULLATI.includes(r.esito)).length;
+
+/** Valore della misura su un insieme di righe; `selezione` è tutta la selezione (base delle percentuali). */
+function misura(nome, righe, selezione) {
+  const durate = righe.map(({ c }) => c.durata).filter((d) => d !== null);
+  const eta = righe.map(({ r }) => numeroONull(r.eta)).filter((e) => e !== null);
+  const div = (a, b) => (b ? a / b : 0);
+  switch (nome) {
+    case 'interventi': return righe.length;
+    case 'valutati': return contaValutati(righe);
+    case 'trasportati': return righe.filter(({ r }) => r.esito === 'Trasportato').length;
+    case 'durataMedia': return durate.length ? arrotondaExcel(media(durate), 0) : null;
+    case 'durataMediana': return mediana(durate);
+    case 'durataMax': return durate.length ? Math.max(...durate) : null;
+    case 'etaMedia': return eta.length ? arrotondaExcel(media(eta), 1) : null;
+    case 'etaMediana': return mediana(eta);
+    case 'pctTotali': return div(righe.length, selezione.length);
+    case 'pctValutati': return div(righe.length, contaValutati(selezione));
+    default: throw new Error(`Misura sconosciuta: ${nome}`);
+  }
+}
+
+/** Ordina per valore (a parità resta l'ordine naturale; i valori vuoti in fondo) e taglia ai primi N. */
+function classifica(righe, ordine, primi) {
+  const ordinate = ordine === 'nessuno' ? righe : [...righe].sort((a, b) => {
+    if (a.valore === null || b.valore === null) return (a.valore === null) - (b.valore === null);
+    return ordine === 'max' ? b.valore - a.valore : a.valore - b.valore;
+  });
+  return primi ? ordinate.slice(0, primi) : ordinate;
+}
+
+/**
+ * Esegue una query validata sull'archivio. Il periodo della query, se c'è, batte quello della pagina.
+ * Forma del risultato: { periodo, descrizionePeriodo, base, righe, colonne, etichetteColonne, evidenziata, confronto, misura }.
+ */
+export function eseguiQuery(records, liste, query, periodoPagina) {
+  const { misura: nome, gruppi, filtri, ordine, primi } = query;
+  if (query.confronto) {
+    const lato = (periodo) => {
+      const selezione = seleziona(records, periodo, filtri);
+      return { periodo, descrizionePeriodo: descriviPeriodo(periodo), valore: misura(nome, selezione, selezione), n: selezione.length };
+    };
+    const a = lato(query.confronto.periodoA);
+    const b = lato(query.confronto.periodoB);
+    const differenza = a.valore === null || b.valore === null ? null : b.valore - a.valore;
+    return {
+      periodo: null, descrizionePeriodo: `${a.descrizionePeriodo} e ${b.descrizionePeriodo}`, base: a.n + b.n,
+      righe: [], colonne: null, etichetteColonne: null, evidenziata: null, misura: nome,
+      confronto: { a, b, differenza, variazionePct: differenza === null || !a.valore ? null : (differenza / a.valore) * 100 },
+    };
+  }
+  const periodo = query.periodo ?? periodoPagina ?? { tipo: 'tutto' };
+  const selezione = seleziona(records, periodo, filtri);
+  const senzaData = ordine === 'nessuno';
+  let righe;
+  let colonne = null;
+  if (!gruppi.length) {
+    righe = [{ chiavi: [], etichette: [], valore: misura(nome, selezione, selezione), n: selezione.length }];
+  } else {
+    const secondo = gruppi[1] ? raggruppa(selezione, gruppi[1], liste, senzaData) : null;
+    if (secondo) colonne = secondo;
+    righe = classifica(raggruppa(selezione, gruppi[0], liste, senzaData).map((g) => {
+      const riga = { chiavi: [g.chiave], etichette: [g.etichetta], valore: misura(nome, g.righe, selezione), n: g.righe.length };
+      if (secondo) {
+        const dentro = new Set(g.righe);
+        riga.celle = Object.fromEntries(secondo.map((col) => [col.chiave, misura(nome, col.righe.filter((x) => dentro.has(x)), selezione)]));
+      }
+      return riga;
+    }), ordine, primi);
+  }
+  return {
+    periodo, descrizionePeriodo: descriviPeriodo(periodo), base: selezione.length, righe,
+    colonne: colonne && colonne.map((c) => c.chiave), etichetteColonne: colonne && colonne.map((c) => c.etichetta),
+    evidenziata: ordine === 'nessuno' || !righe.length ? null : 0, confronto: null, misura: nome,
+  };
 }
