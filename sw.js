@@ -20,6 +20,7 @@ const FILE = [
   'js/core/merge.js',
   'js/core/modulo.js',
   'js/core/statistiche.js',
+  'js/core/volo.js',
   'js/ui/dom.js',
   'js/ui/elenco.js',
   'js/ui/file.js',

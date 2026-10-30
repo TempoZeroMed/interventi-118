@@ -20,9 +20,9 @@ export function arrotondaExcel(x, cifre = 0) {
 }
 
 const div = (a, b) => (b ? a / b : 0); // IFERROR(a/b, 0)
-const media = (v) => (v.length ? v.reduce((s, x) => s + x, 0) / v.length : null);
+export const media = (v) => (v.length ? v.reduce((s, x) => s + x, 0) / v.length : null);
 const mediaArrotondata = (v, cifre) => (v.length ? arrotondaExcel(media(v), cifre) : null);
-function mediana(v) {
+export function mediana(v) {
   if (!v.length) return null;
   const o = [...v].sort((a, b) => a - b);
   const m = Math.floor(o.length / 2);
@@ -53,7 +53,7 @@ function estremi(periodo) {
 }
 
 /** Mesi (AAAA-MM) da mostrare nella tabella 8 per il periodo. */
-function mesiDelPeriodo(periodo, selezione) {
+export function mesiDelPeriodo(periodo, selezione) {
   const date = selezione.map((r) => r.data).filter(isDataValida).sort();
   let primo;
   let ultimo;
@@ -74,7 +74,7 @@ function mesiDelPeriodo(periodo, selezione) {
 }
 
 /** Voci di una lista da mostrare: attive sempre, disattivate se usate, valori fuori lista in fondo. */
-function vociTabella(lista, valoriUsati) {
+export function vociTabella(lista, valoriUsati) {
   const usati = new Set(valoriUsati.filter((v) => v !== ''));
   const voci = (lista ?? []).filter((v) => v.attiva || usati.has(v.voce)).map((v) => v.voce);
   const note = new Set((lista ?? []).map((v) => v.voce));
