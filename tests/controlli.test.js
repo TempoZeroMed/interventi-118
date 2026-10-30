@@ -122,3 +122,14 @@ test('salvataggio: una MISSIONE di un record eliminato si può riusare', () => {
   const eliminato = rec({ id: 'x', deleted: true });
   assert.equal(verificaSalvataggio(rec({ id: 'y' }), [eliminato]).ok, true);
 });
+
+test('volo: tipo missione e tempo mancanti solo per V-ECHO e T-ECHO, anche su record senza i campi nuovi', () => {
+  assert.deepEqual(avvisiDi(rec({ mezzo: 'V-ECHO' })), ['Tipo missione mancante', 'Tempo volo mancante']);
+  assert.deepEqual(avvisiDi(rec({ mezzo: '3030', tipoMissione: '', tempoVolo: null, manovre: [] })), []);
+});
+
+test('volo: tempo non valido se non intero o fuori da 0–600', () => {
+  const con = (tempoVolo) => avvisiDi(rec({ mezzo: 'T-ECHO', tipoMissione: 'HEMS', tempoVolo }));
+  for (const buono of [0, 44, 600]) assert.deepEqual(con(buono), [], String(buono));
+  for (const cattivo of [-1, 601, 44.5, '45 min']) assert.deepEqual(con(cattivo), ['Tempo volo non valido'], String(cattivo));
+});

@@ -1,7 +1,10 @@
 // Controlli di qualità (colonna CONTROLLI dell'Excel) e regole di salvataggio.
-import { isDataValida, isOraValida } from './campi.js';
+import { isDataValida, isOraValida, isElicottero } from './campi.js';
 
-/** Nell'ordine in cui compaiono nella colonna CONTROLLI; l'ultimo è aggiunto dall'app. */
+/** Controlli del foglio "Voli" dell'Excel HEMS, più la convalida di TEMPO VOLO (intero 0–600). */
+export const TIPI_AVVISO_VOLO = ['Tipo missione mancante', 'Tempo volo mancante', 'Tempo volo non valido'];
+
+/** Nell'ordine in cui compaiono nella colonna CONTROLLI; "Età non valida" e quelli di volo sono aggiunti dall'app. */
 export const TIPI_AVVISO = [
   'Ora allert. non valida',
   'Libero operativo non valido',
@@ -11,6 +14,7 @@ export const TIPI_AVVISO = [
   'Mezzo solo India',
   'Ospedale senza trasporto',
   'Età non valida',
+  ...TIPI_AVVISO_VOLO,
 ];
 
 export const MEZZI_SOLO_INDIA = ['3040', '5022', '5024'];
@@ -40,6 +44,10 @@ export function avvisi(r, indice) {
   if (r.eta !== null && r.eta !== undefined && (typeof r.eta !== 'number' || !Number.isInteger(r.eta) || r.eta < 0)) {
     out.push('Età non valida');
   }
+  const tempo = r.tempoVolo ?? null;
+  if (isElicottero(r.mezzo) && !r.tipoMissione) out.push('Tipo missione mancante');
+  if (isElicottero(r.mezzo) && tempo === null) out.push('Tempo volo mancante');
+  if (tempo !== null && !(Number.isInteger(tempo) && tempo >= 0 && tempo <= 600)) out.push('Tempo volo non valido');
   return out;
 }
 

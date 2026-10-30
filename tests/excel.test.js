@@ -3,22 +3,32 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcolaStatistiche } from '../js/core/statistiche.js';
+import { TIPI_AVVISO_VOLO } from '../js/core/controlli.js';
+import { isElicottero } from '../js/core/campi.js';
 import { unisci, leggiBackup } from '../js/core/merge.js';
 import { IMPORT, ATTESE, leggiJson, differenze, motivoSkip } from './aiuti.js';
 
 // I record passano dalla stessa lettura dell'import nell'app (normalizzazione compresa).
 const importati = () => leggiBackup(JSON.stringify(leggiJson(IMPORT)));
 
+/** Gli avvisi di volo non esistono nell'Excel 118: per il confronto i voli contano come completi. */
+function statistiche118(record, liste, periodo) {
+  const completi = record.map((r) => (isElicottero(r.mezzo) ? { ...r, tipoMissione: 'HEMS', tempoVolo: 0 } : r));
+  const s = calcolaStatistiche(completi, liste, periodo);
+  s.controlli.perTipo = s.controlli.perTipo.filter((t) => !TIPI_AVVISO_VOLO.includes(t.voce));
+  return s;
+}
+
 test('le statistiche sui 212 interventi coincidono con il foglio "Statistiche"', { skip: motivoSkip }, () => {
   const { record, liste } = importati();
   assert.equal(record.length, 212);
-  const diff = differenze(calcolaStatistiche(record, liste, { tipo: 'tutto' }), leggiJson(ATTESE));
+  const diff = differenze(statistiche118(record, liste, { tipo: 'tutto' }), leggiJson(ATTESE));
   assert.deepEqual(diff, [], `${diff.length} valori diversi dall'Excel:\n${diff.slice(0, 30).join('\n')}`);
 });
 
 test('tutti i 212 interventi sono del 2026: l\'anno 2026 dà gli stessi numeri di "tutto"', { skip: motivoSkip }, () => {
   const { record, liste } = importati();
-  const diff = differenze(calcolaStatistiche(record, liste, { tipo: 'anno', anno: 2026 }), leggiJson(ATTESE));
+  const diff = differenze(statistiche118(record, liste, { tipo: 'anno', anno: 2026 }), leggiJson(ATTESE));
   assert.deepEqual(diff, []);
 });
 
