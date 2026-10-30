@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Interventi 118</title>
+  <meta name="description" content="Registro personale delle uscite 118: inserimento rapido, elenco, statistiche. Funziona offline, i dati restano sul dispositivo.">
+  <meta name="theme-color" content="#15130f">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Interventi 118">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="css/app.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <nav class="schede" aria-label="Sezioni">
+    <a class="logo" href="#/nuovo">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5z"/><circle cx="10" cy="7.5" r="1.5"/><path d="M5 15h14M5 18h14"/></svg>
+      Interventi 118
+    </a>
+    <a class="scheda" href="#/nuovo" data-vista="nuovo">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+      Inserisci
+    </a>
+    <a class="scheda" href="#/elenco" data-vista="elenco">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01"/></svg>
+      Elenco
+    </a>
+    <a class="scheda" href="#/statistiche" data-vista="statistiche">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20v-8M12 20V5M19 20v-5M3 20h18"/></svg>
+      Statistiche
+    </a>
+    <a class="scheda" href="#/impostazioni" data-vista="impostazioni">
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>
+      Impostazioni
+    </a>
+  </nav>
+
+  <header class="banda" id="banda">
+    <div class="titoli"><h1 id="titolo">Interventi 118</h1><span class="sotto" id="sottotitolo"></span></div>
+  </header>
+  <div class="promemoria" id="promemoria" role="status" hidden></div>
+
+  <main id="vista" tabindex="-1">
+    <noscript><p>Per usare l'app serve JavaScript.</p></noscript>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"><span id="toast-testo"></span></div>
+  <dialog id="dialogo"></dialog>
+</body>
+</html>

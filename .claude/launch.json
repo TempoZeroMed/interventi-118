@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "interventi-118",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["tools/server_sviluppo.py", "8118"],
+      "port": 8118
+    }
+  ]
+}

@@ -1,0 +1,1029 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-30T02:47:27+00:00",
+  "title": "Design System: Interventi 118",
+  "extensions": {
+    "colorMeta": {
+      "stock": {
+        "role": "neutral",
+        "displayName": "Tag Stock",
+        "canonical": "#eeece6",
+        "tonalRamp": [
+          "oklch(15% 0.008 91.5)",
+          "oklch(26% 0.008 91.5)",
+          "oklch(37% 0.008 91.5)",
+          "oklch(48% 0.008 91.5)",
+          "oklch(59% 0.008 91.5)",
+          "oklch(70% 0.008 91.5)",
+          "oklch(82% 0.008 91.5)",
+          "oklch(95% 0.008 91.5)"
+        ]
+      },
+      "stock-2": {
+        "role": "neutral",
+        "displayName": "Pressed Stock",
+        "canonical": "#e3e0d7",
+        "tonalRamp": [
+          "oklch(15% 0.013 91.5)",
+          "oklch(26% 0.013 91.5)",
+          "oklch(37% 0.013 91.5)",
+          "oklch(48% 0.013 91.5)",
+          "oklch(59% 0.013 91.5)",
+          "oklch(70% 0.013 91.5)",
+          "oklch(82% 0.013 91.5)",
+          "oklch(95% 0.013 91.5)"
+        ]
+      },
+      "carta": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#fbfaf7",
+        "tonalRamp": [
+          "oklch(15% 0.004 91.4)",
+          "oklch(26% 0.004 91.4)",
+          "oklch(37% 0.004 91.4)",
+          "oklch(48% 0.004 91.4)",
+          "oklch(59% 0.004 91.4)",
+          "oklch(70% 0.004 91.4)",
+          "oklch(82% 0.004 91.4)",
+          "oklch(95% 0.004 91.4)"
+        ]
+      },
+      "inchiostro": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#17140f",
+        "tonalRamp": [
+          "oklch(15% 0.011 80.5)",
+          "oklch(26% 0.011 80.5)",
+          "oklch(37% 0.011 80.5)",
+          "oklch(48% 0.011 80.5)",
+          "oklch(59% 0.011 80.5)",
+          "oklch(70% 0.011 80.5)",
+          "oklch(82% 0.011 80.5)",
+          "oklch(95% 0.011 80.5)"
+        ]
+      },
+      "inchiostro-2": {
+        "role": "neutral",
+        "displayName": "Faded Ink",
+        "canonical": "#4d473b",
+        "tonalRamp": [
+          "oklch(15% 0.021 84.6)",
+          "oklch(26% 0.021 84.6)",
+          "oklch(37% 0.021 84.6)",
+          "oklch(48% 0.021 84.6)",
+          "oklch(59% 0.021 84.6)",
+          "oklch(70% 0.021 84.6)",
+          "oklch(82% 0.021 84.6)",
+          "oklch(95% 0.021 84.6)"
+        ]
+      },
+      "linea": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#cbc5b7",
+        "tonalRamp": [
+          "oklch(15% 0.020 87.5)",
+          "oklch(26% 0.020 87.5)",
+          "oklch(37% 0.020 87.5)",
+          "oklch(48% 0.020 87.5)",
+          "oklch(59% 0.020 87.5)",
+          "oklch(70% 0.020 87.5)",
+          "oklch(82% 0.020 87.5)",
+          "oklch(95% 0.020 87.5)"
+        ]
+      },
+      "linea-forte": {
+        "role": "neutral",
+        "displayName": "Strong Rule",
+        "canonical": "#8f877a",
+        "tonalRamp": [
+          "oklch(15% 0.021 80.1)",
+          "oklch(26% 0.021 80.1)",
+          "oklch(37% 0.021 80.1)",
+          "oklch(48% 0.021 80.1)",
+          "oklch(59% 0.021 80.1)",
+          "oklch(70% 0.021 80.1)",
+          "oklch(82% 0.021 80.1)",
+          "oklch(95% 0.021 80.1)"
+        ]
+      },
+      "banda": {
+        "role": "primary",
+        "displayName": "Banda Black",
+        "canonical": "#15130f",
+        "tonalRamp": [
+          "oklch(15% 0.009 84.6)",
+          "oklch(26% 0.009 84.6)",
+          "oklch(37% 0.009 84.6)",
+          "oklch(48% 0.009 84.6)",
+          "oklch(59% 0.009 84.6)",
+          "oklch(70% 0.009 84.6)",
+          "oklch(82% 0.009 84.6)",
+          "oklch(95% 0.009 84.6)"
+        ]
+      },
+      "banda-2": {
+        "role": "neutral",
+        "displayName": "Banda Raised",
+        "canonical": "#2a2620",
+        "tonalRamp": [
+          "oklch(15% 0.012 78.1)",
+          "oklch(26% 0.012 78.1)",
+          "oklch(37% 0.012 78.1)",
+          "oklch(48% 0.012 78.1)",
+          "oklch(59% 0.012 78.1)",
+          "oklch(70% 0.012 78.1)",
+          "oklch(82% 0.012 78.1)",
+          "oklch(95% 0.012 78.1)"
+        ]
+      },
+      "banda-testo": {
+        "role": "neutral",
+        "displayName": "Band Text",
+        "canonical": "#f4f1ea",
+        "tonalRamp": [
+          "oklch(15% 0.010 87.5)",
+          "oklch(26% 0.010 87.5)",
+          "oklch(37% 0.010 87.5)",
+          "oklch(48% 0.010 87.5)",
+          "oklch(59% 0.010 87.5)",
+          "oklch(70% 0.010 87.5)",
+          "oklch(82% 0.010 87.5)",
+          "oklch(95% 0.010 87.5)"
+        ]
+      },
+      "banda-testo-2": {
+        "role": "neutral",
+        "displayName": "Band Text Dim",
+        "canonical": "#b4ad9f",
+        "tonalRamp": [
+          "oklch(15% 0.021 84.6)",
+          "oklch(26% 0.021 84.6)",
+          "oklch(37% 0.021 84.6)",
+          "oklch(48% 0.021 84.6)",
+          "oklch(59% 0.021 84.6)",
+          "oklch(70% 0.021 84.6)",
+          "oklch(82% 0.021 84.6)",
+          "oklch(95% 0.021 84.6)"
+        ]
+      },
+      "chip-fondo": {
+        "role": "neutral",
+        "displayName": "Chip Card",
+        "canonical": "#dedad0",
+        "tonalRamp": [
+          "oklch(15% 0.014 88.7)",
+          "oklch(26% 0.014 88.7)",
+          "oklch(37% 0.014 88.7)",
+          "oklch(48% 0.014 88.7)",
+          "oklch(59% 0.014 88.7)",
+          "oklch(70% 0.014 88.7)",
+          "oklch(82% 0.014 88.7)",
+          "oklch(95% 0.014 88.7)"
+        ]
+      },
+      "chip-fondo-hover": {
+        "role": "neutral",
+        "displayName": "Chip Card Hover",
+        "canonical": "#d4cfc3",
+        "tonalRamp": [
+          "oklch(15% 0.017 88.0)",
+          "oklch(26% 0.017 88.0)",
+          "oklch(37% 0.017 88.0)",
+          "oklch(48% 0.017 88.0)",
+          "oklch(59% 0.017 88.0)",
+          "oklch(70% 0.017 88.0)",
+          "oklch(82% 0.017 88.0)",
+          "oklch(95% 0.017 88.0)"
+        ]
+      },
+      "avviso-fondo": {
+        "role": "neutral",
+        "displayName": "Notice Tint",
+        "canonical": "#f3e3c4",
+        "tonalRamp": [
+          "oklch(15% 0.044 83.9)",
+          "oklch(26% 0.044 83.9)",
+          "oklch(37% 0.044 83.9)",
+          "oklch(48% 0.044 83.9)",
+          "oklch(59% 0.044 83.9)",
+          "oklch(70% 0.044 83.9)",
+          "oklch(82% 0.044 83.9)",
+          "oklch(95% 0.044 83.9)"
+        ]
+      },
+      "avviso-testo": {
+        "role": "neutral",
+        "displayName": "Notice Ink",
+        "canonical": "#6b4300",
+        "tonalRamp": [
+          "oklch(15% 0.090 71.2)",
+          "oklch(26% 0.090 71.2)",
+          "oklch(37% 0.090 71.2)",
+          "oklch(48% 0.090 71.2)",
+          "oklch(59% 0.090 71.2)",
+          "oklch(70% 0.090 71.2)",
+          "oklch(82% 0.090 71.2)",
+          "oklch(95% 0.090 71.2)"
+        ]
+      },
+      "errore-fondo": {
+        "role": "neutral",
+        "displayName": "Error Tint",
+        "canonical": "#f6d9d5",
+        "tonalRamp": [
+          "oklch(15% 0.033 27.1)",
+          "oklch(26% 0.033 27.1)",
+          "oklch(37% 0.033 27.1)",
+          "oklch(48% 0.033 27.1)",
+          "oklch(59% 0.033 27.1)",
+          "oklch(70% 0.033 27.1)",
+          "oklch(82% 0.033 27.1)",
+          "oklch(95% 0.033 27.1)"
+        ]
+      },
+      "errore-testo": {
+        "role": "neutral",
+        "displayName": "Error Ink",
+        "canonical": "#8e1612",
+        "tonalRamp": [
+          "oklch(15% 0.155 28.4)",
+          "oklch(26% 0.155 28.4)",
+          "oklch(37% 0.155 28.4)",
+          "oklch(48% 0.155 28.4)",
+          "oklch(59% 0.155 28.4)",
+          "oklch(70% 0.155 28.4)",
+          "oklch(82% 0.155 28.4)",
+          "oklch(95% 0.155 28.4)"
+        ]
+      },
+      "verde": {
+        "role": "secondary",
+        "displayName": "Verde",
+        "canonical": "#1b7a3e",
+        "tonalRamp": [
+          "oklch(15% 0.126 150.8)",
+          "oklch(26% 0.126 150.8)",
+          "oklch(37% 0.126 150.8)",
+          "oklch(48% 0.126 150.8)",
+          "oklch(59% 0.126 150.8)",
+          "oklch(70% 0.126 150.8)",
+          "oklch(82% 0.126 150.8)",
+          "oklch(95% 0.126 150.8)"
+        ]
+      },
+      "verde-testo": {
+        "role": "secondary",
+        "displayName": "Verde on fill",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "verde-strappo": {
+        "role": "secondary",
+        "displayName": "Verde torn-off text",
+        "canonical": "#1b7a3e",
+        "tonalRamp": [
+          "oklch(15% 0.126 150.8)",
+          "oklch(26% 0.126 150.8)",
+          "oklch(37% 0.126 150.8)",
+          "oklch(48% 0.126 150.8)",
+          "oklch(59% 0.126 150.8)",
+          "oklch(70% 0.126 150.8)",
+          "oklch(82% 0.126 150.8)",
+          "oklch(95% 0.126 150.8)"
+        ]
+      },
+      "giallo": {
+        "role": "secondary",
+        "displayName": "Giallo",
+        "canonical": "#f2c230",
+        "tonalRamp": [
+          "oklch(15% 0.158 89.0)",
+          "oklch(26% 0.158 89.0)",
+          "oklch(37% 0.158 89.0)",
+          "oklch(48% 0.158 89.0)",
+          "oklch(59% 0.158 89.0)",
+          "oklch(70% 0.158 89.0)",
+          "oklch(82% 0.158 89.0)",
+          "oklch(95% 0.158 89.0)"
+        ]
+      },
+      "giallo-testo": {
+        "role": "secondary",
+        "displayName": "Giallo on fill",
+        "canonical": "#1d1705",
+        "tonalRamp": [
+          "oklch(15% 0.033 91.8)",
+          "oklch(26% 0.033 91.8)",
+          "oklch(37% 0.033 91.8)",
+          "oklch(48% 0.033 91.8)",
+          "oklch(59% 0.033 91.8)",
+          "oklch(70% 0.033 91.8)",
+          "oklch(82% 0.033 91.8)",
+          "oklch(95% 0.033 91.8)"
+        ]
+      },
+      "giallo-strappo": {
+        "role": "secondary",
+        "displayName": "Giallo torn-off text",
+        "canonical": "#765600",
+        "tonalRamp": [
+          "oklch(15% 0.097 83.5)",
+          "oklch(26% 0.097 83.5)",
+          "oklch(37% 0.097 83.5)",
+          "oklch(48% 0.097 83.5)",
+          "oklch(59% 0.097 83.5)",
+          "oklch(70% 0.097 83.5)",
+          "oklch(82% 0.097 83.5)",
+          "oklch(95% 0.097 83.5)"
+        ]
+      },
+      "rosso": {
+        "role": "secondary",
+        "displayName": "Rosso",
+        "canonical": "#c8201e",
+        "tonalRamp": [
+          "oklch(15% 0.200 27.9)",
+          "oklch(26% 0.200 27.9)",
+          "oklch(37% 0.200 27.9)",
+          "oklch(48% 0.200 27.9)",
+          "oklch(59% 0.200 27.9)",
+          "oklch(70% 0.200 27.9)",
+          "oklch(82% 0.200 27.9)",
+          "oklch(95% 0.200 27.9)"
+        ]
+      },
+      "rosso-testo": {
+        "role": "secondary",
+        "displayName": "Rosso on fill",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "oklch(15% 0.000 89.9)",
+          "oklch(26% 0.000 89.9)",
+          "oklch(37% 0.000 89.9)",
+          "oklch(48% 0.000 89.9)",
+          "oklch(59% 0.000 89.9)",
+          "oklch(70% 0.000 89.9)",
+          "oklch(82% 0.000 89.9)",
+          "oklch(95% 0.000 89.9)"
+        ]
+      },
+      "rosso-strappo": {
+        "role": "secondary",
+        "displayName": "Rosso torn-off text",
+        "canonical": "#b01c1a",
+        "tonalRamp": [
+          "oklch(15% 0.182 27.8)",
+          "oklch(26% 0.182 27.8)",
+          "oklch(37% 0.182 27.8)",
+          "oklch(48% 0.182 27.8)",
+          "oklch(59% 0.182 27.8)",
+          "oklch(70% 0.182 27.8)",
+          "oklch(82% 0.182 27.8)",
+          "oklch(95% 0.182 27.8)"
+        ]
+      },
+      "nero": {
+        "role": "secondary",
+        "displayName": "Nero",
+        "canonical": "#15130f",
+        "tonalRamp": [
+          "oklch(15% 0.009 84.6)",
+          "oklch(26% 0.009 84.6)",
+          "oklch(37% 0.009 84.6)",
+          "oklch(48% 0.009 84.6)",
+          "oklch(59% 0.009 84.6)",
+          "oklch(70% 0.009 84.6)",
+          "oklch(82% 0.009 84.6)",
+          "oklch(95% 0.009 84.6)"
+        ]
+      },
+      "nero-testo": {
+        "role": "secondary",
+        "displayName": "Nero on fill",
+        "canonical": "#f4f1ea",
+        "tonalRamp": [
+          "oklch(15% 0.010 87.5)",
+          "oklch(26% 0.010 87.5)",
+          "oklch(37% 0.010 87.5)",
+          "oklch(48% 0.010 87.5)",
+          "oklch(59% 0.010 87.5)",
+          "oklch(70% 0.010 87.5)",
+          "oklch(82% 0.010 87.5)",
+          "oklch(95% 0.010 87.5)"
+        ]
+      },
+      "nero-strappo": {
+        "role": "secondary",
+        "displayName": "Nero torn-off text",
+        "canonical": "#15130f",
+        "tonalRamp": [
+          "oklch(15% 0.009 84.6)",
+          "oklch(26% 0.009 84.6)",
+          "oklch(37% 0.009 84.6)",
+          "oklch(48% 0.009 84.6)",
+          "oklch(59% 0.009 84.6)",
+          "oklch(70% 0.009 84.6)",
+          "oklch(82% 0.009 84.6)",
+          "oklch(95% 0.009 84.6)"
+        ]
+      },
+      "stock-notte": {
+        "role": "neutral",
+        "displayName": "Tag Stock (night)",
+        "canonical": "#151310",
+        "tonalRamp": [
+          "oklch(15% 0.007 78.1)",
+          "oklch(26% 0.007 78.1)",
+          "oklch(37% 0.007 78.1)",
+          "oklch(48% 0.007 78.1)",
+          "oklch(59% 0.007 78.1)",
+          "oklch(70% 0.007 78.1)",
+          "oklch(82% 0.007 78.1)",
+          "oklch(95% 0.007 78.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of stock"
+      },
+      "stock-2-notte": {
+        "role": "neutral",
+        "displayName": "Pressed Stock (night)",
+        "canonical": "#1d1a16",
+        "tonalRamp": [
+          "oklch(15% 0.009 75.1)",
+          "oklch(26% 0.009 75.1)",
+          "oklch(37% 0.009 75.1)",
+          "oklch(48% 0.009 75.1)",
+          "oklch(59% 0.009 75.1)",
+          "oklch(70% 0.009 75.1)",
+          "oklch(82% 0.009 75.1)",
+          "oklch(95% 0.009 75.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of stock-2"
+      },
+      "carta-notte": {
+        "role": "neutral",
+        "displayName": "Paper (night)",
+        "canonical": "#221f1a",
+        "tonalRamp": [
+          "oklch(15% 0.010 80.6)",
+          "oklch(26% 0.010 80.6)",
+          "oklch(37% 0.010 80.6)",
+          "oklch(48% 0.010 80.6)",
+          "oklch(59% 0.010 80.6)",
+          "oklch(70% 0.010 80.6)",
+          "oklch(82% 0.010 80.6)",
+          "oklch(95% 0.010 80.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of carta"
+      },
+      "inchiostro-notte": {
+        "role": "neutral",
+        "displayName": "Ink (night)",
+        "canonical": "#f1ece2",
+        "tonalRamp": [
+          "oklch(15% 0.014 84.6)",
+          "oklch(26% 0.014 84.6)",
+          "oklch(37% 0.014 84.6)",
+          "oklch(48% 0.014 84.6)",
+          "oklch(59% 0.014 84.6)",
+          "oklch(70% 0.014 84.6)",
+          "oklch(82% 0.014 84.6)",
+          "oklch(95% 0.014 84.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of inchiostro"
+      },
+      "inchiostro-2-notte": {
+        "role": "neutral",
+        "displayName": "Faded Ink (night)",
+        "canonical": "#b8af9f",
+        "tonalRamp": [
+          "oklch(15% 0.025 82.1)",
+          "oklch(26% 0.025 82.1)",
+          "oklch(37% 0.025 82.1)",
+          "oklch(48% 0.025 82.1)",
+          "oklch(59% 0.025 82.1)",
+          "oklch(70% 0.025 82.1)",
+          "oklch(82% 0.025 82.1)",
+          "oklch(95% 0.025 82.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of inchiostro-2"
+      },
+      "linea-notte": {
+        "role": "neutral",
+        "displayName": "Rule (night)",
+        "canonical": "#3a352d",
+        "tonalRamp": [
+          "oklch(15% 0.015 79.6)",
+          "oklch(26% 0.015 79.6)",
+          "oklch(37% 0.015 79.6)",
+          "oklch(48% 0.015 79.6)",
+          "oklch(59% 0.015 79.6)",
+          "oklch(70% 0.015 79.6)",
+          "oklch(82% 0.015 79.6)",
+          "oklch(95% 0.015 79.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of linea"
+      },
+      "linea-forte-notte": {
+        "role": "neutral",
+        "displayName": "Strong Rule (night)",
+        "canonical": "#6b6457",
+        "tonalRamp": [
+          "oklch(15% 0.022 83.0)",
+          "oklch(26% 0.022 83.0)",
+          "oklch(37% 0.022 83.0)",
+          "oklch(48% 0.022 83.0)",
+          "oklch(59% 0.022 83.0)",
+          "oklch(70% 0.022 83.0)",
+          "oklch(82% 0.022 83.0)",
+          "oklch(95% 0.022 83.0)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of linea-forte"
+      },
+      "banda-notte": {
+        "role": "primary",
+        "displayName": "Banda Black (night)",
+        "canonical": "#0a0907",
+        "tonalRamp": [
+          "oklch(15% 0.005 86.6)",
+          "oklch(26% 0.005 86.6)",
+          "oklch(37% 0.005 86.6)",
+          "oklch(48% 0.005 86.6)",
+          "oklch(59% 0.005 86.6)",
+          "oklch(70% 0.005 86.6)",
+          "oklch(82% 0.005 86.6)",
+          "oklch(95% 0.005 86.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of banda"
+      },
+      "banda-2-notte": {
+        "role": "neutral",
+        "displayName": "Banda Raised (night)",
+        "canonical": "#1f1c17",
+        "tonalRamp": [
+          "oklch(15% 0.010 80.6)",
+          "oklch(26% 0.010 80.6)",
+          "oklch(37% 0.010 80.6)",
+          "oklch(48% 0.010 80.6)",
+          "oklch(59% 0.010 80.6)",
+          "oklch(70% 0.010 80.6)",
+          "oklch(82% 0.010 80.6)",
+          "oklch(95% 0.010 80.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of banda-2"
+      },
+      "banda-testo-notte": {
+        "role": "neutral",
+        "displayName": "Band Text (night)",
+        "canonical": "#f1ece2",
+        "tonalRamp": [
+          "oklch(15% 0.014 84.6)",
+          "oklch(26% 0.014 84.6)",
+          "oklch(37% 0.014 84.6)",
+          "oklch(48% 0.014 84.6)",
+          "oklch(59% 0.014 84.6)",
+          "oklch(70% 0.014 84.6)",
+          "oklch(82% 0.014 84.6)",
+          "oklch(95% 0.014 84.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of banda-testo"
+      },
+      "banda-testo-2-notte": {
+        "role": "neutral",
+        "displayName": "Band Text Dim (night)",
+        "canonical": "#9c9485",
+        "tonalRamp": [
+          "oklch(15% 0.024 83.2)",
+          "oklch(26% 0.024 83.2)",
+          "oklch(37% 0.024 83.2)",
+          "oklch(48% 0.024 83.2)",
+          "oklch(59% 0.024 83.2)",
+          "oklch(70% 0.024 83.2)",
+          "oklch(82% 0.024 83.2)",
+          "oklch(95% 0.024 83.2)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of banda-testo-2"
+      },
+      "chip-fondo-notte": {
+        "role": "neutral",
+        "displayName": "Chip Card (night)",
+        "canonical": "#302b24",
+        "tonalRamp": [
+          "oklch(15% 0.014 76.3)",
+          "oklch(26% 0.014 76.3)",
+          "oklch(37% 0.014 76.3)",
+          "oklch(48% 0.014 76.3)",
+          "oklch(59% 0.014 76.3)",
+          "oklch(70% 0.014 76.3)",
+          "oklch(82% 0.014 76.3)",
+          "oklch(95% 0.014 76.3)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of chip-fondo"
+      },
+      "chip-fondo-hover-notte": {
+        "role": "neutral",
+        "displayName": "Chip Card Hover (night)",
+        "canonical": "#3a342c",
+        "tonalRamp": [
+          "oklch(15% 0.016 75.1)",
+          "oklch(26% 0.016 75.1)",
+          "oklch(37% 0.016 75.1)",
+          "oklch(48% 0.016 75.1)",
+          "oklch(59% 0.016 75.1)",
+          "oklch(70% 0.016 75.1)",
+          "oklch(82% 0.016 75.1)",
+          "oklch(95% 0.016 75.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of chip-fondo-hover"
+      },
+      "avviso-fondo-notte": {
+        "role": "neutral",
+        "displayName": "Notice Tint (night)",
+        "canonical": "#3a2c12",
+        "tonalRamp": [
+          "oklch(15% 0.045 81.1)",
+          "oklch(26% 0.045 81.1)",
+          "oklch(37% 0.045 81.1)",
+          "oklch(48% 0.045 81.1)",
+          "oklch(59% 0.045 81.1)",
+          "oklch(70% 0.045 81.1)",
+          "oklch(82% 0.045 81.1)",
+          "oklch(95% 0.045 81.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of avviso-fondo"
+      },
+      "avviso-testo-notte": {
+        "role": "neutral",
+        "displayName": "Notice Ink (night)",
+        "canonical": "#f0c97a",
+        "tonalRamp": [
+          "oklch(15% 0.107 83.9)",
+          "oklch(26% 0.107 83.9)",
+          "oklch(37% 0.107 83.9)",
+          "oklch(48% 0.107 83.9)",
+          "oklch(59% 0.107 83.9)",
+          "oklch(70% 0.107 83.9)",
+          "oklch(82% 0.107 83.9)",
+          "oklch(95% 0.107 83.9)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of avviso-testo"
+      },
+      "errore-fondo-notte": {
+        "role": "neutral",
+        "displayName": "Error Tint (night)",
+        "canonical": "#3d1714",
+        "tonalRamp": [
+          "oklch(15% 0.061 26.6)",
+          "oklch(26% 0.061 26.6)",
+          "oklch(37% 0.061 26.6)",
+          "oklch(48% 0.061 26.6)",
+          "oklch(59% 0.061 26.6)",
+          "oklch(70% 0.061 26.6)",
+          "oklch(82% 0.061 26.6)",
+          "oklch(95% 0.061 26.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of errore-fondo"
+      },
+      "errore-testo-notte": {
+        "role": "neutral",
+        "displayName": "Error Ink (night)",
+        "canonical": "#ffb4ab",
+        "tonalRamp": [
+          "oklch(15% 0.089 26.8)",
+          "oklch(26% 0.089 26.8)",
+          "oklch(37% 0.089 26.8)",
+          "oklch(48% 0.089 26.8)",
+          "oklch(59% 0.089 26.8)",
+          "oklch(70% 0.089 26.8)",
+          "oklch(82% 0.089 26.8)",
+          "oklch(95% 0.089 26.8)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of errore-testo"
+      },
+      "verde-notte": {
+        "role": "secondary",
+        "displayName": "Verde (night)",
+        "canonical": "#26914d",
+        "tonalRamp": [
+          "oklch(15% 0.140 151.0)",
+          "oklch(26% 0.140 151.0)",
+          "oklch(37% 0.140 151.0)",
+          "oklch(48% 0.140 151.0)",
+          "oklch(59% 0.140 151.0)",
+          "oklch(70% 0.140 151.0)",
+          "oklch(82% 0.140 151.0)",
+          "oklch(95% 0.140 151.0)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of verde"
+      },
+      "verde-strappo-notte": {
+        "role": "secondary",
+        "displayName": "Verde torn-off text (night)",
+        "canonical": "#5cc283",
+        "tonalRamp": [
+          "oklch(15% 0.133 154.3)",
+          "oklch(26% 0.133 154.3)",
+          "oklch(37% 0.133 154.3)",
+          "oklch(48% 0.133 154.3)",
+          "oklch(59% 0.133 154.3)",
+          "oklch(70% 0.133 154.3)",
+          "oklch(82% 0.133 154.3)",
+          "oklch(95% 0.133 154.3)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of verde-strappo"
+      },
+      "rosso-notte": {
+        "role": "secondary",
+        "displayName": "Rosso (night)",
+        "canonical": "#d93a33",
+        "tonalRamp": [
+          "oklch(15% 0.197 27.6)",
+          "oklch(26% 0.197 27.6)",
+          "oklch(37% 0.197 27.6)",
+          "oklch(48% 0.197 27.6)",
+          "oklch(59% 0.197 27.6)",
+          "oklch(70% 0.197 27.6)",
+          "oklch(82% 0.197 27.6)",
+          "oklch(95% 0.197 27.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of rosso"
+      },
+      "rosso-strappo-notte": {
+        "role": "secondary",
+        "displayName": "Rosso torn-off text (night)",
+        "canonical": "#ff8a80",
+        "tonalRamp": [
+          "oklch(15% 0.144 26.1)",
+          "oklch(26% 0.144 26.1)",
+          "oklch(37% 0.144 26.1)",
+          "oklch(48% 0.144 26.1)",
+          "oklch(59% 0.144 26.1)",
+          "oklch(70% 0.144 26.1)",
+          "oklch(82% 0.144 26.1)",
+          "oklch(95% 0.144 26.1)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of rosso-strappo"
+      },
+      "nero-notte": {
+        "role": "secondary",
+        "displayName": "Nero (night)",
+        "canonical": "#000000",
+        "tonalRamp": [
+          "oklch(15% 0.000 0.0)",
+          "oklch(26% 0.000 0.0)",
+          "oklch(37% 0.000 0.0)",
+          "oklch(48% 0.000 0.0)",
+          "oklch(59% 0.000 0.0)",
+          "oklch(70% 0.000 0.0)",
+          "oklch(82% 0.000 0.0)",
+          "oklch(95% 0.000 0.0)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of nero"
+      },
+      "nero-strappo-notte": {
+        "role": "secondary",
+        "displayName": "Nero torn-off text (night)",
+        "canonical": "#f1ece2",
+        "tonalRamp": [
+          "oklch(15% 0.014 84.6)",
+          "oklch(26% 0.014 84.6)",
+          "oklch(37% 0.014 84.6)",
+          "oklch(48% 0.014 84.6)",
+          "oklch(59% 0.014 84.6)",
+          "oklch(70% 0.014 84.6)",
+          "oklch(82% 0.014 84.6)",
+          "oklch(95% 0.014 84.6)"
+        ],
+        "mode": "dark (prefers-color-scheme: dark) override of nero-strappo"
+      }
+    },
+    "typographyMeta": {
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Screen title in the black band; empty-state titles."
+      },
+      "numeral": {
+        "displayName": "Numeral",
+        "purpose": "KPI values, tabular."
+      },
+      "title": {
+        "displayName": "Section Title",
+        "purpose": "Uppercase tracked form section headings."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Inputs and running text."
+      },
+      "code-word": {
+        "displayName": "Code Word",
+        "purpose": "Words on the tear-off code strip."
+      },
+      "label": {
+        "displayName": "Field Label",
+        "purpose": "Printed uppercase field names above inputs."
+      },
+      "label-small": {
+        "displayName": "Label Small",
+        "purpose": "Mini strip, code tags, KPI terms, table headers."
+      }
+    },
+    "shadows": [
+      {
+        "name": "strip-lift",
+        "value": "0 3px 10px rgb(0 0 0 / .18)",
+        "purpose": "The chosen code strip."
+      },
+      {
+        "name": "segment",
+        "value": "0 1px 3px rgb(0 0 0 / .14)",
+        "purpose": "Selected segment of the period control."
+      },
+      {
+        "name": "toast",
+        "value": "0 8px 24px rgb(0 0 0 / .28)",
+        "purpose": "Save/undo toast."
+      },
+      {
+        "name": "dialog",
+        "value": "0 24px 60px rgb(0 0 0 / .35)",
+        "purpose": "Confirmation dialog, over rgb(10 9 7 / .55) backdrop."
+      }
+    ],
+    "motion": [
+      {
+        "name": "uscita",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "All state transitions: strip tear-off (0.24s clip-path), chips (0.15s), toast (0.22s), disclosure chevrons (0.2s)."
+      },
+      {
+        "name": "press",
+        "value": "transform scale(.98) 0.1s",
+        "purpose": "Button press."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "durations 0s",
+        "purpose": "prefers-reduced-motion disables all transitions and chart animation."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "shortcut-4",
+        "value": "480px"
+      },
+      {
+        "name": "kpi-3",
+        "value": "700px"
+      },
+      {
+        "name": "rail",
+        "value": "960px"
+      },
+      {
+        "name": "kpi-6",
+        "value": "1200px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button (Salva plate)",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Reversed band plate for the single primary action; inverts to light ink at night.",
+      "html": "<button class=\"ds-btn-primary\"><svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M5 12l5 5L20 7\"/></svg>Salva intervento</button>",
+      "css": ".ds-btn-primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 24px;min-width:260px;border-radius:8px;background:var(--primario-fondo,#15130f);color:var(--primario-testo,#f4f1ea);border:1.5px solid var(--primario-fondo,#15130f);font:700 1.0625rem/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;transition:background-color .15s,transform .1s}.ds-btn-primary:hover{filter:brightness(1.15)}.ds-btn-primary:active{transform:scale(.98)}.ds-btn-primary:focus-visible{outline:2.5px solid var(--inchiostro,#17140f);outline-offset:2px}"
+    },
+    {
+      "name": "Secondary Button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Paper plate with a strong-rule outline for secondary actions (Adesso, Svuota, export).",
+      "html": "<button class=\"ds-btn\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>Adesso</button>",
+      "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border-radius:8px;background:var(--carta,#fbfaf7);border:1.5px solid var(--linea-forte,#8f877a);color:var(--inchiostro,#17140f);font:700 .9375rem/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;transition:background-color .15s,transform .1s}.ds-btn:hover{background:var(--stock-2,#e3e0d7)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2.5px solid var(--inchiostro,#17140f);outline-offset:2px}"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Light, outlined field under a printed uppercase label.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-label\">Missione</span><input class=\"ds-input\" placeholder=\"04AA0000\"></label>",
+      "css": ".ds-field{display:block;max-width:320px}.ds-label{display:block;margin:0 0 5px;font:700 .75rem/1.4 -apple-system,system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--inchiostro-2,#4d473b)}.ds-input{width:100%;height:48px;padding:0 12px;background:var(--carta,#fbfaf7);border:1.5px solid var(--linea,#cbc5b7);border-radius:8px;font:400 1.0625rem -apple-system,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--inchiostro,#17140f);box-sizing:border-box}.ds-input:focus{outline:none;border-color:var(--inchiostro,#17140f);box-shadow:0 0 0 1px var(--inchiostro,#17140f)}"
+    },
+    {
+      "name": "Choice Chips",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "Filled, borderless choice chips; the selected one takes the band. On phones three shortcuts plus an inline Altro select.",
+      "html": "<div class=\"ds-chips\"><button class=\"ds-chip\" aria-pressed=\"true\">3030</button><button class=\"ds-chip\" aria-pressed=\"false\">5022</button><button class=\"ds-chip\" aria-pressed=\"false\">3040</button><button class=\"ds-chip\" aria-pressed=\"false\">Altro…</button></div>",
+      "css": ".ds-chips{display:flex;flex-wrap:wrap;gap:8px}.ds-chip{min-height:44px;padding:8px 14px;border-radius:8px;background:var(--chip-fondo,#dedad0);border:1.5px solid transparent;color:var(--inchiostro,#17140f);font:600 .9375rem/1.15 -apple-system,system-ui,sans-serif;cursor:pointer;transition:background-color .15s cubic-bezier(.16,1,.3,1),color .15s cubic-bezier(.16,1,.3,1)}.ds-chip:hover{background:var(--chip-fondo-hover,#d4cfc3)}.ds-chip[aria-pressed=\"true\"]{background:var(--banda,#15130f);border-color:var(--banda,#15130f);color:var(--banda-testo,#f4f1ea)}.ds-chip:focus-visible{outline:2.5px solid var(--inchiostro,#17140f);outline-offset:2px}"
+    },
+    {
+      "name": "Tear-off Code Strip",
+      "kind": "custom",
+      "refersTo": "striscia-giallo",
+      "description": "Signature: perforated colour strips; the chosen code stays full with its word, the others tear off to a dashed outline.",
+      "html": "<div class=\"ds-strappo\"><button class=\"ds-striscia ds-v\" aria-checked=\"false\">Verde</button><button class=\"ds-striscia ds-g\" aria-checked=\"true\">✓ Giallo</button><button class=\"ds-striscia ds-r\" aria-checked=\"false\">Rosso</button></div>",
+      "css": ".ds-strappo{display:flex;max-width:360px}.ds-striscia{flex:1 1 0;min-height:58px;border:2px solid var(--c);background:var(--c);color:var(--ct);font:800 .9375rem -apple-system,system-ui,sans-serif;letter-spacing:.07em;text-transform:uppercase;cursor:pointer;transition:background-color .24s cubic-bezier(.16,1,.3,1),color .22s cubic-bezier(.16,1,.3,1)}.ds-striscia+.ds-striscia{border-left-width:0}.ds-striscia:first-child{border-radius:8px 0 0 8px}.ds-striscia:last-child{border-radius:0 8px 8px 0}.ds-v{--c:var(--verde,#1b7a3e);--ct:#fff;--cs:var(--verde-strappo,#1b7a3e)}.ds-g{--c:var(--giallo,#f2c230);--ct:var(--giallo-testo,#1d1705);--cs:var(--giallo-strappo,#765600)}.ds-r{--c:var(--rosso,#c8201e);--ct:#fff;--cs:var(--rosso-strappo,#b01c1a)}.ds-striscia[aria-checked=\"false\"]{background:transparent;border-style:dashed;color:var(--cs)}.ds-striscia[aria-checked=\"true\"]{box-shadow:0 3px 10px rgb(0 0 0 / .18);position:relative;z-index:2}.ds-striscia:focus-visible{outline:2.5px solid var(--inchiostro,#17140f);outline-offset:2px}"
+    },
+    {
+      "name": "Mini Strip (invio → rientro)",
+      "kind": "custom",
+      "refersTo": "mini-strappo-rientro",
+      "description": "Invio light (tint plus inset border), rientro full, joined by a perforation.",
+      "html": "<span class=\"ds-mini\"><span class=\"ds-seg ds-inv\">Giallo</span><span class=\"ds-seg ds-rie\">Rosso</span></span>",
+      "css": ".ds-mini{display:inline-flex;white-space:nowrap}.ds-seg{position:relative;padding:4px 7px 3px;min-width:3.2em;text-align:center;font:800 .6875rem/1.2 -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}.ds-inv{--c:var(--giallo,#f2c230);background:color-mix(in srgb,var(--c) 30%,var(--stock,#eeece6));color:var(--inchiostro,#17140f);box-shadow:inset 0 0 0 1.5px var(--c);border-radius:4px 0 0 4px}.ds-rie{background:var(--rosso,#c8201e);color:#fff;border-radius:0 4px 4px 0}.ds-rie::before{content:\"\";position:absolute;left:-1px;top:2px;bottom:2px;width:2px;background-image:linear-gradient(var(--stock,#eeece6) 55%,transparent 0);background-size:2px 4px}"
+    },
+    {
+      "name": "Band and Tab Bar",
+      "kind": "nav",
+      "refersTo": "scheda",
+      "description": "The black band shell: header on top, four uppercase tabs at the bottom on phones.",
+      "html": "<nav class=\"ds-schede\"><a class=\"ds-scheda\" aria-current=\"page\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>Inserisci</a><a class=\"ds-scheda\" href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\"><path d=\"M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01\"/></svg>Elenco</a></nav>",
+      "css": ".ds-schede{display:grid;grid-template-columns:repeat(2,1fr);background:var(--banda,#15130f);max-width:360px}.ds-scheda{height:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;position:relative;color:var(--banda-testo-2,#b4ad9f);text-decoration:none;font:700 .6875rem -apple-system,system-ui,sans-serif;letter-spacing:.04em;text-transform:uppercase}.ds-scheda:hover{color:var(--banda-testo,#f4f1ea)}.ds-scheda[aria-current=\"page\"]{color:var(--banda-testo,#f4f1ea)}.ds-scheda[aria-current=\"page\"]::before{content:\"\";position:absolute;top:0;left:28%;right:28%;height:3px;background:var(--banda-testo,#f4f1ea);border-radius:0 0 2px 2px}.ds-scheda:focus-visible{outline:2.5px solid var(--banda-testo,#f4f1ea);outline-offset:-4px}"
+    },
+    {
+      "name": "KPI Row",
+      "kind": "custom",
+      "refersTo": "cod",
+      "description": "KPIs on the stock, no cards: dashed top perforation, hairline splits, tabular numerals.",
+      "html": "<dl class=\"ds-kpi\"><div><dt>Interventi</dt><dd class=\"ds-val\">90</dd><dd class=\"ds-nota\">86 valutati</dd></div><div><dt>Rossi al rientro</dt><dd class=\"ds-val\">22 <span class=\"ds-cod\">Rosso</span></dd><dd class=\"ds-nota\">26% dei valutati</dd></div></dl>",
+      "css": ".ds-kpi{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;margin:0;background:var(--linea,#cbc5b7) padding-box;border-top:2px dashed var(--linea,#cbc5b7);max-width:420px}.ds-kpi>div{background:var(--stock,#eeece6);padding:12px 12px 14px}.ds-kpi dt{font:800 .6875rem -apple-system,system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--inchiostro-2,#4d473b)}.ds-kpi dd{margin:0}.ds-val{font:800 2rem/1.1 -apple-system,system-ui,sans-serif;letter-spacing:-.02em;font-variant-numeric:tabular-nums;color:var(--inchiostro,#17140f)}.ds-nota{font-size:.8125rem;color:var(--inchiostro-2,#4d473b)}.ds-cod{display:inline-block;vertical-align:middle;padding:3px 6px 2px;border-radius:3px;background:var(--rosso,#c8201e);color:#fff;font:800 .625rem/1.2 -apple-system,system-ui,sans-serif;letter-spacing:.06em;text-transform:uppercase}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Triage Tag",
+    "overview": "**Creative North Star: \"The Triage Tag\"**\n\nEvery record is a printed triage tag. The ground is tag stock: a warm, slightly yellowed card by day (stock) and a warm charcoal at night (stock-notte). The tag's black band is the app shell: the header and the tab bar (a left rail on screens) are one solid band of near-black ink. On that stock, the four START colours VERDE, GIALLO, ROSSO and NERO are the only saturated colours that carry meaning, and each always appears with its word printed on it. The colour code is the fastest thing to set and the first thing read back.\n\nThe world is dense and practical. Labels are bold, uppercase, tracked system sans, like the printed field names on a tag; times, ages, mission codes and every statistic use tabular numerals. The one ornament is the perforation: dashed rules that separate the tag's sections and the joints of the code strips. There are no cards, no illustrations and no decorative colour. It replaces the generic white medical form with one blue accent and rounded cards.\n\nNight is a first-class mode, not an inversion afterthought: the stock darkens, primary plates flip to light ink on dark, and code colours shift to brighter, legible tear-off tones.",
+    "keyCharacteristics": [
+      "Warm tag stock ground, black band shell, no neutral grey.",
+      "Four START colours as the only meaningful saturated colours, always with their word.",
+      "Bold uppercase tracked labels; tabular numerals for every number.",
+      "Dashed perforations as the only ornament and the main separator.",
+      "The tear-off code strip as the signature, at full size in the form and in miniature everywhere else."
+    ],
+    "rules": [
+      {
+        "name": "The Word With The Colour Rule",
+        "body": "A START colour never appears without its word (VERDE, GIALLO, ROSSO, NERO) printed on or beside it. Charts that use the colours label each bar with the code name.",
+        "section": "colors"
+      },
+      {
+        "name": "The Four Colours Only Rule",
+        "body": "VERDE, GIALLO, ROSSO and NERO are the only saturated colours that carry meaning. Everything else is tinted from the stock or the band; never introduce a brand accent or a neutral grey.",
+        "section": "colors"
+      },
+      {
+        "name": "The Chiaro Invio, Pieno Rientro Rule",
+        "body": "Wherever invio and rientro appear together, invio is light (a tint of its colour) and rientro is full colour. This holds in the mini strip and in every invio/rientro chart.",
+        "section": "colors"
+      },
+      {
+        "name": "The Tabular Rule",
+        "body": "Every time, date, age, mission code, count and percentage uses tabular numerals so columns of tags line up.",
+        "section": "typography"
+      },
+      {
+        "name": "The Printed Field Rule",
+        "body": "Field names are uppercase, bold and tracked; values the user writes are sentence case at regular weight. The contrast between printed field and handwritten value is the form's legibility.",
+        "section": "typography"
+      },
+      {
+        "name": "The Bottom Perforation Rule",
+        "body": "A section's dashed perforation sits on its bottom edge, never its top, so the last section has none and a section that lands at the top of a desktop column has no rule above it. Statistics blocks (KPIs, each chart, the tables heading, settings blocks) follow the same idea from the top: one dashed rule between blocks, none on the first.",
+        "section": "layout"
+      },
+      {
+        "name": "The No Cards Rule",
+        "body": "KPIs, charts and tables sit directly on the stock. Blocks are separated by dashed perforations and hairline rules, never by cards, borders around panels or raised surfaces.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do print the code word on every use of VERDE, GIALLO, ROSSO or NERO.",
+      "Do draw invio light and rientro full, in the mini strip and in charts alike.",
+      "Do keep choice chips filled and borderless (chip-fondo) and text inputs light and outlined (carta with a linea outline).",
+      "Do put section perforations on the bottom edge, so a column-top section has no rule above it.",
+      "Do set every number in tabular numerals.",
+      "Do keep the shell in the black band: header, tab bar and rail are one material.",
+      "Do keep touch targets at 44px or more (chips 44px, inputs and buttons 48px, strip 58px)."
+    ],
+    "donts": [
+      "Don't put KPIs, charts or tables in cards; separate them with dashed perforations on the stock.",
+      "Don't use a neutral grey; tint every neutral from the stock or the band.",
+      "Don't introduce an accent colour beyond the four START colours.",
+      "Don't use web fonts; the system sans is the only family.",
+      "Don't add ornament beyond the perforation dash."
+    ]
+  }
+}

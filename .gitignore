@@ -1,0 +1,12 @@
+# Dati sanitari reali: restano solo su questo Mac, mai nel repository
+*.xlsx
+data/
+
+# Sistema e strumenti
+.DS_Store
+node_modules/
+test-results/
+.playwright-cli/
+__pycache__/
+.impeccable/review/
+.impeccable/build/

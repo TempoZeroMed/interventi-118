@@ -1,0 +1,17 @@
+{
+  "name": "Interventi 118",
+  "short_name": "Interventi 118",
+  "description": "Registro personale delle uscite 118: inserimento rapido, elenco, statistiche. Funziona offline.",
+  "lang": "it",
+  "start_url": "./#/nuovo",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#15130f",
+  "theme_color": "#15130f",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" fill="#15130f"/>
+  <g transform="rotate(-8 256 256)">
+    <path d="M150 92h212a18 18 0 0 1 18 18v296a18 18 0 0 1-18 18H150a18 18 0 0 1-18-18V110a18 18 0 0 1 18-18z" fill="#eeece6"/>
+    <circle cx="256" cy="138" r="17" fill="#15130f"/>
+    <circle cx="256" cy="138" r="27" fill="none" stroke="#8f877a" stroke-width="6"/>
+    <text x="256" y="262" text-anchor="middle" font-family="-apple-system, Helvetica, Arial, sans-serif" font-weight="800" font-size="104" fill="#15130f" letter-spacing="-3">118</text>
+    <rect x="132" y="300" width="248" height="31" fill="#15130f"/>
+    <rect x="132" y="331" width="248" height="31" fill="#c8201e"/>
+    <rect x="132" y="362" width="248" height="31" fill="#f2c230"/>
+    <path d="M132 393h248v13a18 18 0 0 1-18 18H150a18 18 0 0 1-18-18z" fill="#1b7a3e"/>
+    <path d="M132 331h248M132 362h248M132 393h248" stroke="#eeece6" stroke-width="4" stroke-dasharray="10 8"/>
+  </g>
+</svg>
