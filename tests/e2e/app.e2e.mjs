@@ -292,7 +292,7 @@ for (const nomeBrowser of BROWSER) {
           await attendiTesto(riquadro, 'imposta la parola d\'ordine nelle Impostazioni');
           await vai(page, '#/impostazioni');
           const impostazioni = page.locator('section', { has: page.getByRole('heading', { name: 'Domande all\'archivio' }) });
-          await impostazioni.getByLabel('Parola d\'ordine').fill('prova');
+          await impostazioni.getByLabel('Parola d\'ordine').fill('parola di prova lunga');
           await impostazioni.getByRole('button', { name: 'Salva' }).click();
           await attendiTesto(impostazioni, 'Impostata');
 
@@ -320,7 +320,7 @@ for (const nomeBrowser of BROWSER) {
           assert.ok(await riquadro.locator('.cifra .valore').isVisible());
           await page.waitForFunction(() => document.querySelector('section.domande canvas')?.width > 0);
           const inviata = richieste[0];
-          assert.equal(inviata.parolaOrdine, 'prova');
+          assert.equal(inviata.parolaOrdine, 'parola di prova lunga');
           assert.equal(inviata.domanda, 'Qual è l\'ora in cui esco di più?');
           assert.match(inviata.oggi, /^\d{4}-\d{2}-\d{2}$/);
           assert.ok(inviata.liste.ospedale.includes('Biella'));
@@ -817,13 +817,17 @@ for (const nomeBrowser of BROWSER) {
       const sezione = page.locator('section', { has: page.getByRole('heading', { name: 'Domande all\'archivio' }) });
       await sezione.getByLabel('Parola d\'ordine').fill('abc');
       await sezione.getByRole('button', { name: 'Salva' }).click();
+      await attendiTesto(page.locator('#toast'), 'almeno 16 caratteri');
+      assert.equal(await sezione.getByRole('button', { name: 'Cambia' }).count(), 0, 'una parola corta non si salva');
+      await sezione.getByLabel('Parola d\'ordine').fill('una frase lunga di prova');
+      await sezione.getByRole('button', { name: 'Salva' }).click();
       await attendiTesto(sezione, 'Impostata');
       await page.reload();
       await vai(page, '#/impostazioni');
       await attendiTesto(sezione, 'Impostata');
       assert.equal(await sezione.getByRole('button', { name: 'Cambia' }).count(), 1);
       assert.equal(await sezione.locator('input').count(), 0, 'nessun campo con la parola');
-      assert.ok(!(await sezione.textContent()).includes('abc'));
+      assert.ok(!(await sezione.textContent()).includes('frase lunga'));
       await sezione.getByRole('button', { name: 'Cambia' }).click();
       assert.equal(await sezione.getByLabel('Parola d\'ordine').inputValue(), '', 'il campo riparte vuoto');
       await ctx.close();

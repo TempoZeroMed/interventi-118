@@ -11,6 +11,10 @@ export const MODELLI = ['claude-haiku-5-5', 'claude-sonnet-5-5'];
 const URL_ANTHROPIC = 'https://api.anthropic.com/v1/messages';
 const ATTESA_MASSIMA = 20000;
 const MAX_VOCI = 2000;
+const MAX_CORPO = 65536; // caratteri: un archivio vero ne manda pochi KB
+const MAX_TESTO_VOCE = 200;
+const MIN_PAROLA = 16; // il servizio è pubblico: una parola corta si indovina provando
+const RITARDO_ERRATA = 1000; // ms prima di rispondere a una parola sbagliata: rallenta chi prova a indovinarla
 
 export const PROMPT_SISTEMA = `Traduci domande in italiano sull'archivio personale di un infermiere del 118 (ambulanza ed elisoccorso) in una query JSON. Non vedi i dati: la query la esegue l'app sul telefono. Rispondi SOLO con un oggetto JSON, senza testo prima o dopo.
 
@@ -82,15 +86,17 @@ function erroreCorpo(c) {
   return null;
 }
 
+const corto = (t) => t.slice(0, MAX_TESTO_VOCE);
+
 function promptCompleto({ oggi, liste = {}, comuni = [] }) {
-  const righeListe = Object.entries(liste).map(([nome, voci]) => `- ${nome}: ${voci.join(' | ')}`).join('\n');
+  const righeListe = Object.entries(liste).map(([nome, voci]) => `- ${corto(nome)}: ${voci.map(corto).join(' | ')}`).join('\n');
   return `${PROMPT_SISTEMA}
 
 ## Dati di contesto
 Oggi è ${oggi}.
 Voci delle liste:
 ${righeListe || '- (nessuna)'}
-Comuni presenti in archivio: ${comuni.length ? comuni.join(' | ') : '(nessuno)'}`;
+Comuni presenti in archivio: ${comuni.length ? comuni.map(corto).join(' | ') : '(nessuno)'}`;
 }
 
 function messaggioUtente({ domanda, controdomanda }) {
@@ -133,18 +139,26 @@ async function traduci(fetchAnthropic, env, modello, corpo) {
   return esito.query;
 }
 
-async function rispondiDomanda(richiesta, env, fetchAnthropic) {
+async function rispondiDomanda(richiesta, env, fetchAnthropic, attesa) {
   if (!env.PAROLA_ORDINE || !env.CHIAVE_ANTHROPIC) {
     return errore(503, 'Il servizio delle domande non è ancora configurato: mancano i segreti su Cloudflare.');
   }
+  if (env.PAROLA_ORDINE.length < MIN_PAROLA) {
+    return errore(503, `La parola d'ordine impostata su Cloudflare è troppo corta: servono almeno ${MIN_PAROLA} caratteri.`);
+  }
+  const testo = await richiesta.text();
+  if (testo.length > MAX_CORPO) return errore(400, 'Richiesta troppo grande.');
   let corpo;
   try {
-    corpo = await richiesta.json();
+    corpo = JSON.parse(testo);
   } catch {
     return errore(400, 'Richiesta non valida.');
   }
   if (!corpo || typeof corpo !== 'object' || Array.isArray(corpo)) return errore(400, 'Richiesta non valida.');
-  if (!stessaParola(corpo.parolaOrdine, env.PAROLA_ORDINE)) return errore(401, 'Parola d\'ordine errata.');
+  if (!stessaParola(corpo.parolaOrdine, env.PAROLA_ORDINE)) {
+    await attesa(RITARDO_ERRATA);
+    return errore(401, 'Parola d\'ordine errata.');
+  }
   const motivo = erroreCorpo(corpo);
   if (motivo) return errore(400, motivo);
   try {
@@ -161,10 +175,13 @@ async function rispondiDomanda(richiesta, env, fetchAnthropic) {
 }
 
 /** Gestore con le dipendenze iniettabili, per i test. */
-export function creaGestore({ fetchAnthropic = (...a) => globalThis.fetch(...a) } = {}) {
+export function creaGestore({
+  fetchAnthropic = (...a) => globalThis.fetch(...a),
+  attesa = (ms) => new Promise((risolvi) => setTimeout(risolvi, ms)),
+} = {}) {
   return async (richiesta, env) => {
     const url = new URL(richiesta.url);
-    if (richiesta.method === 'POST' && url.pathname === '/api/domanda') return rispondiDomanda(richiesta, env, fetchAnthropic);
+    if (richiesta.method === 'POST' && url.pathname === '/api/domanda') return rispondiDomanda(richiesta, env, fetchAnthropic, attesa);
     return env.ASSETS.fetch(richiesta);
   };
 }

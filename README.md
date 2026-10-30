@@ -257,13 +257,13 @@ Servono una chiave di Anthropic e una parola d'ordine scelta da te. Restano segr
    cd ~ && npx --yes wrangler@4.156.0 secret put CHIAVE_ANTHROPIC --name liberoeoperativo
    ```
 
-3. Allo stesso modo salva la parola d'ordine:
+3. Allo stesso modo salva la parola d'ordine. Il servizio è raggiungibile da chiunque conosca l'indirizzo, quindi deve essere difficile da indovinare: **almeno 16 caratteri**, per esempio quattro parole a caso separate da spazi (non un nome, non una data, non le parole di questo esempio). Con una parola più corta il servizio non parte e lo dice; a ogni parola sbagliata risponde dopo un secondo, per rallentare chi prova a indovinarla.
 
    ```bash
    cd ~ && npx --yes wrangler@4.156.0 secret put PAROLA_ORDINE --name liberoeoperativo
    ```
 
-4. Sull'iPhone e sul Mac: **Impostazioni → Domande all'archivio**, scrivi la stessa parola d'ordine e tocca **Salva**. La parola resta sul dispositivo e non entra nei backup.
+4. Sull'iPhone e sul Mac: **Impostazioni → Domande all'archivio**, scrivi la stessa parola d'ordine e tocca **Salva**. La parola resta sul dispositivo e non entra nei backup. Il tetto di spesa del punto 1 resta la rete di sicurezza: anche nel caso peggiore non si spende più di quello.
 
 Senza questi passi l'app funziona come prima; il riquadro dice cosa manca. Se cambi la parola d'ordine su Cloudflare, cambiala anche nelle Impostazioni di ogni dispositivo (**Cambia**).
 

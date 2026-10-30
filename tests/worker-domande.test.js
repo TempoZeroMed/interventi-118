@@ -6,9 +6,10 @@ const QUERY = {
   tipo: 'query', interpretazione: 'Interventi per ora del giorno', misura: 'interventi', gruppi: ['ora'], filtri: [],
   periodo: null, confronto: null, ordine: 'max', primi: 1,
 };
-const ENV = { PAROLA_ORDINE: 'segreta', CHIAVE_ANTHROPIC: 'k', ASSETS: { fetch: async () => new Response('asset') } };
+const PAROLA = 'cavallo batteria graffetta';
+const ENV = { PAROLA_ORDINE: PAROLA, CHIAVE_ANTHROPIC: 'k', ASSETS: { fetch: async () => new Response('asset') } };
 const CORPO = {
-  parolaOrdine: 'segreta', domanda: 'Qual è l\'ora in cui esco di più?', oggi: '2026-10-30',
+  parolaOrdine: PAROLA, domanda: 'Qual è l\'ora in cui esco di più?', oggi: '2026-10-30',
   liste: { ospedale: ['Biella', 'Ospedale Inventato'], mezzo: ['3030'] }, comuni: ['Cirié Inventato', 'Biella'],
 };
 
@@ -42,13 +43,50 @@ test('le altre richieste vanno ai file statici, senza chiamare Claude', async ()
 
 test('parola d\'ordine assente o sbagliata: 401 senza chiamare Claude', async () => {
   const { fetchAnthropic, chiamate } = claudeFinto(JSON.stringify(QUERY));
-  const gestisci = creaGestore({ fetchAnthropic });
+  const gestisci = creaGestore({ fetchAnthropic, attesa: async () => {} });
   const senza = await leggi(await gestisci(richiesta({ ...CORPO, parolaOrdine: undefined }), ENV));
   assert.equal(senza.stato, 401);
   assert.match(senza.corpo.errore, /Parola d'ordine errata/);
   assert.equal((await gestisci(richiesta({ ...CORPO, parolaOrdine: 'sbagliata' }), ENV)).status, 401);
   assert.equal((await gestisci(richiesta({}), ENV)).status, 401);
   assert.equal(chiamate.length, 0);
+});
+
+test('parola sbagliata: la risposta arriva dopo un secondo, quella giusta subito', async () => {
+  const { fetchAnthropic } = claudeFinto(JSON.stringify(QUERY));
+  const attese = [];
+  const gestisci = creaGestore({ fetchAnthropic, attesa: async (ms) => { attese.push(ms); } });
+  assert.equal((await gestisci(richiesta({ ...CORPO, parolaOrdine: 'tentativo' }), ENV)).status, 401);
+  assert.deepEqual(attese, [1000]);
+  assert.equal((await gestisci(richiesta(CORPO), ENV)).status, 200);
+  assert.deepEqual(attese, [1000], 'nessuna attesa con la parola giusta');
+});
+
+test('parola d\'ordine su Cloudflare troppo corta: 503 senza chiamare Claude', async () => {
+  const { fetchAnthropic, chiamate } = claudeFinto(JSON.stringify(QUERY));
+  const corta = { ...ENV, PAROLA_ORDINE: 'segreta' };
+  const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta({ ...CORPO, parolaOrdine: 'segreta' }), corta));
+  assert.equal(stato, 503);
+  assert.match(corpo.errore, /almeno 16 caratteri/);
+  assert.equal(chiamate.length, 0);
+});
+
+test('richiesta troppo grande: 400 senza chiamare Claude', async () => {
+  const { fetchAnthropic, chiamate } = claudeFinto(JSON.stringify(QUERY));
+  const enorme = { ...CORPO, liste: { ospedale: Array(1000).fill('x'.repeat(100)) } };
+  const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta(enorme), ENV));
+  assert.equal(stato, 400);
+  assert.match(corpo.errore, /troppo grande/);
+  assert.equal(chiamate.length, 0);
+});
+
+test('voci e comuni lunghi arrivano a Claude accorciati a 200 caratteri', async () => {
+  const { fetchAnthropic, chiamate } = claudeFinto(JSON.stringify(QUERY));
+  const lunghi = { ...CORPO, liste: { ospedale: ['A'.repeat(500)] }, comuni: ['B'.repeat(500)] };
+  assert.equal((await creaGestore({ fetchAnthropic })(richiesta(lunghi), ENV)).status, 200);
+  const { system } = chiamate[0].corpo;
+  assert.ok(system.includes('A'.repeat(200)) && !system.includes('A'.repeat(201)));
+  assert.ok(system.includes('B'.repeat(200)) && !system.includes('B'.repeat(201)));
 });
 
 test('servizio senza segreti: 503 con un messaggio chiaro', async () => {
