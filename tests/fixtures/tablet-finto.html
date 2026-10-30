@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<title>Tablet finto</title>
+<!--
+  Imitazione della schermata "Missione" del tablet SaveOnBoard, solo per le prove end-to-end del pulsante "Foto tablet".
+  Tutti i dati sono inventati (missione 99ZZ…). Le prove ne fanno uno screenshot e lo passano all'app come foto.
+  Con la classe "storta" sul tablet: foto inclinata, un po' sfocata, con meno contrasto e un riflesso.
+-->
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  /* il tavolo intorno al tablet: la foto non è mai tutta schermo */
+  body { width: 1400px; height: 920px; padding: 60px; background: #4a4844; font-family: Arial, Helvetica, sans-serif; }
+  .tablet { position: relative; width: 1280px; height: 800px; overflow: hidden; border-radius: 8px; background: #f3f5f7; color: #15181c; }
+  .tablet.storta { transform: rotate(-3deg); filter: blur(0.6px) contrast(0.85); }
+  .tablet.storta::after {
+    content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: linear-gradient(115deg, transparent 30%, rgb(255 255 255 / .55) 42%, rgb(255 255 255 / .2) 50%, transparent 62%);
+  }
+
+  .stato { display: flex; gap: 14px; height: 34px; padding: 7px 20px; background: #000; color: #fff; font-size: 17px; }
+  .testata { display: flex; align-items: center; gap: 24px; height: 76px; padding: 0 24px; background: #dde4ec; font-size: 26px; }
+  .testata .mezzo { margin-left: auto; padding: 6px 16px; border-radius: 6px; background: #c9d3de; font-weight: 700; }
+  .testata .stato-mezzo { color: #1d6b35; }
+
+  .corpo { padding: 26px 32px 0; }
+  .titolo { margin: 0 0 10px; font-size: 18px; font-weight: 700; letter-spacing: .08em; color: #5a6068; }
+  .riga { margin: 0 0 16px; font-size: 26px; }
+  .valutazione { display: flex; align-items: center; gap: 18px; }
+  .codice { padding: 6px 18px; border-radius: 6px; background: #f2c230; font-weight: 700; letter-spacing: .06em; }
+  .indirizzo { font-weight: 700; }
+  .piccola { font-size: 22px; color: #3a4048; }
+  .blocco { margin-top: 26px; }
+
+  .orari { position: absolute; left: 24px; right: 24px; bottom: 24px; display: flex; gap: 12px; }
+  .orari > div { flex: 1; height: 112px; padding: 14px 0 0; border-radius: 8px; background: #e2e7ed; text-align: center; }
+  .orari > .blu { background: #2f6fc4; color: #fff; }
+  .orari .nome { font-size: 20px; }
+  .orari .ora { margin-top: 12px; font-size: 38px; font-weight: 700; letter-spacing: .02em; }
+</style>
+</head>
+<body>
+  <div class="tablet">
+    <div class="stato"><span>06:15</span><span>Sab 31 Ott</span></div>
+    <div class="testata">
+      <span>SaveOnBoard | Missione in corso: 99ZZ0042/3</span>
+      <span class="mezzo">N03050</span>
+      <span class="stato-mezzo">Operativo</span>
+    </div>
+    <div class="corpo">
+      <p class="titolo">TARGET</p>
+      <p class="riga valutazione">VALUTAZIONE <span class="codice">R 04 S</span></p>
+      <p class="riga indirizzo">VIA DELLE PROVE, 12 NOVARA</p>
+      <p class="riga piccola">SCALA --, PIANO 2</p>
+      <div class="blocco">
+        <p class="titolo">PAZIENTE</p>
+        <p class="riga">Sesso F</p>
+        <p class="riga">Data di nascita 40 anni</p>
+      </div>
+      <div class="blocco">
+        <p class="titolo">OSPEDALE</p>
+        <p class="riga">OSPEDALE MAGGIORE NOVARA</p>
+      </div>
+    </div>
+    <div class="orari">
+      <div><p class="nome">Allarme</p><p class="ora">21:05</p></div>
+      <div><p class="nome">Partenza</p><p class="ora">21:07</p></div>
+      <div class="blu"><p class="nome">Arrivo</p><p class="ora">21:20</p></div>
+      <div class="blu"><p class="nome">Partenza H</p><p class="ora">21:40</p></div>
+      <div class="blu"><p class="nome">Arrivo H</p><p class="ora">21:52</p></div>
+      <div><p class="nome">Operativo</p><p class="ora">22:10</p></div>
+    </div>
+  </div>
+</body>
+</html>

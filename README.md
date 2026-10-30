@@ -3,7 +3,7 @@
 Registro personale delle uscite 118 in ambulanza ed elisoccorso. Sostituisce il file
 `Report Interventi 118 2026 v3.xlsx` e, per le missioni in elicottero, la parte di volo di `Report Voli HEMS 2026.xlsx`:
 
-- inserimento rapido da iPhone, con una mano;
+- inserimento rapido da iPhone, con una mano, anche da una foto della schermata "Missione" del tablet;
 - elenco con ricerca e filtri;
 - statistiche identiche a quelle dei fogli Excel, compresi tempo di volo e manovre.
 
@@ -23,13 +23,15 @@ Gli screenshot usano dati inventati.
 1. [Avvio in locale](#avvio-in-locale)
 2. [Primo import dei dati dall'Excel](#primo-import-dei-dati-dallexcel)
 3. [Volo ed elisoccorso](#volo-ed-elisoccorso)
-4. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
-5. [Installazione su iPhone](#installazione-su-iphone)
-6. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
-7. [Test](#test)
-8. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
-9. [Struttura del progetto](#struttura-del-progetto)
-10. [Limiti noti](#limiti-noti)
+4. [Foto del tablet](#foto-del-tablet)
+5. [Tipologia India/Mike](#tipologia-indiamike)
+6. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
+7. [Installazione su iPhone](#installazione-su-iphone)
+8. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
+9. [Test](#test)
+10. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
+11. [Struttura del progetto](#struttura-del-progetto)
+12. [Limiti noti](#limiti-noti)
 
 ---
 
@@ -133,6 +135,99 @@ Se modifichi uno di quegli interventi sul telefono tra l'export del punto 1 e l'
 
 ---
 
+## Foto del tablet
+
+In cima a **Nuovo intervento** c'è il pulsante **Foto tablet**: fotografi la schermata "Missione" del tablet SaveOnBoard e il modulo si riempie con quello che l'app riesce a leggere. Controlli, correggi quello che serve e salvi come sempre. Il pulsante non compare quando modifichi un intervento già salvato.
+
+![Nuovo intervento dopo la lettura di una foto](docs/screenshots/390-foto-tablet.png)
+
+Lo screenshot usa una schermata inventata.
+
+### Come si usa
+
+1. Tocca **Foto tablet**: il menu di iOS offre **Scatta foto** e **Libreria foto**.
+2. Fotografa lo schermo dritto, intero e senza riflessi. Il pulsante mostra l'avanzamento ("Leggo la foto… 40%"); la lettura richiede qualche secondo.
+3. Compare il riquadro con la miniatura, quanti campi sono stati letti e l'elenco dei **Non letti**. Toccando la miniatura rivedi la foto intera; **Togli foto** chiude il riquadro, e i valori restano nel modulo.
+4. I campi letti prendono il posto di quelli già nel modulo e sono evidenziati con **dalla foto**, finché non li tocchi o non salvi. Ricontrolli quelli evidenziati e completi quelli non letti.
+
+Se la missione è già in archivio, sotto la foto compare subito un avviso con **Apri**. Se la foto non si apre o non contiene la schermata "Missione", un messaggio lo dice e il modulo non cambia.
+
+### Cosa legge
+
+Gli esempi usano valori inventati.
+
+| Campo | Da dove | Esempio |
+|---|---|---|
+| Missione | la parte prima della `/` in "Missione in corso", se è di 2 cifre, 2 lettere e 4 cifre | `99ZZ0042/1` → `99ZZ0042` |
+| Mezzo | le cifre dopo `N0`, se sono una voce della lista Mezzo | `N03050` → `3050` |
+| Data | non dal tablet: oggi, o ieri se l'ora di allarme è più avanti dell'ora attuale | foto alle 06:15, allarme 22:50 → ieri |
+| Ora allert. | il riquadro **Allarme** | `21:05` |
+| Libero operativo | il riquadro **Operativo** | `22:10` |
+| Comune | il testo dopo il numero civico dell'indirizzo | `VIA DELLE PROVE, 12 NOVARA` → `NOVARA` |
+| Codice, Patologia, Luogo | il codice del riquadro Valutazione, messo sia nell'invio sia nel rientro | `V 09 L` → VERDE, `09 - …`, `L - …` |
+| Età | la riga "Data di nascita", con "N anni": il tablet conta un anno indietro, quindi N + 1 | `40 anni` → `41` |
+| Sesso | la riga "Sesso" | `M` → Maschio |
+| Esito | **Trasportato** se sotto **Arrivo H** c'è un orario | `21:52` → Trasportato |
+| Ospedale | solo con esito Trasportato, e solo se il testo corrisponde a una voce della lista Ospedale | `OSP. MAGGIORE NOVARA` → Novara |
+| Tipologia | non dal tablet: la imposta la [regola India/Mike](#tipologia-indiamike) dopo mezzo e ora allert. | |
+
+- **Niente viene indovinato.** Un valore illeggibile o fuori formato lascia il campo com'era e finisce tra i **Non letti** (l'elenco riguarda Missione, Mezzo, Ora allert., Libero operativo, Comune, Codice, Patologia, Luogo, Età e Sesso).
+- **Orari.** Ogni orario è quello scritto sotto la sua etichetta. Se c'è l'etichetta **Allarme**, la fila degli orari si legge tre volte: sulla foto intera e su due ritagli ingranditi, uno normale e uno invertito (per le scritte chiare sui riquadri scuri). Se due letture danno orari diversi, l'orario resta vuoto.
+- **Comune.** Se l'indirizzo finisce con parole di due lettere ("… DA PO") il comune vale solo se è già nell'archivio, con o senza quelle parole: un nome troncato non si inventa. Un nome nuovo vale solo se è fatto di lettere (anche accentate, con apostrofo o trattino): con una cifra o un segno rimasti resta non letto ("N0VARA"), salvo che, tolti i segni, sia un comune già nell'archivio ("NOVARA." diventa NOVARA, scritto come nell'archivio).
+- **Non letti per scelta.** Partenza, Arrivo e Partenza H non servono, perché l'app non ha quei campi. Tipo missione, tempo di volo e manovre degli elicotteri non sono sullo schermo e si compilano a mano.
+
+### La foto non esce dal telefono
+
+- La lettura avviene sul dispositivo. La foto e il testo letto non vengono inviati da nessuna parte.
+- L'app non salva la foto: non finisce nell'intervento, nella bozza, nei backup né nell'export. La miniatura sta solo in memoria e sparisce con il riquadro.
+- La foto mostra dati di un paziente. Se la scegli da **Libreria foto**, era già nel Rullino e ci resta: l'app non può cancellarla. Un avviso fisso sotto la miniatura lo ricorda: cancellala da Foto quando hai finito.
+
+### Primo uso e offline
+
+Il lettore è Tesseract.js 7.0.0 (licenza Apache 2.0), copiato in `vendor/tesseract-7.0.0/` come le altre librerie. Ogni dispositivo ne scarica circa **6 MB**, una volta sola, insieme all'app: motore di lettura e lingua italiana. La cartella è più grande perché contiene le tre varianti del motore; il dispositivo ne scarica una sola, quella che userà.
+
+- Questi file stanno in una cache a parte (`lettore-testo-7.0.0`) che un aggiornamento dell'app non cancella né riscarica.
+- Dopo il primo caricamento la lettura funziona anche senza rete.
+- Se tocchi **Foto tablet** prima che il lettore sia stato scaricato, il messaggio chiede di aprire l'app una volta con la rete e di riprovare.
+- Il lettore si avvia al primo tocco di **Foto tablet** e si chiude uscendo dal modulo.
+
+### Prova su una foto vera
+
+Le prove automatiche usano una schermata finta con dati inventati. Per vedere come legge una foto vera, solo sul Mac e solo in WebKit, c'è una prova a parte:
+
+```bash
+FOTO_TABLET=/percorso/fuori/dal/repository/foto.jpg node --test tests/e2e/foto-vera.e2e.mjs
+```
+
+Stampa nel terminale i valori del modulo, i **Non letti** e i secondi impiegati, da confrontare a occhio con la foto. Non scrive nessun file e non fa screenshot; senza `FOTO_TABLET` viene saltata, e non fa parte di `npm run e2e`.
+
+La foto ha dati veri di un paziente: tienila fuori dal repository, in una cartella temporanea, e cancellala alla fine. Se è in formato HEIC, convertila prima:
+
+```bash
+T=$(mktemp -d) && sips -s format jpeg foto.HEIC --out "$T/tablet.jpg"
+```
+
+---
+
+## Tipologia India/Mike
+
+La tipologia si imposta da sola quando scegli il mezzo o l'ora di allertamento, a mano o dalla foto:
+
+| Mezzo | Tipologia |
+|---|---|
+| 3040, 5022, 5024 | India sempre |
+| 3050 | Mike con ora allert. dalle 08:00 alle 19:59, India dalle 20:00 alle 07:59 |
+| 6021 | Mike con ora allert. dalle 20:00 alle 07:59, India dalle 08:00 alle 19:59 |
+| tutti gli altri, elicotteri compresi | Mike sempre |
+
+- **Cambiando il mezzo** la tipologia diventa quella della regola. Per 3050 e 6021 serve un'ora allert. valida: senza, la tipologia si svuota fino a quando la inserisci.
+- **Cambiando l'ora allert.** la tipologia si ricalcola solo per 3050 e 6021: per gli altri mezzi una scelta fatta a mano resta com'è.
+- La tipologia si può sempre cambiare a mano, e non c'è nessun avviso nuovo.
+- Gli interventi già salvati non cambiano: la regola agisce solo quando cambi mezzo o ora nel modulo.
+- 3050 e 6021 sono voci di sistema della lista Mezzo, come 3040, 5022 e 5024: la regola si basa sul nome, quindi non si possono rinominare né disattivare.
+
+---
+
 ## Pubblicazione su Cloudflare Pages
 
 L'app è un insieme di file statici: Cloudflare la ospita gratis, a un indirizzo tutto suo:
@@ -179,6 +274,8 @@ Test, strumenti, documenti e appunti di progetto restano nel repository ma non f
 4. Sui dispositivi la nuova versione arriva alla seconda apertura dell'app: la prima scarica i file, la seconda li usa.
 
 Se aggiungi un file all'app, inseriscilo nell'elenco `FILE` di `sw.js`; se aggiungi una cartella, anche nella riga `git archive` di `tools/pubblica.sh`. Un test (`tests/pwa.test.js`) segnala se te ne dimentichi.
+
+I file del lettore della [foto del tablet](#primo-uso-e-offline) hanno una cache a parte, che non cambia con `VERSIONE`: così un aggiornamento non riscarica i 6 MB. Se cambi versione di Tesseract, cambiano insieme la cartella in `vendor/` e il nome `LETTORE` in `sw.js`.
 
 ---
 
@@ -241,13 +338,15 @@ A fine import compare il riepilogo:
 npm test
 ```
 
-Esegue i test unitari (oltre 130) con `node --test`. Coprono:
+Esegue i test unitari (oltre 180) con `node --test`. Coprono:
 
 - campi calcolati, compresa la durata a cavallo della mezzanotte;
 - controlli di qualità, compresi quelli di volo;
 - statistiche, comprese quelle di volo;
 - merge con conflitti ed eliminazioni, anche tra backup vecchi e nuovi;
-- liste, export Excel, file della PWA e script di import dei voli.
+- regola India/Mike per mezzo e orario;
+- lettura della schermata del tablet, su testi inventati;
+- liste, export Excel, file della PWA, comportamento del service worker e script di import dei voli.
 
 Se `data/` contiene i file creati dagli script del [primo import](#primo-import-dei-dati-dallexcel), i test confrontano anche le statistiche sui 212 interventi reali con i valori del foglio Excel. Senza quei file, quei test vengono saltati con il motivo.
 
@@ -263,11 +362,12 @@ Lo script crea `data/volo_attese.json`. Da quel momento `npm test` controlla tut
 npm run e2e
 ```
 
-Esegue 36 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
+Esegue 72 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
 
 - inserimento e duplicato bloccante;
 - modifica, eliminazione, filtri e statistiche;
 - sezione Volo del form e vista Volo delle statistiche;
+- foto del tablet, con una schermata finta e dati inventati: campi evidenziati, missione già salvata, foto storta o sbagliata, lettore assente;
 - export e reimport con merge tra due dispositivi simulati;
 - export Excel e funzionamento offline.
 
@@ -299,7 +399,7 @@ Scelte fatte dove le formule dell'Excel erano ambigue, confermate prima di scriv
 2. **Missione duplicata:** il salvataggio si blocca solo se inserisci o cambi una MISSIONE mettendo un numero già usato; un duplicato già presente resta modificabile. Il controllo guarda tutto l'archivio, non solo il periodo filtrato.
 3. **Righe senza DATA:** contano solo nella vista "Tutto", non nei filtri per anno, mese o intervallo.
 4. **Tabella per mese:** mostra i mesi del periodo scelto, con l'anno quando il periodo ne copre più di uno.
-5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 5022, 5024, V-ECHO, T-ECHO, C-ECHO e A-ECHO. Sono le voci da cui dipendono statistiche e controlli. C-ECHO e A-ECHO non sono nel foglio "Liste" dell'Excel: l'app li aggiunge da sola in fondo alla lista Mezzo, anche su un dispositivo che aveva già le sue liste.
+5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 3050, 5022, 5024, 6021, V-ECHO, T-ECHO, C-ECHO e A-ECHO. Sono le voci da cui dipendono statistiche, controlli e regola [India/Mike](#tipologia-indiamike). C-ECHO e A-ECHO non sono nel foglio "Liste" dell'Excel: l'app li aggiunge da sola in fondo alla lista Mezzo, anche su un dispositivo che aveva già le sue liste.
 
 Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [Statistiche di volo](#statistiche-di-volo).
 
@@ -311,14 +411,16 @@ Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [St
 index.html, manifest.webmanifest, sw.js   app, installazione, cache offline
 css/app.css                               stile (sistema visivo descritto in DESIGN.md)
 js/core/       logica pura, senza interfaccia, coperta dai test:
-               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel
-js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo), impostazioni
+               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel, tablet
+js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo), impostazioni;
+               fototablet (foto, ritocco e lettore della schermata del tablet)
 js/db.js       archivio IndexedDB          js/stato.js  stato in memoria
 js/app.js      avvio e navigazione
-vendor/        Chart.js 4.5.1 (MIT) e SheetJS CE 0.20.3 (Apache 2.0), copie locali con licenza
+vendor/        Chart.js 4.5.1 (MIT), SheetJS CE 0.20.3 (Apache 2.0) e Tesseract.js 7.0.0 (Apache 2.0, in tesseract-7.0.0/),
+               copie locali con licenza
 icons/         icona (SVG originale e PNG)
 tools/         import dagli Excel 118 e HEMS, verifica statistiche, dati demo, server di sviluppo
-tests/         test unitari, prove end-to-end (tests/e2e), dati demo (tests/fixtures)
+tests/         test unitari, prove end-to-end (tests/e2e, con la prova a mano su una foto vera), dati demo e schermata finta del tablet (tests/fixtures)
 docs/screenshots/   schermate delle prove end-to-end
 ```
 
@@ -333,5 +435,7 @@ docs/screenshots/   schermate delle prove end-to-end
 - **Pulizia di Safari:** cancellare i dati di navigazione di Safari cancella i dati dell'app aperta nel browser. Il backup regolare resta la protezione principale.
 - **Backup della versione 1.1:** contengono i dati di volo e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla due volte con la rete.
 - **Export Excel e dati di volo:** l'export contiene le colonne VOLO, ma `tools/xlsx_to_json.py` legge solo le colonne del 118. Per i passaggi tra dispositivi usa sempre il backup JSON.
+- **Lettura della foto non provata su iPhone:** sia le prove automatiche sia la prova su una foto vera girano in WebKit su Mac. Tempi, menu **Scatta foto** / **Libreria foto** e primo scaricamento del lettore vanno verificati a mano sul telefono.
+- **Lettura della foto: un aiuto, non una garanzia.** Il lettore può sbagliare, soprattutto con foto storte, mosse o con riflessi: i campi evidenziati vanno sempre ricontrollati. Quello che non legge o non riconosce resta vuoto.
 - **Lettura degli Excel:** l'app importa solo backup JSON. Per leggere un file Excel si usa `tools/xlsx_to_json.py`, che legge il foglio "Interventi" con la struttura attuale.
 - **Promemoria del backup sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata.

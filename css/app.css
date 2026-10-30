@@ -23,6 +23,7 @@
   --errore-fondo: #f6d9d5;
   --errore-testo: #8e1612;
   --selezione: #f2c230;
+  --selezione-testo: #1d1705;
   --chip-fondo: #dedad0;
   --chip-fondo-hover: #d4cfc3;
 
@@ -364,12 +365,53 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
   background: var(--stock); border-top: 1px solid var(--linea);
 }
 .barra-azioni .bottone.primario { flex: 1; min-height: 54px; font-size: 1.0625rem; }
+/* i campi riempiti dalla foto del tablet, finché non si toccano o non si salva: il bordo non sposta niente */
+.campo.da-foto { position: relative; border-radius: var(--raggio); outline: 2px solid var(--selezione); outline-offset: 4px; }
+.campo.da-foto::after {
+  content: "dalla foto"; position: absolute; top: -10px; right: 4px; z-index: 3; pointer-events: none;
+  padding: 2px 7px; border-radius: 4px; background: var(--selezione); color: var(--selezione-testo);
+  font-size: .6875rem; font-weight: 800; line-height: 1.2; letter-spacing: .02em;
+}
+
 @media (min-width: 960px) {
   .modulo { display: block; columns: 2; column-gap: 48px; }
   .sezione { display: inline-block; width: 100%; }
   .barra-azioni { left: var(--rail); bottom: 0; padding: 14px 32px; justify-content: flex-end; }
   .barra-azioni .bottone.primario { flex: 0 0 auto; min-width: 260px; }
 }
+
+/* ---------------------------------------------------------------- foto del tablet */
+
+.foto-tablet { display: grid; gap: 12px; padding: 2px 0 14px; margin: 0 0 14px; border-bottom: 2px dashed var(--linea); break-inside: avoid; }
+.foto-tablet > .bottone { width: 100%; }
+/* durante la lettura il pulsante resta leggibile e si riempie con l'avanzamento */
+.foto-tablet > .bottone[aria-busy="true"] {
+  opacity: 1; font-variant-numeric: tabular-nums;
+  background: linear-gradient(to right, var(--chip-fondo) var(--avanzamento, 0%), var(--carta) 0);
+}
+.esito-foto:empty { display: none; }
+.riquadro-foto { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 12px 14px; align-items: start; }
+.miniatura {
+  display: block; padding: 0; overflow: hidden; cursor: zoom-in;
+  background: var(--carta); border: 1.5px solid var(--linea); border-radius: var(--raggio);
+}
+.miniatura img { display: block; width: 100%; height: auto; }
+.riepilogo-foto { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.riepilogo-foto .letti { font-weight: 800; }
+.riepilogo-foto .non-letti { font-size: .9375rem; font-weight: 600; color: var(--avviso-testo); }
+.riepilogo-foto .bottone { margin-top: 6px; }
+.riquadro-foto > .messaggio, .nota-rullino { grid-column: 1 / -1; }
+.nota-rullino { display: flex; gap: 8px; align-items: flex-start; font-size: .875rem; color: var(--inchiostro-2); }
+.nota-rullino .ico { width: 18px; height: 18px; margin-top: 1px; }
+@media (min-width: 480px) { .riquadro-foto { grid-template-columns: 160px minmax(0, 1fr); } }
+
+/* la foto intera, per il confronto con il modulo: un tocco la chiude */
+dialog.foto-intera {
+  width: 100vw; height: 100vh; height: 100dvh; max-width: none; max-height: none; margin: 0;
+  background: transparent; box-shadow: none; border-radius: 0; cursor: zoom-out;
+}
+dialog.foto-intera::backdrop { background: rgb(10 9 7 / .92); }
+dialog.foto-intera img { display: block; width: 100%; height: 100%; object-fit: contain; }
 
 /* ---------------------------------------------------------------- elenco */
 

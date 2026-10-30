@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Static HTML + CSS + vanilla JavaScript (ES modules), no build step. Only allowed libraries, as local copies in `vendor/`: Chart.js (charts) and SheetJS CE 0.20.3 (xlsx export). Installable PWA hosted on Cloudflare Pages (own domain, published from the Mac with `npm run pubblica`), data in IndexedDB. Decided in `prompt_app_interventi_118.md`.
+Static HTML + CSS + vanilla JavaScript (ES modules), no build step. Only allowed libraries, as local copies in `vendor/`: Chart.js (charts), SheetJS CE 0.20.3 (xlsx export) and, added later with the user's approval, Tesseract.js 7.0.0 (reads the tablet photo on the device, about 6 MB downloaded once per device). Installable PWA hosted on Cloudflare Pages (own domain, published from the Mac with `npm run pubblica`), data in IndexedDB. Decided in `prompt_app_interventi_118.md`.
 
 ## Users
 
@@ -32,6 +32,7 @@ Personal, offline, private: the data never leaves the device except through an e
 ## Capabilities and Constraints
 
 - Quick entry form, chronological list with search and filters, live statistics (6 KPIs, 12 tables, 6 charts) on a selectable period, settings with editable lists, JSON backup/merge, xlsx export.
+- "Foto tablet" on the new-mission form: a photo of the SaveOnBoard "Missione" screen is read on the device and fills the fields it can read (highlighted "dalla foto", the rest listed as "Non letti"); nothing is guessed, the photo is never saved and never leaves the device.
 - Must work fully offline after first load; no network calls, analytics, external fonts or CDNs.
 - Italian UI, mobile-first (~390px), usable at 1440px, dark mode.
 - Out of scope: login, accounts, backend, notifications, extra features.

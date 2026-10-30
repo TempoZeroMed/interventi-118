@@ -45,3 +45,5 @@ export function caricaScript(src) {
 
 export const CHART = 'vendor/chart-4.5.1.umd.min.js';
 export const SHEETJS = 'vendor/xlsx-0.20.3.full.min.js';
+export const CARTELLA_TESSERACT = 'vendor/tesseract-7.0.0/';
+export const TESSERACT = 'vendor/tesseract-7.0.0/tesseract.min.js';

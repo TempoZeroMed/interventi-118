@@ -6,7 +6,9 @@ import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, oraLocale, pro
 import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
+import { applicaLettura } from '../core/tablet.js';
 import { h, icona, impostaBanda, toast, conferma, dataLunga, dataBreve, numero, coppiaCodici } from './dom.js';
+import { creaFotoTablet } from './fototablet.js';
 
 // voci più usate mostrate come pulsanti nelle liste lunghe: 3 sul telefono, così il menu "Altro…" sta nella stessa riga
 const scorciatoie = () => (matchMedia('(min-width: 480px)').matches ? 4 : 3);
@@ -43,18 +45,41 @@ function costruisci(main, iniziale, originale) {
       { indietro: '#/elenco', extra: coppiaCodici(r.codiceInvio, r.codiceRientro) })
     : impostaBanda('Nuovo intervento', r.data ? dataLunga(r.data) : 'senza data'));
 
+  // campi riempiti dalla foto del tablet: evidenziati finché non si toccano o non si salva (solo in memoria)
+  const evidenziati = new Set();
+  const RIENTRO = ['codiceRientro', 'patologiaRientro', 'luogoRientro'];
+
   let timerBozza = null;
+  function salvaBozza() {
+    if (modifica) return;
+    clearTimeout(timerBozza);
+    timerBozza = setTimeout(() => impostaMeta({ bozza: r }).catch(() => {}), 400);
+  }
+
   /** Ogni modifica passa da qui; campo '_copia' è il pulsante "Copia da invio", '_manovra' un pulsante delle manovre. */
   function cambia(campo, valore) {
+    const prima = r;
     if (campo === '_copia') r = copiaDaInvio(r);
     else if (campo === '_manovra') r = alternaManovra(r, valore);
     else r = impostaCampo(r, campo, valore);
+    // il campo toccato non è più "dalla foto", e nemmeno uno che una regola del form ha cambiato (es. l'ospedale svuotato)
+    const toccati = campo === '_copia' ? RIENTRO : [campo];
+    for (const k of evidenziati) if (toccati.includes(k) || r[k] !== prima[k]) evidenziati.delete(k);
     modificato = true;
     aggiorna();
-    if (!modifica) {
-      clearTimeout(timerBozza);
-      timerBozza = setTimeout(() => impostaMeta({ bozza: r }).catch(() => {}), 400);
-    }
+    salvaBozza();
+  }
+
+  /**
+   * I valori letti dalla foto: passano dalle regole del form e prendono il posto di quelli presenti. Una seconda foto
+   * aggiunge i suoi campi agli evidenziati: un campo che non legge tiene il valore della prima, e anche l'evidenziazione.
+   */
+  function daFoto({ valori }) {
+    r = applicaLettura(r, valori);
+    for (const k of Object.keys(valori)) evidenziati.add(k);
+    modificato = true;
+    aggiorna();
+    salvaBozza();
   }
   function aggiorna() {
     for (const fn of aggiornatori) fn(r);
@@ -64,16 +89,17 @@ function costruisci(main, iniziale, originale) {
 
   // ------------------------------------------------------------ componenti
 
-  function campo(etichetta, controllo, extra = null) {
+  function campo(chiave, etichetta, controllo, extra = null) {
     const id = `c-${Math.random().toString(36).slice(2, 8)}`;
     controllo.id ||= id;
-    return h('div', { class: 'campo' }, h('label', { class: 'etichetta', for: controllo.id }, etichetta), controllo, extra);
+    return h('div', { class: 'campo', 'data-campo': chiave },
+      h('label', { class: 'etichetta', for: controllo.id }, etichetta), controllo, extra);
   }
 
   function data(chiave, etichetta) {
     const input = h('input', { class: 'input', type: 'date', value: r[chiave], oninput: (e) => cambia(chiave, e.target.value) });
     quando((x) => { if (input.value !== x[chiave]) input.value = x[chiave]; });
-    return campo(etichetta, input);
+    return campo(chiave, etichetta, input);
   }
 
   function ora(chiave, etichetta) {
@@ -82,7 +108,7 @@ function costruisci(main, iniziale, originale) {
     const adesso = h('button', { type: 'button', class: 'bottone', onclick: () => cambia(chiave, oraLocale(new Date())) },
       icona('orologio'), 'Adesso');
     const gruppo = h('div', { class: 'con-bottone' }, input, adesso);
-    const c = campo(etichetta, gruppo);
+    const c = campo(chiave, etichetta, gruppo);
     c.querySelector('label').setAttribute('for', input.id || (input.id = `c-${chiave}`));
     return c;
   }
@@ -98,7 +124,7 @@ function costruisci(main, iniziale, originale) {
       if (input.value !== x.missione) input.value = x.missione;
       contatore.textContent = x.missione ? `${x.missione.length}/8` : '';
     });
-    const c = campo('Missione', input);
+    const c = campo('missione', 'Missione', input);
     c.querySelector('label').append(' ', contatore);
     return c;
   }
@@ -116,7 +142,7 @@ function costruisci(main, iniziale, originale) {
         if (document.activeElement === input) input.setSelectionRange(pos, pos);
       }
     });
-    return campo('Comune', input, lista);
+    return campo('comune', 'Comune', input, lista);
   }
 
   /** ETÀ e TEMPO VOLO: tastiera numerica; un valore svuotato da una regola del form svuota anche il campo. */
@@ -129,7 +155,7 @@ function costruisci(main, iniziale, originale) {
       const testo = x[chiave] === null || x[chiave] === undefined ? '' : String(x[chiave]);
       if (input.value !== testo && normalizzaNumero(input.value) !== x[chiave]) input.value = testo;
     });
-    return campo(etichetta, input);
+    return campo(chiave, etichetta, input);
   }
 
   /** Etichetta visibile, oppure solo per i lettori di schermo quando il titolo della sezione dice già cos'è. */
@@ -146,7 +172,7 @@ function costruisci(main, iniziale, originale) {
     };
     disegna(r);
     quando(disegna);
-    return h('div', { class: 'campo' }, intestazione(etichetta, senzaEtichetta), gruppo);
+    return h('div', { class: 'campo', 'data-campo': chiave }, intestazione(etichetta, senzaEtichetta), gruppo);
   }
 
   /** Liste lunghe: le voci più usate come pulsanti e, nella stessa riga, il menu con tutte le altre. */
@@ -176,7 +202,7 @@ function costruisci(main, iniziale, originale) {
     };
     disegna(r);
     quando(disegna);
-    return h('div', { class: 'campo' }, intestazione(etichetta, senzaEtichetta), gruppo);
+    return h('div', { class: 'campo', 'data-campo': chiave }, intestazione(etichetta, senzaEtichetta), gruppo);
   }
 
   /** La firma dell'app: striscia a strappo dei codici colore. */
@@ -194,7 +220,7 @@ function costruisci(main, iniziale, originale) {
     };
     disegna(r);
     quando(disegna);
-    return h('div', { class: 'campo' }, h('span', { class: 'etichetta' }, etichetta), gruppo);
+    return h('div', { class: 'campo', 'data-campo': chiave }, h('span', { class: 'etichetta' }, etichetta), gruppo);
   }
 
   /** Manovre: più scelte insieme, un tocco accende e il secondo spegne. */
@@ -205,7 +231,7 @@ function costruisci(main, iniziale, originale) {
     quando((x) => {
       bottoni.forEach((b, i) => b.setAttribute('aria-pressed', String((x.manovre ?? []).includes(MANOVRE[i].codice))));
     });
-    return h('div', { class: 'campo' }, h('span', { class: 'etichetta' }, 'Manovre'),
+    return h('div', { class: 'campo', 'data-campo': 'manovre' }, h('span', { class: 'etichetta' }, 'Manovre'),
       h('div', { class: 'chips manovre', role: 'group', 'aria-label': 'Manovre' }, bottoni));
   }
 
@@ -267,7 +293,11 @@ function costruisci(main, iniziale, originale) {
     (volo.hidden ? tempi : volo).append(controlliEl);
   });
 
+  // solo nel nuovo intervento, in cima al modulo
+  const foto = modifica ? null : creaFotoTablet({ dopoLettura: daFoto });
+
   const modulo = h('form', { class: 'modulo', novalidate: true, onsubmit: (e) => { e.preventDefault(); salva(); } },
+    foto?.elemento,
     sezione('Identificazione',
       h('div', { class: 'riga-campi' }, data('data', 'Data'), missione()),
       ora('oraAllert', 'Ora allert.')),
@@ -293,6 +323,9 @@ function costruisci(main, iniziale, originale) {
     tempi,
     volo,
   );
+  quando(() => {
+    for (const el of modulo.querySelectorAll('[data-campo]')) el.classList.toggle('da-foto', evidenziati.has(el.dataset.campo));
+  });
 
   // ------------------------------------------------------------ azioni
 
@@ -322,6 +355,8 @@ function costruisci(main, iniziale, originale) {
       } else {
         await salvaIntervento(daSalvare, { bozza: null });
         modificato = false;
+        evidenziati.clear();
+        foto.chiudiPannello();
         toast(`Intervento ${daSalvare.missione || 'senza missione'} salvato`, {
           etichetta: 'Apri', fai: () => { location.hash = `#/intervento/${encodeURIComponent(daSalvare.id)}`; },
         });
@@ -356,6 +391,8 @@ function costruisci(main, iniziale, originale) {
     }
     r = recordVuoto(crypto.randomUUID(), new Date());
     modificato = false;
+    evidenziati.clear();
+    foto.chiudiPannello();
     await impostaMeta({ bozza: null });
     aggiorna();
   }
@@ -367,6 +404,10 @@ function costruisci(main, iniziale, originale) {
     async puoiUscire() {
       if (!modifica || !modificato) return true;
       return conferma({ titolo: 'Uscire senza salvare?', testo: 'Le modifiche a questo intervento andranno perse.', si: 'Esci', no: 'Resta', pericolo: true });
+    },
+    /** Prima di cambiare schermata: chiude la foto e il suo lettore. */
+    smonta() {
+      foto?.smonta();
     },
   };
 }

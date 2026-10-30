@@ -49,10 +49,14 @@ test('normalizzazione: i campi mancanti diventano vuoti', () => {
 
 test('le liste predefinite dell\'app sono quelle del foglio "Liste"', { skip: !existsSync(IMPORT) && 'manca data/interventi_import.json: esegui tools/xlsx_to_json.py' }, () => {
   const daExcel = JSON.parse(readFileSync(IMPORT, 'utf8')).liste;
-  // tipoMissione viene dall'Excel HEMS e C-ECHO e A-ECHO sono arrivati dopo: nel foglio "Liste" del 118 non ci sono
+  // tipoMissione viene dall'Excel HEMS e C-ECHO e A-ECHO sono arrivati dopo: nel foglio "Liste" del 118 non ci sono.
+  // 3050 e 6021 ci sono, ma sono diventate di sistema dopo la creazione di data/interventi_import.json
   const dopo = ['C-ECHO', 'A-ECHO'];
+  const diSistemaDopo = ['3050', '6021'];
   const semplifica = (liste) => Object.fromEntries(Object.keys(daExcel).map((nome) => [
-    nome, liste[nome].filter((v) => !dopo.includes(v.voce)).map(({ id, voce, attiva, sistema }) => ({ id, voce, attiva, sistema })),
+    nome, liste[nome].filter((v) => !dopo.includes(v.voce)).map(({ id, voce, attiva, sistema }) => (
+      nome === 'mezzo' && diSistemaDopo.includes(voce) ? { id, voce, attiva } : { id, voce, attiva, sistema }
+    )),
   ]));
   assert.deepEqual(semplifica(LISTE_PREDEFINITE), semplifica(daExcel));
 });
@@ -61,7 +65,7 @@ test('le voci di sistema includono quelle che reggono formule e controlli', () =
   const sistema = (nome) => LISTE_PREDEFINITE[nome].filter((v) => v.sistema).map((v) => v.voce);
   assert.deepEqual(sistema('esito'), ['Trasportato', 'Deceduto', 'Annullato da CO', 'Non Raggiungibile']);
   assert.deepEqual(sistema('codiceRientro'), ['VERDE', 'GIALLO', 'ROSSO', 'NERO']);
-  assert.deepEqual(sistema('mezzo'), ['3040', '5022', '5024', 'V-ECHO', 'T-ECHO', 'C-ECHO', 'A-ECHO']);
+  assert.deepEqual(sistema('mezzo'), ['3040', '3050', '5022', '5024', '6021', 'V-ECHO', 'T-ECHO', 'C-ECHO', 'A-ECHO']);
   assert.deepEqual(sistema('ospedale'), []);
 });
 
@@ -125,4 +129,12 @@ test('allineaVociSistema: C-ECHO già aggiunto a mano diventa di sistema, senza 
   ] };
   const cEcho = allineaVociSistema(salvata).mezzo.filter((v) => v.voce === 'C-ECHO');
   assert.deepEqual(cEcho.map(({ id, attiva, sistema }) => [id, attiva, sistema]), [['mezzo-c-echo', true, true]]);
+});
+
+test('allineaVociSistema: 3050 salvata come voce normale e disattivata diventa di sistema e attiva', () => {
+  const salvata = { mezzo: [
+    { id: 'mezzo-3050', voce: '3050', attiva: false, sistema: false, updatedAt: '2026-01-01T00:00:00.000Z' },
+  ] };
+  const v3050 = allineaVociSistema(salvata).mezzo.find((v) => v.voce === '3050');
+  assert.deepEqual([v3050.sistema, v3050.attiva], [true, true]);
 });

@@ -1,6 +1,6 @@
 // Regole del form di inserimento, senza DOM.
 import { CAMPI, normalizzaRecord, normalizzaManovre, normalizzaNumero, isElicottero } from './campi.js';
-import { MEZZI_SOLO_INDIA } from './controlli.js';
+import { MEZZI_A_ORARIO, tipologiaDelMezzo } from './controlli.js';
 
 const due = (n) => String(n).padStart(2, '0');
 
@@ -22,7 +22,8 @@ export function impostaCampo(r, campo, valore) {
   else if (campo === 'missione') nuovo.missione = String(valore).toUpperCase().replace(/\s+/g, '');
   else if (campo === 'eta' || campo === 'tempoVolo') nuovo[campo] = normalizzaNumero(valore); // un testo resta testo, per l'avviso
   else nuovo[campo] = valore;
-  if (campo === 'mezzo' && MEZZI_SOLO_INDIA.includes(valore)) nuovo.tipologia = 'India';
+  if (campo === 'mezzo' && valore) nuovo.tipologia = tipologiaDelMezzo(valore, r.oraAllert);
+  if (campo === 'oraAllert' && Object.hasOwn(MEZZI_A_ORARIO, r.mezzo)) nuovo.tipologia = tipologiaDelMezzo(r.mezzo, valore);
   if (campo === 'esito' && valore !== 'Trasportato') nuovo.ospedale = '';
   if (campo === 'mezzo' && !isElicottero(valore)) Object.assign(nuovo, { tipoMissione: '', tempoVolo: null, manovre: [] });
   return nuovo;

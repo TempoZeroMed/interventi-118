@@ -77,7 +77,7 @@ const SISTEMA = {
   tipologia: ['India', 'Mike'],
   sesso: ['Maschio', 'Femmina'],
   esito: ['Trasportato', 'Deceduto', 'Annullato da CO', 'Non Raggiungibile'],
-  mezzo: ['3040', '5022', '5024', ...MEZZI_ELICOTTERO],
+  mezzo: ['3040', '3050', '5022', '5024', '6021', ...MEZZI_ELICOTTERO],
 };
 
 /** Come lo slug di tools/xlsx_to_json.py: 'Ciriè' -> 'cirie'. */

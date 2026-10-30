@@ -45,6 +45,7 @@ const TRATTI = {
   spunta: 'M5 12.5l4.5 4.5L19 7',
   matita: 'M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4',
   x: 'M6 6l12 12M18 6L6 18',
+  fotocamera: 'M3 8h4l2-3h6l2 3h4v11H3zM15.5 13a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z',
 };
 
 export function icona(nome, classe = 'ico') {

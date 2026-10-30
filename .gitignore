@@ -2,6 +2,14 @@
 *.xlsx
 data/
 
+# Foto del tablet: mostrano dati di pazienti (le immagini dei documenti sono PNG)
+*.heic
+*.HEIC
+*.jpg
+*.JPG
+*.jpeg
+*.JPEG
+
 # Sistema e strumenti
 .DS_Store
 node_modules/

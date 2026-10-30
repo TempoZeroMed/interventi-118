@@ -1,5 +1,5 @@
 // Controlli di qualità (colonna CONTROLLI dell'Excel) e regole di salvataggio.
-import { isDataValida, isOraValida, isElicottero } from './campi.js';
+import { isDataValida, isOraValida, minutiDaOra, isElicottero } from './campi.js';
 
 /** Controlli del foglio "Voli" dell'Excel HEMS, più la convalida di TEMPO VOLO (intero 0–600). */
 export const TIPI_AVVISO_VOLO = ['Tipo missione mancante', 'Tempo volo mancante', 'Tempo volo non valido'];
@@ -18,6 +18,26 @@ export const TIPI_AVVISO = [
 ];
 
 export const MEZZI_SOLO_INDIA = ['3040', '5022', '5024'];
+
+/** Mezzi che sono Mike in una fascia oraria (anche oltre la mezzanotte) e India nel resto della giornata. */
+export const MEZZI_A_ORARIO = {
+  '3050': { mikeDalle: '08:00', mikeAlle: '20:00' },
+  '6021': { mikeDalle: '20:00', mikeAlle: '08:00' },
+};
+
+/** TIPOLOGIA che il mezzo impone: '' se non si può dire (mezzo vuoto, o 3050/6021 senza ora valida). */
+export function tipologiaDelMezzo(mezzo, oraAllert) {
+  if (!mezzo) return '';
+  if (MEZZI_SOLO_INDIA.includes(mezzo)) return 'India';
+  if (!Object.hasOwn(MEZZI_A_ORARIO, mezzo)) return 'Mike';
+  if (!isOraValida(oraAllert)) return '';
+  const orario = MEZZI_A_ORARIO[mezzo];
+  const minuti = minutiDaOra(oraAllert);
+  const dalle = minutiDaOra(orario.mikeDalle);
+  const alle = minutiDaOra(orario.mikeAlle);
+  const mike = dalle < alle ? minuti >= dalle && minuti < alle : minuti >= dalle || minuti < alle;
+  return mike ? 'Mike' : 'India';
+}
 
 const chiaveMissione = (missione) => String(missione ?? '').trim().toUpperCase();
 
