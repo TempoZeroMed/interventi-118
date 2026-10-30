@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 
 export const IMPORT = new URL('../data/interventi_import.json', import.meta.url);
 export const ATTESE = new URL('../data/statistiche_attese.json', import.meta.url);
+export const VOLO_ATTESE = new URL('../data/volo_attese.json', import.meta.url);
 
 export const datiReali = existsSync(IMPORT) && existsSync(ATTESE);
 export const motivoSkip = datiReali ? false
