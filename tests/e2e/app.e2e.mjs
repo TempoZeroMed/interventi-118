@@ -9,6 +9,7 @@ import { join, basename } from 'node:path';
 import {
   DEMO, caricaPlaywright, avviaServer, avviaBrowser, nuovoContesto, attendiTesto, conteggioElenco, scattaSchermata,
 } from './aiuti-e2e.mjs';
+import { isElicottero } from '../../js/core/campi.js';
 
 const demo = JSON.parse(readFileSync(DEMO, 'utf8')).record;
 const BROWSER = (process.env.E2E_BROWSER ?? 'webkit,chromium').split(',');
@@ -185,7 +186,7 @@ for (const nomeBrowser of BROWSER) {
         });
 
         test('statistiche: vista Volo con 4 KPI, 3 grafici e 5 tabelle', async () => {
-          const voli = demo.filter((r) => ['V-ECHO', 'T-ECHO'].includes(r.mezzo) && r.id !== 'demo-0005');
+          const voli = demo.filter((r) => isElicottero(r.mezzo) && r.id !== 'demo-0005');
           await vai(page, '#/statistiche');
           await page.getByRole('button', { name: 'Tutto', exact: true }).click();
           await page.getByRole('group', { name: 'Vista' }).getByRole('button', { name: 'Volo', exact: true }).click();
@@ -208,6 +209,10 @@ for (const nomeBrowser of BROWSER) {
           await vai(page, '#/nuovo');
           await page.getByLabel(/^Missione/).fill('99ZZ0777');
           assert.equal(await sezioneVolo.isVisible(), false, 'nascosta per le ambulanze');
+          for (const elicottero of ['C-ECHO', 'A-ECHO']) {
+            await scegli(page, 'Mezzo', elicottero);
+            assert.ok(await sezioneVolo.isVisible(), `visibile per ${elicottero}`);
+          }
           await scegli(page, 'Mezzo', 'V-ECHO');
           assert.ok(await sezioneVolo.isVisible(), 'visibile per V-ECHO');
           await scegli(page, 'Tipo missione', 'HSR');

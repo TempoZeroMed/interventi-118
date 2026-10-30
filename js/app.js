@@ -7,7 +7,7 @@ import * as elenco from './ui/elenco.js';
 import * as statistiche from './ui/statistiche.js';
 import * as impostazioni from './ui/impostazioni.js';
 
-export const VERSIONE_APP = '1.1.0';
+export const VERSIONE_APP = '1.2.0';
 
 const main = document.getElementById('vista');
 let vistaCorrente = null;

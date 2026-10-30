@@ -320,9 +320,9 @@ The same strip, small, reports invio → rientro in the list, the detail band an
 ### Statistics
 KPIs are a grid on the stock: label small term, numeral value, faded notes, cells split by hairline linea rules under a dashed top perforation. Charts are Chart.js bars in ink (light ink at night) with linea gridlines and inchiostro-2 axes; invio/rientro charts follow chiaro = invio (26% tint with a 2px border), pieno = rientro.
 
-A two-way segmented control, **Interventi | Volo**, sits under the period control and switches the whole view; the period is shared. The Volo view counts only V-ECHO and T-ECHO: four KPIs (two columns, four from 1200px), three ink bar charts (flight hours by month, manoeuvres in %, missions by vehicle) and tables numbered V1–V5. Flight hours read as h:mm, like the Excel `[h]:mm`.
+A two-way segmented control, **Interventi | Volo**, sits under the period control and switches the whole view; the period is shared. The Volo view counts only the helicopters (V-ECHO, T-ECHO, C-ECHO, A-ECHO): four KPIs (two columns, four from 1200px), three ink bar charts (flight hours by month, manoeuvres in %, missions by vehicle) and tables numbered V1–V5. Flight hours read as h:mm, like the Excel `[h]:mm`.
 
-The Volo section of the form appears only for V-ECHO and T-ECHO, after Tempi; the warnings block always closes the last visible section.
+The Volo section of the form appears only for the four helicopters, after Tempi; the warnings block always closes the last visible section.
 
 ## Do's and Don'ts
 

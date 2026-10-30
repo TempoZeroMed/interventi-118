@@ -71,8 +71,10 @@ test('manovre: un tocco accende, un secondo tocco spegne, ordine fisso', () => {
 
 test('cambio di mezzo: tra elicotteri i dati di volo restano, verso un\'ambulanza o togliendo il mezzo si svuotano', () => {
   const volo = { ...recordVuoto('x', new Date(2026, 0, 1)), mezzo: 'V-ECHO', tipoMissione: 'HSR', tempoVolo: 50, manovre: ['VD'] };
-  const tEcho = impostaCampo(volo, 'mezzo', 'T-ECHO');
-  assert.deepEqual([tEcho.tipoMissione, tEcho.tempoVolo, tEcho.manovre], ['HSR', 50, ['VD']]);
+  for (const elicottero of ['T-ECHO', 'C-ECHO', 'A-ECHO']) {
+    const r = impostaCampo(volo, 'mezzo', elicottero);
+    assert.deepEqual([r.tipoMissione, r.tempoVolo, r.manovre], ['HSR', 50, ['VD']], elicottero);
+  }
   for (const mezzo of ['3030', '']) {
     const r = impostaCampo(volo, 'mezzo', mezzo);
     assert.deepEqual([r.tipoMissione, r.tempoVolo, r.manovre], ['', null, []], mezzo || 'mezzo tolto');

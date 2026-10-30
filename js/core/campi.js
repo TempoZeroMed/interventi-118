@@ -24,7 +24,7 @@ export const CAMPI = [
   { chiave: 'tempoVolo', intestazione: 'TEMPO VOLO (min)', sezione: 'Volo' },
 ];
 
-export const MEZZI_ELICOTTERO = ['V-ECHO', 'T-ECHO'];
+export const MEZZI_ELICOTTERO = ['V-ECHO', 'T-ECHO', 'C-ECHO', 'A-ECHO'];
 export const isElicottero = (mezzo) => MEZZI_ELICOTTERO.includes(mezzo);
 
 /** Colonne HD…VSB del foglio "Voli", nello stesso ordine. */
@@ -65,6 +65,7 @@ const VOCI = {
   mezzo: [
     '3030', '3040', '3050', '3080', '5021', '5022', '5023', '5024', '5035', '5085', '6001', '6021', '6022', '6023',
     '7045', '7046', '7047', '7049', '7050', 'V-ECHO', 'T-ECHO',
+    'C-ECHO', 'A-ECHO', // aggiunti dopo: nel foglio non ci sono
   ],
   tipoMissione: ['HEMS', 'HSR', 'IFT'], // foglio "Liste" dell'Excel HEMS
 };
@@ -95,12 +96,16 @@ export const LISTE_PREDEFINITE = Object.fromEntries(Object.entries(VOCI).map(([n
 /**
  * Le voci di sistema si riconoscono dal nome: vale anche per le liste salvate prima che lo diventassero.
  * Non si possono disattivare, quindi una voce disattivata prima di diventarlo torna attiva.
+ * Quelle che mancano (C-ECHO e A-ECHO nelle liste salvate prima) si aggiungono in fondo, con l'id predefinito,
+ * così due dispositivi le uniscono senza doppioni.
  */
 export function allineaVociSistema(liste) {
   const daAllineare = (nome, v) => (SISTEMA[nome] ?? []).includes(v.voce) && !(v.sistema && v.attiva);
+  const mancanti = (nome, voci) => (LISTE_PREDEFINITE[nome] ?? [])
+    .filter((p) => p.sistema && !voci.some((v) => v.voce === p.voce || v.id === p.id));
   return Object.fromEntries(Object.entries(liste).map(([nome, voci]) => [
     nome,
-    voci.map((v) => (daAllineare(nome, v) ? { ...v, sistema: true, attiva: true } : v)),
+    [...voci.map((v) => (daAllineare(nome, v) ? { ...v, sistema: true, attiva: true } : v)), ...mancanti(nome, voci)],
   ]));
 }
 

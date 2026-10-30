@@ -83,20 +83,20 @@ Infine importa `data/interventi_import.json` in ogni dispositivo, da **Impostazi
 
 ## Volo ed elisoccorso
 
-Per le missioni in elicottero (mezzo **V-ECHO** o **T-ECHO**) il form mostra la sezione **Volo**, dopo "Tempi":
+Per le missioni in elicottero (mezzo **V-ECHO**, **T-ECHO**, **C-ECHO** o **A-ECHO**) il form mostra la sezione **Volo**, dopo "Tempi":
 
 - **Tipo missione:** HEMS, HSR o IFT. È una lista come le altre: si modifica da Impostazioni.
 - **Tempo di volo (min):** i minuti totali di volo della missione. Comprende il rientro in base, quindi può superare la durata.
 - **Manovre:** HD Hovering discesa, VD Verricello discesa, HS Hovering salita, VS Verricello salita, VSP Verricello salita pannolone, VSB Verricello salita barella. Un tocco accende la manovra, il secondo la spegne; se ne possono scegliere più di una.
 
-Se cambi il mezzo e scegli un'ambulanza, i dati di volo si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS).
+Se passi da un elicottero all'altro i dati di volo restano; se scegli un'ambulanza si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS).
 
 ### Statistiche di volo
 
-In **Statistiche**, sotto il periodo, c'è l'interruttore **Interventi | Volo**. La vista Volo conta solo le missioni V-ECHO e T-ECHO del periodo e rifà le tabelle di volo del foglio "Statistiche" dell'Excel HEMS, con le stesse formule:
+In **Statistiche**, sotto il periodo, c'è l'interruttore **Interventi | Volo**. La vista Volo conta solo le missioni in elicottero del periodo e rifà le tabelle di volo del foglio "Statistiche" dell'Excel HEMS, con le stesse formule:
 
 - **Basi:** le missioni sono gli interventi in elicottero del periodo; le statistiche del tempo contano solo le missioni con il tempo di volo compilato.
-- **KPI:** missioni (per V-ECHO e T-ECHO), ore di volo, volo medio con la mediana, missioni con almeno una manovra.
+- **KPI:** missioni (per ognuno dei quattro elicotteri), ore di volo, volo medio con la mediana, missioni con almeno una manovra.
 - **Tabelle:**
   - V1 Tempo di volo: totale, media, mediana, minimo, massimo;
   - V2 Per mezzo;
@@ -299,7 +299,7 @@ Scelte fatte dove le formule dell'Excel erano ambigue, confermate prima di scriv
 2. **Missione duplicata:** il salvataggio si blocca solo se inserisci o cambi una MISSIONE mettendo un numero già usato; un duplicato già presente resta modificabile. Il controllo guarda tutto l'archivio, non solo il periodo filtrato.
 3. **Righe senza DATA:** contano solo nella vista "Tutto", non nei filtri per anno, mese o intervallo.
 4. **Tabella per mese:** mostra i mesi del periodo scelto, con l'anno quando il periodo ne copre più di uno.
-5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 5022, 5024, V-ECHO e T-ECHO. Sono le voci da cui dipendono statistiche e controlli.
+5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 5022, 5024, V-ECHO, T-ECHO, C-ECHO e A-ECHO. Sono le voci da cui dipendono statistiche e controlli. C-ECHO e A-ECHO non sono nel foglio "Liste" dell'Excel: l'app li aggiunge da sola in fondo alla lista Mezzo, anche su un dispositivo che aveva già le sue liste.
 
 Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [Statistiche di volo](#statistiche-di-volo).
 

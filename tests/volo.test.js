@@ -33,7 +33,9 @@ test('basi, KPI e tempo di volo: solo elicotteri, eliminati esclusi', () => {
   const s = calcolaStatisticheVolo(RECORD, LISTE_PREDEFINITE, TUTTO);
   assert.deepEqual(s.basi, { missioni: 4, conTempo: 3 });
   assert.deepEqual(s.kpi, {
-    missioni: 4, perMezzo: [{ voce: 'V-ECHO', n: 2 }, { voce: 'T-ECHO', n: 2 }], minutiVolo: 165,
+    missioni: 4,
+    perMezzo: [{ voce: 'V-ECHO', n: 2 }, { voce: 'T-ECHO', n: 2 }, { voce: 'C-ECHO', n: 0 }, { voce: 'A-ECHO', n: 0 }],
+    minutiVolo: 165,
     conTempo: 3, voloMedio: 55, voloMediana: 45, conManovre: 2, conManovrePct: 50,
   });
   assert.deepEqual(s.tempo, { totaleMinuti: 165, media: 55, mediana: 45, minimo: 30, massimo: 90 });
@@ -44,6 +46,8 @@ test('per mezzo e tipo di missione (% sui compilati, riga "Non compilato")', () 
   assert.deepEqual(s.mezzi, [
     { voce: 'V-ECHO', n: 2, pct: 0.5, minutiVolo: 120, voloMedio: 60, conTempo: 2 },
     { voce: 'T-ECHO', n: 2, pct: 0.5, minutiVolo: 45, voloMedio: 45, conTempo: 1 },
+    { voce: 'C-ECHO', n: 0, pct: 0, minutiVolo: 0, voloMedio: null, conTempo: 0 },
+    { voce: 'A-ECHO', n: 0, pct: 0, minutiVolo: 0, voloMedio: null, conTempo: 0 },
   ]);
   assert.deepEqual(s.tipi, {
     voci: [
@@ -78,7 +82,20 @@ test('periodo senza voli: tutto a zero, medie nulle', () => {
   assert.equal(s.tempo.totaleMinuti, 0);
   assert.equal(s.kpi.voloMedio, null);
   assert.equal(s.manovre.almenoUna.pct, 0);
-  assert.deepEqual(s.mezzi.map((m) => m.voloMedio), [null, null]);
+  assert.deepEqual(s.mezzi.map((m) => m.voloMedio), [null, null, null, null]);
+});
+
+test('C-ECHO e A-ECHO contano come V-ECHO e T-ECHO', () => {
+  const record = [
+    r({ id: 'c', data: '2026-06-01', mezzo: 'C-ECHO', tipoMissione: 'HEMS', tempoVolo: 40, manovre: ['HD'] }),
+    r({ id: 'a', data: '2026-06-02', mezzo: 'A-ECHO', tipoMissione: 'IFT', tempoVolo: 80 }),
+    r({ id: 'v', data: '2026-06-03', mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: 30 }),
+  ];
+  const s = calcolaStatisticheVolo(record, LISTE_PREDEFINITE, TUTTO);
+  assert.deepEqual(s.basi, { missioni: 3, conTempo: 3 });
+  assert.deepEqual(s.mezzi.map((m) => [m.voce, m.n, m.minutiVolo]),
+    [['V-ECHO', 1, 30], ['T-ECHO', 0, 0], ['C-ECHO', 1, 40], ['A-ECHO', 1, 80]]);
+  assert.equal(s.kpi.conManovre, 1);
 });
 
 test('voce rinominata: la tabella dei tipi usa il nome nuovo, il valore fuori lista compare in fondo', () => {

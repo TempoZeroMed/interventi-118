@@ -1,8 +1,10 @@
 // Vista "Volo" delle statistiche: KPI, 3 grafici e 5 tabelle di volo del foglio "Statistiche" dell'Excel HEMS.
+import { MEZZI_ELICOTTERO } from '../core/campi.js';
 import { h, conteggio, numero, pct, pctGia, oreMinuti } from './dom.js';
 import { colore, configBarre, schedaGrafico, tabella, unita, voceKpi } from './statistiche.js';
 
 const missioni = (n) => `${conteggio(n)} ${n === 1 ? 'missione' : 'missioni'}`;
+const elicotteri = `${MEZZI_ELICOTTERO.slice(0, -1).join(', ')} o ${MEZZI_ELICOTTERO.at(-1)}`;
 
 function kpi(s) {
   const k = s.kpi;
@@ -78,7 +80,7 @@ export function disegnaVolo(s, tele) {
   if (!s.basi.missioni) {
     return h('div', { class: 'vuoto-stato' },
       h('h2', {}, 'Nessuna missione in elicottero in questo periodo'),
-      h('p', {}, 'La vista Volo conta gli interventi con mezzo V-ECHO o T-ECHO. Scegli un altro anno, mese o intervallo.'));
+      h('p', {}, `La vista Volo conta gli interventi con mezzo ${elicotteri}. Scegli un altro anno, mese o intervallo.`));
   }
   return h('div', {},
     kpi(s),

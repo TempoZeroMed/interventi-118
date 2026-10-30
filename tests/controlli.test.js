@@ -123,8 +123,10 @@ test('salvataggio: una MISSIONE di un record eliminato si può riusare', () => {
   assert.equal(verificaSalvataggio(rec({ id: 'y' }), [eliminato]).ok, true);
 });
 
-test('volo: tipo missione e tempo mancanti solo per V-ECHO e T-ECHO, anche su record senza i campi nuovi', () => {
-  assert.deepEqual(avvisiDi(rec({ mezzo: 'V-ECHO' })), ['Tipo missione mancante', 'Tempo volo mancante']);
+test('volo: tipo missione e tempo mancanti solo per gli elicotteri, anche su record senza i campi nuovi', () => {
+  for (const mezzo of ['V-ECHO', 'T-ECHO', 'C-ECHO', 'A-ECHO']) {
+    assert.deepEqual(avvisiDi(rec({ mezzo })), ['Tipo missione mancante', 'Tempo volo mancante'], mezzo);
+  }
   assert.deepEqual(avvisiDi(rec({ mezzo: '3030', tipoMissione: '', tempoVolo: null, manovre: [] })), []);
 });
 
