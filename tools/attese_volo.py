@@ -17,6 +17,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 
 from xlsx_lettore import Cartella, col
+from hems_to_json import converti_tempo, leggi_manovre
 from xlsx_to_json import converti_data, converti_ora, converti_testo
 
 RADICE = Path(__file__).resolve().parent.parent
@@ -28,21 +29,12 @@ MANOVRE = [
     ("HD", "Hovering discesa"), ("VD", "Verricello discesa"), ("HS", "Hovering salita"),
     ("VS", "Verricello salita"), ("VSP", "Verricello salita pannolone"), ("VSB", "Verricello salita barella"),
 ]
-COLONNE_MANOVRE = ["U", "V", "W", "X", "Y", "Z"]
 NOMI_MESI = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"]
 
 
 def arrotonda_excel(x, cifre):
     """ROUND di Excel: metà lontano da zero, sul valore a 15 cifre significative."""
     return float(Decimal(f"{x:.15g}").quantize(Decimal(1).scaleb(-cifre), rounding=ROUND_HALF_UP))
-
-
-def converti_tempo(cella):
-    if cella is None or cella.valore is None:
-        return None
-    if cella.tipo == "n":
-        return int(cella.valore) if float(cella.valore).is_integer() else cella.valore
-    return str(cella.valore)  # testo: tempo non valido, la conserva per l'avviso
 
 
 def leggi_voli(cartella):
@@ -66,8 +58,7 @@ def leggi_voli(cartella):
             "esito": converti_testo(cella(riga, "N")),
             "liberoOperativo": converti_ora(cella(riga, "S")),
             "tempoVolo": converti_tempo(cella(riga, "T")),
-            "manovre": [codice for (codice, _), lettera in zip(MANOVRE, COLONNE_MANOVRE)
-                        if str(converti_testo(cella(riga, lettera))).strip().upper() == "X"],
+            "manovre": leggi_manovre(celle, riga),
         })
     return record
 
