@@ -30,7 +30,7 @@ function aggiungi(el, figli) {
 
 const TRATTI = {
   piu: 'M12 5v14M5 12h14',
-  orologio: 'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z',
+  calendario: 'M4 6h16v14H4zM4 10h16M8 3v5M16 3v5',
   copia: 'M9 9h11v11H9zM5 15H4V4h11v1',
   cerca: 'M20 20l-4.2-4.2M18 11a7 7 0 1 1-14 0 7 7 0 0 1 14 0z',
   filtri: 'M3 5h18l-7 8.5V19l-4 2v-7.5z',

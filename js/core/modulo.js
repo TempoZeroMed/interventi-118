@@ -5,7 +5,6 @@ import { MEZZI_A_ORARIO, tipologiaDelMezzo } from './controlli.js';
 const due = (n) => String(n).padStart(2, '0');
 
 export const dataLocale = (d) => `${d.getFullYear()}-${due(d.getMonth() + 1)}-${due(d.getDate())}`;
-export const oraLocale = (d) => `${due(d.getHours())}:${due(d.getMinutes())}`;
 
 export function recordVuoto(id, adesso) {
   const r = { id, createdAt: adesso.toISOString(), updatedAt: adesso.toISOString(), deleted: false };

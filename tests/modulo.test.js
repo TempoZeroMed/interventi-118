@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  recordVuoto, impostaCampo, copiaDaInvio, oraLocale, dataLocale, prontoPerSalvare, alternaManovra,
+  recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra,
 } from '../js/core/modulo.js';
 import { tipologiaDelMezzo } from '../js/core/controlli.js';
 
@@ -18,8 +18,7 @@ test('nuovo intervento: DATA di oggi, tutto il resto vuoto', () => {
   assert.equal(r.createdAt, ADESSO.toISOString());
 });
 
-test('"adesso" e data di oggi in ora locale', () => {
-  assert.equal(oraLocale(ADESSO), '07:05');
+test('data di oggi in ora locale', () => {
   assert.equal(dataLocale(new Date(2026, 0, 3, 23, 59)), '2026-01-03');
 });
 

@@ -18,9 +18,9 @@ THESIS: Every record is a triage tag. The colour code is the fastest thing to se
 
 OWN-WORLD: Tag-stock ground (warm neutral by day, charcoal at night), the tag's black band as the shell (header and tab bar), and the four START colours VERDE, GIALLO, ROSSO, NERO as the only saturated colours, each always printed with its word. Bold uppercase system-sans labels like printed tag fields, tabular numerals for times, ages and mission codes, perforation dashes as the only ornament. No grey: neutrals are tinted from the stock or the black band.
 
-STORY: Open the app and a fresh tag is ready with today's date. Tap the codes, chips and "Adesso", save in seconds. The list reads as a stack of tags; the statistics count the strips.
+STORY: Open the app and a fresh tag is ready with today's date. Tap the codes and chips, save in seconds. The list reads as a stack of tags; the statistics count the strips.
 
-FIRST VIEWPORT: Inserisci at 390px. Black band with "Nuovo intervento" and the date. Identificazione row: data, ora with "Adesso", missione. Mezzo chips. The INVIO tear-off strip VERDE/GIALLO/ROSSO at thumb height. A sticky reversed "Salva" plate above the tab bar.
+FIRST VIEWPORT: Inserisci at 390px. Black band with "Nuovo intervento" and the date. Identificazione: data with "Oggi", then missione and ora allert. side by side. Mezzo chips. The INVIO tear-off strip VERDE/GIALLO/ROSSO at thumb height. A sticky reversed "Salva" plate above the tab bar.
 
 SIGNATURE: the tear-off code strip. Codes are perforated colour strips; choosing one keeps it at full strength with its word while the others recede to their dashed outline, as if torn off. The same strip, small, shows invio → rientro in the list, the detail and the statistics.
 

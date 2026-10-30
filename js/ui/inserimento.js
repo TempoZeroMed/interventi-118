@@ -2,7 +2,7 @@
 import { stato, trova, salvaIntervento, eliminaIntervento, impostaMeta } from '../stato.js';
 import { calcolati } from '../core/calcolati.js';
 import { avvisi, indiceMissioni, verificaSalvataggio } from '../core/controlli.js';
-import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, oraLocale, prontoPerSalvare } from '../core/modulo.js';
+import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, dataLocale, prontoPerSalvare } from '../core/modulo.js';
 import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
@@ -99,18 +99,17 @@ function costruisci(main, iniziale, originale) {
   function data(chiave, etichetta) {
     const input = h('input', { class: 'input', type: 'date', value: r[chiave], oninput: (e) => cambia(chiave, e.target.value) });
     quando((x) => { if (input.value !== x[chiave]) input.value = x[chiave]; });
-    return campo(chiave, etichetta, input);
+    const oggi = h('button', { type: 'button', class: 'bottone', onclick: () => cambia(chiave, dataLocale(new Date())) },
+      icona('calendario'), 'Oggi');
+    const c = campo(chiave, etichetta, h('div', { class: 'con-bottone' }, input, oggi));
+    c.querySelector('label').setAttribute('for', input.id || (input.id = `c-${chiave}`));
+    return c;
   }
 
   function ora(chiave, etichetta) {
     const input = h('input', { class: 'input', type: 'time', value: r[chiave], oninput: (e) => cambia(chiave, e.target.value) });
     quando((x) => { if (input.value !== x[chiave]) input.value = x[chiave]; });
-    const adesso = h('button', { type: 'button', class: 'bottone', onclick: () => cambia(chiave, oraLocale(new Date())) },
-      icona('orologio'), 'Adesso');
-    const gruppo = h('div', { class: 'con-bottone' }, input, adesso);
-    const c = campo(chiave, etichetta, gruppo);
-    c.querySelector('label').setAttribute('for', input.id || (input.id = `c-${chiave}`));
-    return c;
+    return campo(chiave, etichetta, input);
   }
 
   function missione() {
@@ -299,8 +298,8 @@ function costruisci(main, iniziale, originale) {
   const modulo = h('form', { class: 'modulo', novalidate: true, onsubmit: (e) => { e.preventDefault(); salva(); } },
     foto?.elemento,
     sezione('Identificazione',
-      h('div', { class: 'riga-campi' }, data('data', 'Data'), missione()),
-      ora('oraAllert', 'Ora allert.')),
+      data('data', 'Data'),
+      h('div', { class: 'riga-campi' }, missione(), ora('oraAllert', 'Ora allert.'))),
     sezione('Mezzo',
       comune(),
       chipsConMenu('mezzo', 'Mezzo', 'mezzo', ['mezzo'], { senzaEtichetta: true }),

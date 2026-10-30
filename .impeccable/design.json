@@ -909,8 +909,8 @@
       "name": "Secondary Button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "Paper plate with a strong-rule outline for secondary actions (Adesso, Svuota, export).",
-      "html": "<button class=\"ds-btn\"><svg viewBox=\"0 0 24 24\" width=\"22\" height=\"22\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><path d=\"M12 7v5l3 2\"/></svg>Adesso</button>",
+      "description": "Paper plate with a strong-rule outline for secondary actions (Svuota, export).",
+      "html": "<button class=\"ds-btn\">Svuota</button>",
       "css": ".ds-btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 16px;border-radius:8px;background:var(--carta,#fbfaf7);border:1.5px solid var(--linea-forte,#8f877a);color:var(--inchiostro,#17140f);font:700 .9375rem/1.2 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;transition:background-color .15s,transform .1s}.ds-btn:hover{background:var(--stock-2,#e3e0d7)}.ds-btn:active{transform:scale(.98)}.ds-btn:focus-visible{outline:2.5px solid var(--inchiostro,#17140f);outline-offset:2px}"
     },
     {
