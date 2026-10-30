@@ -76,8 +76,8 @@ test('l\'attivazione non cancella la cache del lettore', () => {
   assert.match(sw, /n !== VERSIONE && n !== LETTORE/);
 });
 
-test('la versione dell\'app è la 1.3.1 ovunque', () => {
-  assert.ok(leggi('sw.js').includes("const VERSIONE = 'interventi118-v1.3.1'"));
-  assert.ok(leggi('js/app.js').includes("export const VERSIONE_APP = '1.3.1'"));
-  assert.ok(leggi('js/ui/impostazioni.js').includes('Interventi 118, versione 1.3.1.'));
+test('la versione dell\'app è la 1.4.0 ovunque', () => {
+  assert.ok(leggi('sw.js').includes("const VERSIONE = 'interventi118-v1.4.0'"));
+  assert.ok(leggi('js/app.js').includes("export const VERSIONE_APP = '1.4.0'"));
+  assert.ok(leggi('js/ui/impostazioni.js').includes('Interventi 118, versione 1.4.0.'));
 });

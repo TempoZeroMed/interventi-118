@@ -239,7 +239,7 @@ export function mostra(main) {
 
   const info = h('section', { class: 'blocco' },
     h('h2', {}, 'Informazioni'),
-    h('p', {}, 'Interventi 118, versione 1.3.1. I dati restano solo su questo dispositivo: nessun server, nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file.'));
+    h('p', {}, 'Interventi 118, versione 1.4.0. I dati restano solo su questo dispositivo: nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file; per le domande all\'archivio partono solo la domanda, le voci delle liste e i nomi dei comuni.'));
 
   function disegnaTutto() {
     disegnaDati();

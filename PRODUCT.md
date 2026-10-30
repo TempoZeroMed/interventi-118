@@ -20,7 +20,7 @@ Replaces the Excel workbook `Report Interventi 118 2026 v3.xlsx` as the personal
 
 ## Positioning
 
-Personal, offline, private: the data never leaves the device except through an explicit backup file the user saves to iCloud Drive. No account, no server.
+Personal, offline, private: the data never leaves the device except through an explicit backup file the user saves to iCloud Drive. No account. The only network call, made only when the user asks a question in "Fai una domanda", sends the question text, the list values and the distinct municipality names to the app's Cloudflare Worker, which has Claude translate it into a query; the answer is computed on the device and no record ever leaves it.
 
 ## Operating Context
 
@@ -33,9 +33,10 @@ Personal, offline, private: the data never leaves the device except through an e
 
 - Quick entry form, chronological list with search and filters, live statistics (6 KPIs, 12 tables, 6 charts) on a selectable period, settings with editable lists, JSON backup/merge, xlsx export.
 - "Foto tablet" on the new-mission form: a photo of the SaveOnBoard "Missione" screen is read on the device and fills the fields it can read (highlighted "dalla foto", the rest listed as "Non letti"); nothing is guessed, the photo is never saved and never leaves the device.
-- Must work fully offline after first load; no network calls, analytics, external fonts or CDNs.
+- "Fai una domanda" at the top of Statistics: a free question in Italian becomes a JSON query (Claude via the Worker, protected by a passphrase kept in Cloudflare secrets), executed on the device with the Statistics definitions; one clarifying question at most, no history saved.
+- Must work fully offline after first load (questions excepted: they need the network and say so); no other network calls, analytics, external fonts or CDNs.
 - Italian UI, mobile-first (~390px), usable at 1440px, dark mode.
-- Out of scope: login, accounts, backend, notifications, extra features.
+- Out of scope: login, accounts, a backend holding data, notifications, extra features.
 
 ## Evidence on Hand
 
@@ -47,7 +48,7 @@ Personal, offline, private: the data never leaves the device except through an e
 1. Speed of entry beats completeness: no field is mandatory except DATA or MISSIONE.
 2. Never lose data: local persistence, logical deletion, backup reminders, merge instead of overwrite.
 3. Same numbers as the Excel: definitions are copied, not reinterpreted.
-4. Privacy by default: nothing leaves the device unless the user exports it.
+4. Privacy by default: nothing leaves the device unless the user exports it; a question sends only its own text, list values and municipality names.
 
 ## Accessibility & Inclusion
 

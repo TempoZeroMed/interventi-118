@@ -5,10 +5,11 @@ Registro personale delle uscite 118 in ambulanza ed elisoccorso. Sostituisce il 
 
 - inserimento rapido da iPhone, con una mano, anche da una foto della schermata "Missione" del tablet;
 - elenco con ricerca e filtri;
-- statistiche identiche a quelle dei fogli Excel, compresi tempo di volo e manovre.
+- statistiche identiche a quelle dei fogli Excel, compresi tempo di volo e manovre;
+- domande libere all'archivio ("qual è l'ora in cui esco di più?"), con la risposta calcolata sul telefono.
 
 È una app web installabile (PWA): dopo il primo caricamento funziona anche senza rete.
-**I dati restano solo sul dispositivo.** Nessun account, nessun server, nessuna statistica d'uso. I dati escono solo quando esporti un file.
+**I dati restano solo sul dispositivo.** Nessun account, nessuna statistica d'uso. I dati escono solo quando esporti un file. Unica eccezione, solo quando la usi: per le [domande all'archivio](#domande-allarchivio) partono il testo della domanda, le voci delle liste e i nomi dei comuni, mai gli interventi.
 
 | Inserimento | Elenco | Statistiche |
 |---|---|---|
@@ -25,13 +26,14 @@ Gli screenshot usano dati inventati.
 3. [Volo ed elisoccorso](#volo-ed-elisoccorso)
 4. [Foto del tablet](#foto-del-tablet)
 5. [Tipologia India/Mike](#tipologia-indiamike)
-6. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
-7. [Installazione su iPhone](#installazione-su-iphone)
-8. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
-9. [Test](#test)
-10. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
-11. [Struttura del progetto](#struttura-del-progetto)
-12. [Limiti noti](#limiti-noti)
+6. [Domande all'archivio](#domande-allarchivio)
+7. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
+8. [Installazione su iPhone](#installazione-su-iphone)
+9. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
+10. [Test](#test)
+11. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
+12. [Struttura del progetto](#struttura-del-progetto)
+13. [Limiti noti](#limiti-noti)
 
 ---
 
@@ -228,6 +230,45 @@ La tipologia si imposta da sola quando scegli il mezzo o l'ora di allertamento, 
 
 ---
 
+## Domande all'archivio
+
+In cima alle **Statistiche** c'è il riquadro **Fai una domanda**: scrivi in italiano, per esempio "qual è l'ora in cui esco di più?", "in quale giorno ho fatto più interventi?", "durata media per mezzo nel 2025", "più rossi quest'anno o l'anno scorso?". L'app risponde con i numeri del tuo archivio: la cifra in grande, come ha inteso la domanda e su quale periodo, poi la classifica o la tabella (e un grafico quando ci sono almeno tre voci).
+
+### Come funziona
+
+1. La domanda va al Worker dell'app su Cloudflare, che la passa a Claude (Anthropic, modello Haiku; se la risposta non è valida riprova una volta con Sonnet).
+2. Claude non vede i dati: traduce la domanda in una **query**, cioè una descrizione precisa di cosa contare (misura, raggruppamento, filtri, periodo).
+3. Il telefono esegue la query sul suo archivio, con le stesse regole delle Statistiche, e scrive la risposta.
+
+Se la domanda non nomina un periodo vale quello scelto nella pagina; la risposta dice sempre su quale periodo è calcolata. Se la domanda è ambigua Claude fa **una** controdomanda, a cui rispondi nello stesso riquadro. Se non si può calcolare con i campi dell'app, propone tre domande simili. Domanda e risposta non vengono salvate: lasciando la pagina spariscono.
+
+### Cosa parte dal telefono
+
+Solo il testo della domanda, le voci delle liste delle Impostazioni (mezzi, ospedali, patologie…) e i nomi dei comuni presenti in archivio. **Mai gli interventi.** Non scrivere nelle domande dati dei pazienti: Anthropic conserva per un periodo limitato il testo che riceve, secondo la sua politica. Senza rete il riquadro è spento e lo dice; il resto dell'app funziona offline come sempre.
+
+### Prima configurazione (una volta sola, dal Mac)
+
+Servono una chiave di Anthropic e una parola d'ordine scelta da te. Restano segrete su Cloudflare: non sono nel codice né nel repository.
+
+1. Su <https://console.anthropic.com> crea una chiave (**API Keys → Create Key**) e imposta un **tetto di spesa mensile** (**Settings → Limits**), per esempio 5 dollari: ogni domanda costa una frazione di centesimo.
+2. Dal Terminale, **da una cartella fuori dal progetto**, salva la chiave su Cloudflare (Wrangler chiede di incollarla e non la mostra):
+
+   ```bash
+   cd ~ && npx --yes wrangler@4.156.0 secret put CHIAVE_ANTHROPIC --name liberoeoperativo
+   ```
+
+3. Allo stesso modo salva la parola d'ordine:
+
+   ```bash
+   cd ~ && npx --yes wrangler@4.156.0 secret put PAROLA_ORDINE --name liberoeoperativo
+   ```
+
+4. Sull'iPhone e sul Mac: **Impostazioni → Domande all'archivio**, scrivi la stessa parola d'ordine e tocca **Salva**. La parola resta sul dispositivo e non entra nei backup.
+
+Senza questi passi l'app funziona come prima; il riquadro dice cosa manca. Se cambi la parola d'ordine su Cloudflare, cambiala anche nelle Impostazioni di ogni dispositivo (**Cambia**).
+
+---
+
 ## Pubblicazione su Cloudflare Pages
 
 L'app è un insieme di file statici: Cloudflare la ospita gratis, a un indirizzo tutto suo:
@@ -246,9 +287,9 @@ Il comando ([tools/pubblica.sh](tools/pubblica.sh)):
 
 1. si ferma se non sei su `main` o se ci sono modifiche senza commit;
 2. esegue i test;
-3. copia dall'ultimo commit **solo i file dell'app** in una cartella temporanea fuori dal progetto: `index.html`, `manifest.webmanifest`, `sw.js` e le cartelle `css/`, `js/`, `vendor/`, `icons/`;
-4. li carica su Cloudflare con Wrangler, lanciato da quella cartella e senza configurazione automatica;
-5. controlla che dati, Excel e file di progetto rispondano 404; se uno risponde, toglie subito la pubblicazione.
+3. copia dall'ultimo commit **solo i file dell'app** in una cartella temporanea fuori dal progetto: `index.html`, `manifest.webmanifest`, `sw.js` e le cartelle `css/`, `js/`, `vendor/`, `icons/`; accanto, il Worker `worker/domande.js` e una configurazione minima (`wrangler.jsonc`) scritta lì;
+4. prova a secco il Worker, poi carica tutto su Cloudflare con Wrangler, lanciato da quella cartella e senza configurazione automatica;
+5. controlla che dati, Excel e file di progetto rispondano 404 (se uno risponde, toglie subito la pubblicazione) e che le [domande all'archivio](#domande-allarchivio) senza parola d'ordine vengano rifiutate.
 
 **Non lanciare mai Wrangler nella cartella del progetto.** Con la configurazione automatica pubblicherebbe tutta la cartella, dati reali compresi.
 
@@ -346,7 +387,7 @@ A fine import compare il riepilogo:
 npm test
 ```
 
-Esegue i test unitari (oltre 180) con `node --test`. Coprono:
+Esegue i test unitari (oltre 220) con `node --test`. Coprono:
 
 - campi calcolati, compresa la durata a cavallo della mezzanotte;
 - controlli di qualità, compresi quelli di volo;
@@ -354,6 +395,8 @@ Esegue i test unitari (oltre 180) con `node --test`. Coprono:
 - merge con conflitti ed eliminazioni, anche tra backup vecchi e nuovi;
 - regola India/Mike per mezzo e orario;
 - lettura della schermata del tablet, su testi inventati;
+- domande all'archivio: validazione della query, calcolo sul dispositivo e Worker con un Claude finto (nessuna chiamata vera);
+- salvataggio con nome fisso e file ricordato (finestra di salvataggio finta);
 - liste, export Excel, file della PWA, comportamento del service worker e script di import dei voli.
 
 Se `data/` contiene i file creati dagli script del [primo import](#primo-import-dei-dati-dallexcel), i test confrontano anche le statistiche sui 212 interventi reali con i valori del foglio Excel. Senza quei file, quei test vengono saltati con il motivo.
@@ -370,14 +413,16 @@ Lo script crea `data/volo_attese.json`. Da quel momento `npm test` controlla tut
 npm run e2e
 ```
 
-Esegue 72 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
+Esegue 89 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
 
 - inserimento e duplicato bloccante;
 - modifica, eliminazione, filtri e statistiche;
 - sezione Volo del form e vista Volo delle statistiche;
 - foto del tablet, con una schermata finta e dati inventati: campi evidenziati, missione già salvata, foto storta o sbagliata, lettore assente;
 - export e reimport con merge tra due dispositivi simulati;
-- export Excel e funzionamento offline.
+- export Excel, copia con data e, in Chromium, riscrittura del file ricordato;
+- parola d'ordine e riquadro delle domande con risposte finte del servizio (query, controdomanda, rifiuto, errore, senza rete);
+- funzionamento offline.
 
 Le prove avviano da sole un server locale, usano solo dati inventati e salvano gli screenshot in `docs/screenshots/`.
 
@@ -419,9 +464,10 @@ Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [St
 index.html, manifest.webmanifest, sw.js   app, installazione, cache offline
 css/app.css                               stile (sistema visivo descritto in DESIGN.md)
 js/core/       logica pura, senza interfaccia, coperta dai test:
-               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel, tablet
-js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo), impostazioni;
+               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel, tablet, domande
+js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo e le domande all'archivio), impostazioni;
                fototablet (foto, ritocco e lettore della schermata del tablet)
+worker/        Worker Cloudflare: file statici e traduzione delle domande con Claude (POST /api/domanda)
 js/db.js       archivio IndexedDB          js/stato.js  stato in memoria
 js/app.js      avvio e navigazione
 vendor/        Chart.js 4.5.1 (MIT), SheetJS CE 0.20.3 (Apache 2.0) e Tesseract.js 7.0.0 (Apache 2.0, in tesseract-7.0.0/),
@@ -446,4 +492,5 @@ docs/screenshots/   schermate delle prove end-to-end
 - **Lettura della foto non provata su iPhone:** sia le prove automatiche sia la prova su una foto vera girano in WebKit su Mac. Tempi, menu **Scatta foto** / **Libreria foto** e primo scaricamento del lettore vanno verificati a mano sul telefono.
 - **Lettura della foto: un aiuto, non una garanzia.** Il lettore può sbagliare, soprattutto con foto storte, mosse o con riflessi: i campi evidenziati vanno sempre ricontrollati. Quello che non legge o non riconosce resta vuoto.
 - **Lettura degli Excel:** l'app importa solo backup JSON. Per leggere un file Excel si usa `tools/xlsx_to_json.py`, che legge il foglio "Interventi" con la struttura attuale.
+- **Domande all'archivio:** servono la rete, i due segreti su Cloudflare e la parola d'ordine nelle Impostazioni. Claude può fraintendere una domanda: la riga "Inteso come" dice come l'ha capita, e la risposta vale per quella lettura. Le domande coprono i campi dell'intervento (compresi tipo missione e tempo di volo), non le altre statistiche di volo. Le prove automatiche usano risposte finte: la prima domanda vera va provata a mano dopo aver impostato i segreti.
 - **Promemoria del backup sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata.

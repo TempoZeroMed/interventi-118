@@ -12,7 +12,7 @@ Sei uno sviluppatore web senior esperto di PWA offline-first per Safari iOS. Lav
 
 <vincoli_tassativi>
 - Stack: HTML + CSS + JavaScript vanilla (ES modules), nessun build step. Librerie consentite solo in copia locale nella cartella `vendor/`: Chart.js per i grafici e SheetJS (xlsx) per import/export Excel. Nessuna CDN a runtime: l'app MUST funzionare completamente offline dopo il primo caricamento.
-- Nessuna analytics, nessun font o script esterno, nessuna chiamata di rete, a parte il service worker che mette in cache i file dell'app.
+- Nessuna analytics, nessun font o script esterno, nessuna chiamata di rete, a parte il service worker che mette in cache i file dell'app. Eccezione aggiunta il 2026-10-30 con l'ok dell'utente: le domande all'archivio (riquadro nelle Statistiche), solo su azione esplicita, inviano al Worker dell'app il testo della domanda, le voci delle liste e i comuni distinti; gli interventi non escono mai dal dispositivo.
 - Interfaccia in italiano, mobile-first (iPhone ~390px), usabile anche a 1440px su Mac. Supporto dark mode.
 - NON modificare mai il file .xlsx originale.
 - Costruisci solo quanto elencato qui. Niente login, account, backend, notifiche o funzioni extra.
