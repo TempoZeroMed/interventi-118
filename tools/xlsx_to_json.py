@@ -49,7 +49,7 @@ VOCI_SISTEMA = {
     "tipologia": {"India", "Mike"},
     "sesso": {"Maschio", "Femmina"},
     "esito": {"Trasportato", "Deceduto", "Annullato da CO", "Non Raggiungibile"},
-    "mezzo": {"3040", "5022", "5024"},
+    "mezzo": {"3040", "5022", "5024", "V-ECHO", "T-ECHO"},
 }
 
 

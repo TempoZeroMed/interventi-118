@@ -8,7 +8,8 @@ const SEZIONI = [
   ['IDENTIFICAZIONE', 0, 3], ['MEZZO', 4, 6], ['INVIO DALLA CO', 7, 9], ['PAZIENTE', 10, 11], ['ESITO', 12, 13],
   ['RIENTRO (valutazione sul posto)', 14, 16], ['TEMPI', 17, 18], ['CALCOLATE – non scrivere', 19, 22],
 ];
-const INTESTAZIONI = ['#', ...CAMPI.map((c) => c.intestazione), 'DURATA (min)', 'MESE', 'ORA DEL GIORNO', 'Δ CODICE', 'CONTROLLI'];
+const CAMPI_118 = CAMPI.filter((c) => c.sezione !== 'Volo');
+const INTESTAZIONI = ['#', ...CAMPI_118.map((c) => c.intestazione), 'DURATA (min)', 'MESE', 'ORA DEL GIORNO', 'Δ CODICE', 'CONTROLLI'];
 
 /** '2026-01-01' -> 46023 (sistema data 1900 di Excel). */
 export function dataSeriale(data) {
@@ -45,7 +46,7 @@ export function righeExcel(records) {
     ...interventi.map((r, i) => {
       const c = calcolati(r);
       const controlli = avvisi(r, indice).map((a) => `${a}; `).join('').trim();
-      return [i + 1, ...CAMPI.map(({ chiave }) => cella(r, chiave)), c.durata, c.mese, c.ora, c.delta, vuotoANull(controlli)];
+      return [i + 1, ...CAMPI_118.map(({ chiave }) => cella(r, chiave)), c.durata, c.mese, c.ora, c.delta, vuotoANull(controlli)];
     }),
   ];
 }

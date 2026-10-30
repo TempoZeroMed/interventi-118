@@ -40,6 +40,12 @@ test('rinominare una voce aggiorna i record che la usano, invio e rientro, e sol
   ]);
 });
 
+test('rinominare un tipo di missione aggiorna i record che lo usano', () => {
+  const records = [rec('a', { tipoMissione: 'HSR' }), rec('b', { tipoMissione: 'HEMS' })];
+  const { modificati } = rinominaVoce(LISTE_PREDEFINITE, records, 'tipoMissione', 'tipoMissione-hsr', 'HSR soccorso', ADESSO);
+  assert.deepEqual(modificati.map((r) => [r.id, r.tipoMissione]), [['a', 'HSR soccorso']]);
+});
+
 test('le voci di sistema non si rinominano né si disattivano', () => {
   assert.throws(() => rinominaVoce(LISTE_PREDEFINITE, [], 'esito', 'esito-trasportato', 'Trasporto', ADESSO), /non si può/);
   assert.throws(() => impostaAttiva(LISTE_PREDEFINITE, 'mezzo', 'mezzo-3040', false, ADESSO), /non si può/);

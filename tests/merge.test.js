@@ -12,6 +12,7 @@ const rec = (id, updatedAt, campi = {}) => ({
   id, createdAt: PRIMA, updatedAt, deleted: false, data: '2026-10-01', oraAllert: '10:00', missione: `04AA${id.padStart(4, '0')}`,
   comune: 'BIELLA', mezzo: '3030', tipologia: 'Mike', codiceInvio: 'GIALLO', patologiaInvio: '', luogoInvio: '', eta: 50,
   sesso: '', esito: '', ospedale: '', codiceRientro: '', patologiaRientro: '', luogoRientro: '', liberoOperativo: '',
+  tipoMissione: '', tempoVolo: null, manovre: [],
   ...campi,
 });
 const perId = (elenco) => Object.fromEntries(elenco.map((r) => [r.id, r]));

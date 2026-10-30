@@ -19,6 +19,22 @@ export const CAMPI = [
   { chiave: 'patologiaRientro', intestazione: 'PATOLOGIA', sezione: 'Rientro', lista: 'patologia' },
   { chiave: 'luogoRientro', intestazione: 'LUOGO', sezione: 'Rientro', lista: 'luogo' },
   { chiave: 'liberoOperativo', intestazione: 'LIBERO OPERATIVO', sezione: 'Tempi' },
+  // dal foglio "Voli" dell'Excel HEMS: solo per gli elicotteri; le manovre sono a parte (array)
+  { chiave: 'tipoMissione', intestazione: 'TIPO MISSIONE', sezione: 'Volo', lista: 'tipoMissione' },
+  { chiave: 'tempoVolo', intestazione: 'TEMPO VOLO (min)', sezione: 'Volo' },
+];
+
+export const MEZZI_ELICOTTERO = ['V-ECHO', 'T-ECHO'];
+export const isElicottero = (mezzo) => MEZZI_ELICOTTERO.includes(mezzo);
+
+/** Colonne HD…VSB del foglio "Voli", nello stesso ordine. */
+export const MANOVRE = [
+  { codice: 'HD', nome: 'Hovering discesa' },
+  { codice: 'VD', nome: 'Verricello discesa' },
+  { codice: 'HS', nome: 'Hovering salita' },
+  { codice: 'VS', nome: 'Verricello salita' },
+  { codice: 'VSP', nome: 'Verricello salita pannolone' },
+  { codice: 'VSB', nome: 'Verricello salita barella' },
 ];
 
 export const EPOCA = '1970-01-01T00:00:00.000Z';
@@ -50,6 +66,7 @@ const VOCI = {
     '3030', '3040', '3050', '3080', '5021', '5022', '5023', '5024', '5035', '5085', '6001', '6021', '6022', '6023',
     '7045', '7046', '7047', '7049', '7050', 'V-ECHO', 'T-ECHO',
   ],
+  tipoMissione: ['HEMS', 'HSR', 'IFT'], // foglio "Liste" dell'Excel HEMS
 };
 
 // Voci che reggono formule e controlli: non si rinominano né si disattivano.
@@ -59,7 +76,7 @@ const SISTEMA = {
   tipologia: ['India', 'Mike'],
   sesso: ['Maschio', 'Femmina'],
   esito: ['Trasportato', 'Deceduto', 'Annullato da CO', 'Non Raggiungibile'],
-  mezzo: ['3040', '5022', '5024'],
+  mezzo: ['3040', '5022', '5024', ...MEZZI_ELICOTTERO],
 };
 
 /** Come lo slug di tools/xlsx_to_json.py: 'Ciriè' -> 'cirie'. */
@@ -74,6 +91,14 @@ export const LISTE_PREDEFINITE = Object.fromEntries(Object.entries(VOCI).map(([n
     id: `${nome}-${slug(voce)}`, voce, attiva: true, sistema: (SISTEMA[nome] ?? []).includes(voce), updatedAt: EPOCA,
   })),
 ]));
+
+/** Le voci di sistema si riconoscono dal nome: vale anche per le liste salvate prima che lo diventassero. */
+export function allineaVociSistema(liste) {
+  return Object.fromEntries(Object.entries(liste).map(([nome, voci]) => [
+    nome,
+    voci.map((v) => (!v.sistema && (SISTEMA[nome] ?? []).includes(v.voce) ? { ...v, sistema: true } : v)),
+  ]));
+}
 
 export function isDataValida(testo) {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(testo ?? '');
@@ -91,7 +116,8 @@ export function minutiDaOra(testo) {
   return Number(testo.slice(0, 2)) * 60 + Number(testo.slice(3, 5));
 }
 
-function normalizzaEta(valore) {
+/** ETÀ e TEMPO VOLO: numero, null se vuoto, testo non numerico conservato (per l'avviso). */
+export function normalizzaNumero(valore) {
   if (valore === null || valore === undefined) return null;
   if (typeof valore === 'number') return valore;
   const testo = String(valore).trim().replace(',', '.');
@@ -99,7 +125,12 @@ function normalizzaEta(valore) {
   return /^-?\d+(\.\d+)?$/.test(testo) ? Number(testo) : testo;
 }
 
-/** Record completo e ripulito: spazi tolti, COMUNE e MISSIONE in maiuscolo, età numerica. */
+/** Codici noti, senza ripetizioni, nell'ordine delle colonne. */
+export function normalizzaManovre(valore) {
+  return Array.isArray(valore) ? MANOVRE.map((m) => m.codice).filter((c) => valore.includes(c)) : [];
+}
+
+/** Record completo e ripulito: spazi tolti, COMUNE e MISSIONE in maiuscolo, età e tempo di volo numerici. */
 export function normalizzaRecord(r) {
   const out = {
     id: r.id,
@@ -108,12 +139,13 @@ export function normalizzaRecord(r) {
     deleted: r.deleted === true,
   };
   for (const { chiave } of CAMPI) {
-    if (chiave === 'eta') {
-      out.eta = normalizzaEta(r.eta);
+    if (chiave === 'eta' || chiave === 'tempoVolo') {
+      out[chiave] = normalizzaNumero(r[chiave]);
       continue;
     }
     const testo = r[chiave] === null || r[chiave] === undefined ? '' : String(r[chiave]).trim();
     out[chiave] = chiave === 'comune' || chiave === 'missione' ? testo.toUpperCase() : testo;
   }
+  out.manovre = normalizzaManovre(r.manovre);
   return out;
 }
