@@ -27,6 +27,7 @@ const FILE = [
   'js/ui/impostazioni.js',
   'js/ui/inserimento.js',
   'js/ui/statistiche.js',
+  'js/ui/volo.js',
   'vendor/chart-4.5.1.umd.min.js',
   'vendor/xlsx-0.20.3.full.min.js',
   'icons/icon.svg',

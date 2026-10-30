@@ -68,6 +68,11 @@ export const conteggio = (n) => intero.format(n);
 export const pct = (f) => (f === null || f === undefined ? '—' : `${decimale.format(f * 100)}%`);
 /** numero già in percento (KPI arrotondati come nell'Excel) -> "1,4%" */
 export const pctGia = (p) => `${decimale.format(p)}%`;
+/** minuti -> "2:45", come il formato [h]:mm delle ore di volo nell'Excel HEMS */
+export function oreMinuti(minuti) {
+  const m = Math.round(minuti);
+  return `${Math.floor(m / 60)}:${String(m % 60).padStart(2, '0')}`;
+}
 
 const MESI_LUNGHI = ['gennaio', 'febbraio', 'marzo', 'aprile', 'maggio', 'giugno', 'luglio', 'agosto', 'settembre', 'ottobre', 'novembre', 'dicembre'];
 const MESI_BREVI = ['gen', 'feb', 'mar', 'apr', 'mag', 'giu', 'lug', 'ago', 'set', 'ott', 'nov', 'dic'];

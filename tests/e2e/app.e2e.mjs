@@ -184,6 +184,21 @@ for (const nomeBrowser of BROWSER) {
           await attendiTesto(page.locator('#banda .sotto'), 'Anno 2026');
         });
 
+        test('statistiche: vista Volo con 4 KPI, 3 grafici e 5 tabelle', async () => {
+          const voli = demo.filter((r) => ['V-ECHO', 'T-ECHO'].includes(r.mezzo) && r.id !== 'demo-0005');
+          await vai(page, '#/statistiche');
+          await page.getByRole('button', { name: 'Tutto', exact: true }).click();
+          await page.getByRole('group', { name: 'Vista' }).getByRole('button', { name: 'Volo', exact: true }).click();
+          await attendiTesto(page.locator('.kpi > div').first(), String(voli.length));
+          assert.equal(await page.locator('.kpi > div').count(), 4);
+          await page.waitForFunction(() => document.querySelectorAll('.grafico canvas').length === 3
+            && [...document.querySelectorAll('.grafico canvas')].every((c) => c.width > 0));
+          assert.equal(await page.locator('.blocco-tabella').count(), 5, 'tabelle V1–V5');
+          if (foto) await scattaSchermata(page, `${vp.nome}-statistiche-volo`, { inCima: true });
+          await page.getByRole('group', { name: 'Vista' }).getByRole('button', { name: 'Interventi', exact: true }).click();
+          await page.waitForFunction(() => document.querySelectorAll('.grafico canvas').length === 6);
+        });
+
         // in fondo al blocco: salva un intervento in più, che cambierebbe i conteggi delle prove precedenti
         test('volo: sezione solo per gli elicotteri, tipo, tempo e manovre salvati', async () => {
           const sezioneVolo = page.locator('section.sezione', { has: page.getByRole('heading', { name: 'Volo', exact: true }) });

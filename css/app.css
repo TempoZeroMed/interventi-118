@@ -436,6 +436,7 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
 .segmenti button[aria-pressed="true"] { background: var(--carta); color: var(--inchiostro); box-shadow: 0 1px 3px rgb(0 0 0 / .14); }
 .periodo .valori { display: flex; gap: 10px; flex-wrap: wrap; }
 .periodo .valori > * { flex: 1 1 140px; }
+.segmenti.vista { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
 .kpi {
   display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px;
@@ -450,6 +451,8 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
 .kpi .valore .cod { font-size: .625rem; vertical-align: middle; }
 @media (min-width: 700px) { .kpi { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1200px) { .kpi { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+@media (min-width: 700px) { .kpi.quattro { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (min-width: 1200px) { .kpi.quattro { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 
 .grafici { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 40px; margin-bottom: 20px; }
 .grafico { border-top: 2px dashed var(--linea); padding: 16px 0 6px; min-width: 0; }

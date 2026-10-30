@@ -1,12 +1,15 @@
 // Statistiche dal vivo su un periodo: KPI, 6 grafici e 12 tabelle del foglio "Statistiche".
 import { stato, interventi } from '../stato.js';
 import { calcolaStatistiche } from '../core/statistiche.js';
+import { calcolaStatisticheVolo } from '../core/volo.js';
 import { isDataValida } from '../core/campi.js';
 import { h, riempi, icona, impostaBanda, codice, numero, conteggio, pct, pctGia, meseLungo, dataBreve } from './dom.js';
 import { caricaScript, CHART } from './file.js';
 import { impostaFiltri } from './elenco.js';
+import { disegnaVolo } from './volo.js';
 
 let periodo = null; // resta scelto finché l'app è aperta
+let vista = 'interventi'; // 'interventi' | 'volo', come il periodo
 let grafici = [];
 
 const anniDisponibili = () => [...new Set(interventi().map((r) => r.data).filter(isDataValida).map((d) => Number(d.slice(0, 4))))]
@@ -29,6 +32,14 @@ export function mostra(main) {
   periodo ??= anni.length ? { tipo: 'anno', anno: anni[0] } : { tipo: 'tutto' };
   const contenuto = h('div');
   const selettore = h('div', { class: 'periodo' });
+  const selettoreVista = h('div', { class: 'segmenti vista', role: 'group', 'aria-label': 'Vista' });
+
+  function disegnaVista() {
+    riempi(selettoreVista, ...[['interventi', 'Interventi'], ['volo', 'Volo']].map(([chiave, testo]) => h('button', {
+      type: 'button', 'aria-pressed': String(vista === chiave),
+      onclick: () => { vista = chiave; disegnaVista(); disegna(); },
+    }, testo)));
+  }
 
   function disegnaSelettore() {
     const segmenti = h('div', { class: 'segmenti', role: 'group', 'aria-label': 'Periodo' },
@@ -62,7 +73,7 @@ export function mostra(main) {
           h('input', { class: 'input', type: 'date', value: periodo.a, onchange: (e) => { periodo.a = e.target.value; disegna(); } })),
       );
     }
-    riempi(selettore, segmenti, valori.length ? h('div', { class: 'valori' }, valori) : null);
+    riempi(selettore, segmenti, valori.length ? h('div', { class: 'valori' }, valori) : null, selettoreVista);
   }
 
   async function disegna() {
@@ -76,17 +87,21 @@ export function mostra(main) {
         h('a', { class: 'bottone primario', href: '#/nuovo' }, icona('piu'), 'Nuovo intervento')));
       return;
     }
-    const s = calcolaStatistiche(stato.record, stato.liste, periodo);
     const tele = [];
-    riempi(contenuto,
-      kpi(s),
-      s.kpi.interventi === 0
-        ? h('div', { class: 'vuoto-stato' }, h('h2', {}, 'Nessun intervento in questo periodo'), h('p', {}, 'Scegli un altro anno, mese o intervallo.'))
-        : h('div', {},
-          h('div', { class: 'grafici' }, ...schedeGrafici(s, tele)),
-          h('h2', { class: 'titolo-dettagli' }, 'Dettagli'),
-          h('div', { class: 'tabelle' }, ...tabelle(s))),
-    );
+    if (vista === 'volo') {
+      riempi(contenuto, disegnaVolo(calcolaStatisticheVolo(stato.record, stato.liste, periodo), tele));
+    } else {
+      const s = calcolaStatistiche(stato.record, stato.liste, periodo);
+      riempi(contenuto,
+        kpi(s),
+        s.kpi.interventi === 0
+          ? h('div', { class: 'vuoto-stato' }, h('h2', {}, 'Nessun intervento in questo periodo'), h('p', {}, 'Scegli un altro anno, mese o intervallo.'))
+          : h('div', {},
+            h('div', { class: 'grafici' }, ...schedeGrafici(s, tele)),
+            h('h2', { class: 'titolo-dettagli' }, 'Dettagli'),
+            h('div', { class: 'tabelle' }, ...tabelle(s))),
+      );
+    }
     if (!tele.length) return;
     try {
       await caricaScript(CHART);
@@ -97,6 +112,7 @@ export function mostra(main) {
     }
   }
 
+  disegnaVista();
   disegnaSelettore();
   main.append(selettore, contenuto);
   disegna();
@@ -116,37 +132,45 @@ export function mostra(main) {
 
 // ---------------------------------------------------------------- KPI
 
+/** Una casella dei KPI: titolo, valore (con unità) e note sotto. */
+export const voceKpi = (titolo, valore, ...note) => h('div', {}, h('dt', {}, titolo),
+  h('dd', {}, h('div', { class: 'valore' }, ...valore), ...note.filter(Boolean).map((n) => h('div', { class: 'nota' }, n))));
+export const unita = (t) => h('span', { class: 'unita' }, t);
+
 function kpi(s) {
   const k = s.kpi;
-  const voce = (titolo, valore, ...note) => h('div', {}, h('dt', {}, titolo), h('dd', {}, h('div', { class: 'valore' }, ...valore), ...note.filter(Boolean).map((n) => h('div', { class: 'nota' }, n))));
-  const unita = (t) => h('span', { class: 'unita' }, t);
   return h('dl', { class: 'kpi' },
-    voce('Interventi', [conteggio(k.interventi)], `${conteggio(k.valutati)} valutati`, `annullati: ${k.annullati} (${pctGia(k.annullatiPct)})`),
-    voce('Trasportati', [conteggio(k.trasportati)], `${pctGia(k.trasportatiPct)} dei valutati`, `deceduti: ${k.deceduti} (${pctGia(k.decedutiPct)})`),
-    voce('Rossi al rientro', [conteggio(k.rossiRientro), codice('ROSSO')], `${pctGia(k.rossiRientroPct)} dei valutati`,
+    voceKpi('Interventi', [conteggio(k.interventi)], `${conteggio(k.valutati)} valutati`, `annullati: ${k.annullati} (${pctGia(k.annullatiPct)})`),
+    voceKpi('Trasportati', [conteggio(k.trasportati)], `${pctGia(k.trasportatiPct)} dei valutati`, `deceduti: ${k.deceduti} (${pctGia(k.decedutiPct)})`),
+    voceKpi('Rossi al rientro', [conteggio(k.rossiRientro), codice('ROSSO')], `${pctGia(k.rossiRientroPct)} dei valutati`,
       `all'invio: ${k.rossiInvio} (${pctGia(k.rossiInvioPct)}) · neri: ${k.neri}`),
-    voce('Durata mediana', [numero(k.durataMediana), unita('min')], k.durataMedia === null ? null : `media ${numero(k.durataMedia)} · max ${numero(k.durataMax)}`),
-    voce('Età mediana', [numero(k.etaMediana), unita('anni')], `${pctGia(k.maschiPct)} maschi · ${pctGia(k.femminePct)} femmine`),
-    voce('Avvisi da controllare', [conteggio(k.avvisi), unita(k.avvisi === 1 ? 'riga' : 'righe')], `${pctGia(k.avvisiPct)} degli interventi`,
+    voceKpi('Durata mediana', [numero(k.durataMediana), unita('min')], k.durataMedia === null ? null : `media ${numero(k.durataMedia)} · max ${numero(k.durataMax)}`),
+    voceKpi('Età mediana', [numero(k.etaMediana), unita('anni')], `${pctGia(k.maschiPct)} maschi · ${pctGia(k.femminePct)} femmine`),
+    voceKpi('Avvisi da controllare', [conteggio(k.avvisi), unita(k.avvisi === 1 ? 'riga' : 'righe')], `${pctGia(k.avvisiPct)} degli interventi`,
       k.avvisi ? h('a', { href: '#/elenco', onclick: () => impostaFiltri({ soloAvvisi: true, periodo: { ...periodo } }) }, 'Vedi nell\'elenco') : null),
   );
 }
 
 // ---------------------------------------------------------------- grafici
 
-const colore = (nome) => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
+export const colore = (nome) => getComputedStyle(document.documentElement).getPropertyValue(nome).trim();
 /** '#1b7a3e' -> 'rgba(27, 122, 62, 0.26)': Chart.js deve poter leggere il colore. */
 function trasparente(hex, alfa) {
   const n = parseInt(hex.replace('#', ''), 16);
   return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alfa})`;
 }
-const percentuale = (v) => `${new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(v)}%`;
+const unDecimale = (v) => new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 }).format(v);
+const percentuale = (v) => `${unDecimale(v)}%`;
 
-/** legenda: stili neutri per le voci della legenda (fill/stroke), quando i colori delle barre variano per voce. */
-function configBarre({ etichette, serie, orizzontale = false, legenda = null, saltaEtichette = false }) {
+/**
+ * legenda: stili neutri per le voci della legenda (fill/stroke), quando i colori delle barre variano per voce.
+ * asse: 'pct' (valori in percento) oppure 'numero' (ore, missioni).
+ */
+export function configBarre({ etichette, serie, orizzontale = false, legenda = null, saltaEtichette = false, asse = 'pct' }) {
   const testo = colore('--inchiostro-2');
   const griglia = colore('--linea');
-  const assePct = { beginAtZero: true, grid: { color: griglia }, border: { display: false }, ticks: { color: testo, callback: (v) => percentuale(v) } };
+  const formato = asse === 'pct' ? percentuale : unDecimale;
+  const assePct = { beginAtZero: true, grid: { color: griglia }, border: { display: false }, ticks: { color: testo, callback: (v) => formato(v) } };
   const asseVoci = { grid: { display: false }, border: { color: griglia }, ticks: { color: testo, autoSkip: saltaEtichette, maxRotation: saltaEtichette ? 0 : 50 } };
   return {
     type: 'bar',
@@ -169,13 +193,13 @@ function configBarre({ etichette, serie, orizzontale = false, legenda = null, sa
             }),
           },
         },
-        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${percentuale(c.parsed[orizzontale ? 'x' : 'y'] ?? 0)}` } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: ${formato(c.parsed[orizzontale ? 'x' : 'y'] ?? 0)}` } },
       },
     },
   };
 }
 
-function schedaGrafico(tele, titolo, legenda, config, classe = '') {
+export function schedaGrafico(tele, titolo, legenda, config, classe = '') {
   const canvas = h('canvas', { role: 'img', 'aria-label': titolo });
   tele.push({ canvas, config });
   return h('figure', { class: `grafico ${classe}`, style: 'margin:0' }, h('h3', {}, titolo), h('figcaption', { class: 'legenda' }, legenda),
@@ -224,7 +248,7 @@ function schedeGrafici(s, tele) {
 // ---------------------------------------------------------------- tabelle
 
 /** colonne: [titolo, funzione(riga) -> contenuto, numerica?] */
-function tabella(titolo, nota, colonne, righe, { aperta = false, piede = null, zero = null } = {}) {
+export function tabella(titolo, nota, colonne, righe, { aperta = false, piede = null, zero = null } = {}) {
   return h('details', { class: 'blocco-tabella', open: aperta },
     h('summary', {}, titolo),
     h('div', { class: 'scorri' }, h('table', { class: 'tabella' },
