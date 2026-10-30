@@ -1,6 +1,7 @@
 // Impostazioni: backup e passaggio dei dati, liste dei menu, archiviazione, installazione.
 import {
   stato, interventi, importaBackup, backupCorrente, registraEsportazione, aggiornaListe, nomeDispositivo, tipoDispositivo, isIOS,
+  impostaMeta,
 } from '../stato.js';
 import { leggiBackup, nomeFileBackup, nomeFileDatato } from '../core/merge.js';
 import { aggiungiVoce, rinominaVoce, impostaAttiva, campiDellaLista } from '../core/liste.js';
@@ -63,6 +64,7 @@ export function mostra(main) {
   impostaBanda('Impostazioni', 'Dati, liste, installazione');
   const sezioneDati = h('section', { class: 'blocco' });
   const sezioneListe = h('section', { class: 'blocco' });
+  const sezioneDomande = h('section', { class: 'blocco' });
   const sezioneArchivio = h('section', { class: 'blocco' });
 
   function disegnaDati() {
@@ -172,6 +174,39 @@ export function mostra(main) {
     return li;
   }
 
+  /** Parola d'ordine per le domande all'archivio: resta in IndexedDB, non entra nei backup e non si mostra mai. */
+  function disegnaDomande(cambia = false) {
+    const aiuto = h('p', {}, 'La stessa parola impostata su Cloudflare. Serve solo per fare domande all\'archivio dalle Statistiche; senza, l\'app funziona come prima.');
+    if (stato.meta.parolaOrdineDomande && !cambia) {
+      riempi(sezioneDomande,
+        h('h2', {}, 'Domande all\'archivio'),
+        h('dl', { class: 'stato-righe' }, h('dt', {}, 'Parola d\'ordine'), h('dd', {}, 'Impostata')),
+        aiuto,
+        h('div', { class: 'azioni' }, h('button', { type: 'button', class: 'bottone', onclick: () => disegnaDomande(true) }, 'Cambia')));
+      return;
+    }
+    const campo = h('input', {
+      id: 'parola-ordine', class: 'input', type: 'password', autocomplete: 'off', enterkeyhint: 'done',
+    });
+    const salva = async () => {
+      const parola = campo.value.trim();
+      if (!parola) {
+        toast('Scrivi la parola d\'ordine');
+        return;
+      }
+      await impostaMeta({ parolaOrdineDomande: parola });
+      toast('Parola d\'ordine salvata');
+      disegnaDomande();
+    };
+    campo.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); salva(); } });
+    riempi(sezioneDomande,
+      h('h2', {}, 'Domande all\'archivio'),
+      h('label', { class: 'etichetta', for: 'parola-ordine' }, 'Parola d\'ordine'),
+      h('div', { class: 'con-bottone' }, campo, h('button', { type: 'button', class: 'bottone', onclick: salva }, 'Salva')),
+      aiuto,
+      cambia ? h('div', { class: 'azioni' }, h('button', { type: 'button', class: 'bottone testo piccolo', onclick: () => disegnaDomande() }, 'Annulla')) : null);
+  }
+
   async function disegnaArchivio() {
     const installata = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches;
     const persistente = stato.meta.persistente;
@@ -209,10 +244,11 @@ export function mostra(main) {
   function disegnaTutto() {
     disegnaDati();
     disegnaListe();
+    disegnaDomande();
     disegnaArchivio();
   }
 
-  main.append(sezioneDati, sezioneListe, sezioneArchivio, guida, info);
+  main.append(sezioneDati, sezioneListe, sezioneDomande, sezioneArchivio, guida, info);
   disegnaTutto();
   // la finestra di salvataggio di Chrome vuole un tocco recente: SheetJS dev'essere già pronto al clic su Esporta Excel
   if (haFinestraSalvataggio()) caricaScript(SHEETJS).catch(() => {});

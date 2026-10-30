@@ -733,6 +733,26 @@ for (const nomeBrowser of BROWSER) {
       await ctx.close();
     });
 
+    test('Impostazioni: parola d\'ordine per le domande, salvata sul dispositivo e mai mostrata', async () => {
+      const ctx = await nuovoContesto(browser, VIEWPORT[0], { serviceWorkers: 'block' });
+      const page = await ctx.newPage();
+      await page.goto(server.url);
+      await vai(page, '#/impostazioni');
+      const sezione = page.locator('section', { has: page.getByRole('heading', { name: 'Domande all\'archivio' }) });
+      await sezione.getByLabel('Parola d\'ordine').fill('abc');
+      await sezione.getByRole('button', { name: 'Salva' }).click();
+      await attendiTesto(sezione, 'Impostata');
+      await page.reload();
+      await vai(page, '#/impostazioni');
+      await attendiTesto(sezione, 'Impostata');
+      assert.equal(await sezione.getByRole('button', { name: 'Cambia' }).count(), 1);
+      assert.equal(await sezione.locator('input').count(), 0, 'nessun campo con la parola');
+      assert.ok(!(await sezione.textContent()).includes('abc'));
+      await sezione.getByRole('button', { name: 'Cambia' }).click();
+      assert.equal(await sezione.getByLabel('Parola d\'ordine').inputValue(), '', 'il campo riparte vuoto');
+      await ctx.close();
+    });
+
     for (const vp of VIEWPORT) test(`funziona offline dopo il primo caricamento (service worker), ${vp.nome} px`, async () => {
       const ctx = await nuovoContesto(browser, vp);
       const page = await ctx.newPage();
