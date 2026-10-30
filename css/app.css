@@ -240,6 +240,10 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
 
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
 .chips.griglia-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.chips.manovre { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px) { .chips.manovre { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+.chip.manovra { font-weight: 500; text-align: left; }
+.chip.manovra strong { font-weight: 800; }
 .chip {
   min-height: 44px; padding: 8px 14px; border-radius: var(--raggio);
   background: var(--chip-fondo); border: 1.5px solid transparent; color: var(--inchiostro);
@@ -337,7 +341,7 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
 
 .modulo { display: grid; gap: 0; }
 .sezione { padding: 2px 0 0; margin: 0 0 14px; border-bottom: 2px dashed var(--linea); break-inside: avoid; }
-.sezione:last-child { border-bottom: 0; margin-bottom: 0; }
+.sezione:last-child, .sezione:has(+ .sezione[hidden]:last-child) { border-bottom: 0; margin-bottom: 0; }
 .sezione > h2 {
   display: flex; align-items: center; justify-content: space-between; gap: 8px;
   font-size: 1.0625rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase;

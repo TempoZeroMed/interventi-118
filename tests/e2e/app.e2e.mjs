@@ -62,7 +62,7 @@ const premuto = async (locator) => (await locator.getAttribute('aria-pressed')) 
 async function nuovoIntervento(page, { missione, comune, ora = '23:40', libero = '00:15' }) {
   await vai(page, '#/nuovo');
   await page.getByLabel('Ora allert.').fill(ora);
-  await page.getByLabel('Missione').fill(missione);
+  await page.getByLabel(/^Missione/).fill(missione);
   await page.getByLabel('Comune', { exact: true }).fill(comune);
   await scegli(page, 'Mezzo', '5022');
   await page.getByRole('radio', { name: 'GIALLO' }).first().click();
@@ -99,7 +99,7 @@ for (const nomeBrowser of BROWSER) {
 
         test('inserimento: regole del form, durata oltre mezzanotte, salvataggio', async () => {
           await nuovoIntervento(page, { missione: 'e2e00001', comune: 'biella' });
-          assert.equal(await page.getByLabel('Missione').inputValue(), 'E2E00001');
+          assert.equal(await page.getByLabel(/^Missione/).inputValue(), 'E2E00001');
           assert.equal(await page.getByLabel('Comune', { exact: true }).inputValue(), 'BIELLA');
           assert.ok(await premuto(page.getByRole('group', { name: 'Tipologia' }).getByRole('button', { name: 'India' })), '5022 imposta India');
           assert.equal(await page.getByRole('radio', { name: 'GIALLO' }).nth(1).getAttribute('aria-checked'), 'true', 'copia da invio');
@@ -111,7 +111,7 @@ for (const nomeBrowser of BROWSER) {
           await scegli(page, 'Ospedale', 'Biella');
           await page.getByRole('button', { name: 'Salva intervento' }).click();
           await attendiTesto(page.locator('#toast'), 'E2E00001 salvato');
-          assert.equal(await page.getByLabel('Missione').inputValue(), '', 'il form si svuota per il prossimo');
+          assert.equal(await page.getByLabel(/^Missione/).inputValue(), '', 'il form si svuota per il prossimo');
           await vai(page, '#/elenco');
           assert.equal(await conteggioElenco(page), demo.length + 1);
           await attendiTesto(page.getByRole('link', { name: /E2E00001/ }), 'BIELLA');
@@ -119,7 +119,7 @@ for (const nomeBrowser of BROWSER) {
 
         test('missione duplicata: salvataggio bloccato con il link al duplicato', async () => {
           await vai(page, '#/nuovo');
-          await page.getByLabel('Missione').fill('E2E00001');
+          await page.getByLabel(/^Missione/).fill('E2E00001');
           await attendiTesto(page.locator('.messaggio.errore'), 'già registrata');
           assert.ok(await page.getByRole('link', { name: 'Apri il duplicato' }).isVisible());
           await page.getByRole('button', { name: 'Salva intervento' }).click();
@@ -183,6 +183,47 @@ for (const nomeBrowser of BROWSER) {
           await page.getByRole('button', { name: 'Anno', exact: true }).click();
           await attendiTesto(page.locator('#banda .sotto'), 'Anno 2026');
         });
+
+        // in fondo al blocco: salva un intervento in più, che cambierebbe i conteggi delle prove precedenti
+        test('volo: sezione solo per gli elicotteri, tipo, tempo e manovre salvati', async () => {
+          const sezioneVolo = page.locator('section.sezione', { has: page.getByRole('heading', { name: 'Volo', exact: true }) });
+          const manovre = page.getByRole('group', { name: 'Manovre', exact: true });
+          const tipo = (voce) => page.getByRole('group', { name: 'Tipo missione', exact: true }).getByRole('button', { name: voce, exact: true });
+          const tempo = () => page.getByLabel('Tempo di volo (min)');
+          await vai(page, '#/nuovo');
+          await page.getByLabel(/^Missione/).fill('99ZZ0777');
+          assert.equal(await sezioneVolo.isVisible(), false, 'nascosta per le ambulanze');
+          await scegli(page, 'Mezzo', 'V-ECHO');
+          assert.ok(await sezioneVolo.isVisible(), 'visibile per V-ECHO');
+          await scegli(page, 'Tipo missione', 'HSR');
+          await tempo().fill('75');
+          await manovre.getByRole('button', { name: 'VD · Verricello discesa' }).click();
+          await manovre.getByRole('button', { name: 'VSP · Verricello salita pannolone' }).click();
+          const controlli = await page.locator('.esiti-controlli').textContent();
+          assert.ok(!/Tipo missione mancante|Tempo volo mancante/.test(controlli), controlli);
+          if (foto) {
+            await sezioneVolo.scrollIntoViewIfNeeded();
+            await scattaSchermata(page, `${vp.nome}-volo`);
+          }
+          await page.getByRole('button', { name: 'Salva intervento' }).click();
+          await attendiTesto(page.locator('#toast'), '99ZZ0777 salvato');
+
+          await vai(page, '#/elenco');
+          await page.getByLabel('Cerca per missione o comune').fill('99ZZ0777');
+          await page.getByRole('link', { name: /99ZZ0777/ }).click();
+          await attendiTesto(page.locator('#banda h1'), 'Intervento 99ZZ0777');
+          assert.ok(await premuto(tipo('HSR')), 'tipo salvato');
+          assert.equal(await tempo().inputValue(), '75');
+          assert.deepEqual(await manovre.getByRole('button', { pressed: true }).allTextContents(),
+            ['VD · Verricello discesa', 'VSP · Verricello salita pannolone']);
+
+          await scegli(page, 'Mezzo', '3030');
+          assert.equal(await sezioneVolo.isVisible(), false, 'sparisce con un\'ambulanza');
+          await scegli(page, 'Mezzo', 'V-ECHO');
+          assert.equal(await tempo().inputValue(), '', 'i dati di volo si sono svuotati');
+          assert.equal(await manovre.getByRole('button', { pressed: true }).count(), 0);
+          assert.equal(await premuto(tipo('HSR')), false);
+        });
       });
     }
 
@@ -244,6 +285,15 @@ for (const nomeBrowser of BROWSER) {
       assert.equal(recA.filter((r) => !r.deleted).length, demo.length + 1, '90 demo − 1 eliminato + 2 nuovi');
       assert.equal(recA.find((r) => r.id === 'demo-0010').comune, 'MONGRANDO');
       assert.equal(recA.find((r) => r.id === 'demo-0005').deleted, true);
+      // i dati di volo fanno il giro dei due dispositivi
+      const volo = demo.find((r) => r.mezzo === 'V-ECHO' && r.tempoVolo !== null);
+      const arrivato = recA.find((r) => r.id === volo.id);
+      assert.deepEqual([arrivato.tipoMissione, arrivato.tempoVolo, arrivato.manovre], [volo.tipoMissione, volo.tempoVolo, volo.manovre]);
+      await vai(b, '#/elenco');
+      await b.getByLabel('Cerca per missione o comune').fill(volo.missione);
+      await b.getByRole('link', { name: new RegExp(volo.missione) }).click();
+      await attendiTesto(b.locator('#banda h1'), `Intervento ${volo.missione}`);
+      assert.equal(await b.getByLabel('Tempo di volo (min)').inputValue(), String(volo.tempoVolo));
       await ctxA.close();
       await ctxB.close();
     });

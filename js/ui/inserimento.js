@@ -2,7 +2,8 @@
 import { stato, trova, salvaIntervento, eliminaIntervento, impostaMeta } from '../stato.js';
 import { calcolati } from '../core/calcolati.js';
 import { avvisi, indiceMissioni, verificaSalvataggio } from '../core/controlli.js';
-import { recordVuoto, impostaCampo, copiaDaInvio, oraLocale, prontoPerSalvare } from '../core/modulo.js';
+import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, oraLocale, prontoPerSalvare } from '../core/modulo.js';
+import { MANOVRE, isElicottero } from '../core/campi.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
 import { h, icona, impostaBanda, toast, conferma, dataLunga, dataBreve, numero, coppiaCodici } from './dom.js';
@@ -43,9 +44,11 @@ function costruisci(main, iniziale, originale) {
     : impostaBanda('Nuovo intervento', r.data ? dataLunga(r.data) : 'senza data'));
 
   let timerBozza = null;
-  /** Ogni modifica passa da qui; campo '_copia' è il pulsante "Copia da invio". */
+  /** Ogni modifica passa da qui; campo '_copia' è il pulsante "Copia da invio", '_manovra' un pulsante delle manovre. */
   function cambia(campo, valore) {
-    r = campo === '_copia' ? copiaDaInvio(r) : impostaCampo(r, campo, valore);
+    if (campo === '_copia') r = copiaDaInvio(r);
+    else if (campo === '_manovra') r = alternaManovra(r, valore);
+    else r = impostaCampo(r, campo, valore);
     modificato = true;
     aggiorna();
     if (!modifica) {
@@ -116,16 +119,17 @@ function costruisci(main, iniziale, originale) {
     return campo('Comune', input, lista);
   }
 
-  function eta() {
+  /** ETÀ e TEMPO VOLO: tastiera numerica; un valore svuotato da una regola del form svuota anche il campo. */
+  function campoNumerico(chiave, etichetta) {
     const input = h('input', {
-      class: 'input num', type: 'text', inputmode: 'numeric', pattern: '[0-9]*', value: r.eta ?? '', autocomplete: 'off',
-      oninput: (e) => cambia('eta', e.target.value),
+      class: 'input num', type: 'text', inputmode: 'numeric', pattern: '[0-9]*', value: r[chiave] ?? '', autocomplete: 'off',
+      oninput: (e) => cambia(chiave, e.target.value),
     });
     quando((x) => {
-      const testo = x.eta === null ? '' : String(x.eta);
-      if (input.value !== testo && Number(input.value) !== x.eta) input.value = testo;
+      const testo = x[chiave] === null || x[chiave] === undefined ? '' : String(x[chiave]);
+      if (input.value !== testo && Number(input.value) !== x[chiave]) input.value = testo;
     });
-    return campo('Età', input);
+    return campo(etichetta, input);
   }
 
   /** Etichetta visibile, oppure solo per i lettori di schermo quando il titolo della sezione dice già cos'è. */
@@ -193,6 +197,18 @@ function costruisci(main, iniziale, originale) {
     return h('div', { class: 'campo' }, h('span', { class: 'etichetta' }, etichetta), gruppo);
   }
 
+  /** Manovre: più scelte insieme, un tocco accende e il secondo spegne. */
+  function manovre() {
+    const bottoni = MANOVRE.map(({ codice, nome }) => h('button', {
+      type: 'button', class: 'chip manovra', 'aria-pressed': 'false', onclick: () => cambia('_manovra', codice),
+    }, h('strong', {}, codice), ` · ${nome}`));
+    quando((x) => {
+      bottoni.forEach((b, i) => b.setAttribute('aria-pressed', String((x.manovre ?? []).includes(MANOVRE[i].codice))));
+    });
+    return h('div', { class: 'campo' }, h('span', { class: 'etichetta' }, 'Manovre'),
+      h('div', { class: 'chips manovre', role: 'group', 'aria-label': 'Manovre' }, bottoni));
+  }
+
   function sezione(titolo, ...contenuto) {
     return h('section', { class: 'sezione' }, h('h2', {}, titolo), ...contenuto);
   }
@@ -240,6 +256,17 @@ function costruisci(main, iniziale, originale) {
     controlliEl.replaceChildren(...blocchi);
   });
 
+  const tempi = sezione('Tempi', ora('liberoOperativo', 'Libero operativo'), calcolatiEl);
+  const volo = sezione('Volo',
+    chips('tipoMissione', 'Tipo missione', 'tipoMissione'),
+    h('div', { class: 'riga-campi' }, campoNumerico('tempoVolo', 'Tempo di volo (min)')),
+    manovre());
+  // solo per gli elicotteri; gli avvisi restano in fondo all'ultima sezione visibile
+  quando((x) => {
+    volo.hidden = !isElicottero(x.mezzo);
+    (volo.hidden ? tempi : volo).append(controlliEl);
+  });
+
   const modulo = h('form', { class: 'modulo', novalidate: true, onsubmit: (e) => { e.preventDefault(); salva(); } },
     sezione('Identificazione',
       h('div', { class: 'riga-campi' }, data('data', 'Data'), missione()),
@@ -253,7 +280,7 @@ function costruisci(main, iniziale, originale) {
       chipsConMenu('patologiaInvio', 'Patologia', 'patologia', ['patologiaInvio', 'patologiaRientro']),
       chips('luogoInvio', 'Luogo', 'luogo')),
     sezione('Paziente',
-      h('div', { class: 'riga-campi' }, eta()),
+      h('div', { class: 'riga-campi' }, campoNumerico('eta', 'Età')),
       chips('sesso', 'Sesso', 'sesso', { griglia: true })),
     sezione('Esito',
       chips('esito', 'Esito', 'esito', { senzaEtichetta: true }),
@@ -263,10 +290,8 @@ function costruisci(main, iniziale, originale) {
       striscia('codiceRientro', 'Codice', 'codiceRientro'),
       chipsConMenu('patologiaRientro', 'Patologia', 'patologia', ['patologiaRientro', 'patologiaInvio']),
       chips('luogoRientro', 'Luogo', 'luogo')),
-    sezione('Tempi',
-      ora('liberoOperativo', 'Libero operativo'),
-      calcolatiEl,
-      controlliEl),
+    tempi,
+    volo,
   );
 
   // ------------------------------------------------------------ azioni

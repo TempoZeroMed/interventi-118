@@ -3,7 +3,7 @@
 // Uso: node tools/genera_demo.mjs [numero] [file]   (predefiniti: 90, tests/fixtures/demo.json)
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { dirname } from 'node:path';
-import { LISTE_PREDEFINITE } from '../js/core/campi.js';
+import { LISTE_PREDEFINITE, MANOVRE, isElicottero, normalizzaManovre } from '../js/core/campi.js';
 import { creaBackup } from '../js/core/merge.js';
 import { MEZZI_SOLO_INDIA } from '../js/core/controlli.js';
 
@@ -28,12 +28,19 @@ for (let i = 0; i < quanti; i++) {
   const inizio = Math.floor(caso() * 1440);
   const durata = 15 + Math.floor(caso() * 110);
   const ora = (m) => `${due(Math.floor((m % 1440) / 60))}:${due(m % 60)}`;
-  const mezzo = uno(['3030', '3040', '5022', '3080', '5023', 'V-ECHO'], [60, 12, 9, 6, 4, 4]);
+  const mezzo = uno(['3030', '3040', '5022', '3080', '5023', 'V-ECHO', 'T-ECHO'], [60, 12, 9, 6, 4, 8, 6]);
   const esito = uno(voci('esito'), [55, 14, 1, 1, 15, 6, 3, 3, 1]);
   const annullato = esito === 'Annullato da CO' || esito === 'Non Raggiungibile';
   const codiceInvio = uno(['VERDE', 'GIALLO', 'ROSSO'], [4, 80, 16]);
   const patologia = uno(voci('patologia'), [9, 25, 22, 24, 7, 1, 2, 1, 1, 1, 0, 0, 0, 0, 0, 6, 2]);
   const luogo = uno(voci('luogo'), [56, 16, 3, 5, 1, 1, 18]);
+  // voli sempre completi: gli avvisi della demo restano i due casi voluti qui sotto
+  const manovra = () => uno(MANOVRE.map((m) => m.codice), [3, 4, 1, 1, 2, 2]);
+  const volo = isElicottero(mezzo) ? {
+    tipoMissione: uno(voci('tipoMissione'), [70, 25, 5]),
+    tempoVolo: 20 + Math.floor(caso() * 141),
+    manovre: caso() < 0.75 ? [] : normalizzaManovre([manovra(), ...(caso() < 0.3 ? [manovra()] : [])]),
+  } : { tipoMissione: '', tempoVolo: null, manovre: [] };
   const id = `demo-${String(i + 1).padStart(4, '0')}`;
   const istante = new Date(`${data}T${ora(inizio)}:00`).toISOString();
   record.push({
@@ -47,6 +54,7 @@ for (let i = 0; i < quanti; i++) {
     patologiaRientro: annullato ? '' : caso() < 0.8 ? patologia : uno(voci('patologia')),
     luogoRientro: annullato ? '' : luogo,
     liberoOperativo: ora(inizio + durata),
+    ...volo,
   });
 }
 // due casi da controllare, per vedere gli avvisi

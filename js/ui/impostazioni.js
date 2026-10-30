@@ -12,6 +12,7 @@ import { impostaFiltri } from './elenco.js';
 const NOMI_LISTE = {
   mezzo: 'Mezzi', tipologia: 'Tipologia', codiceInvio: 'Codici invio', codiceRientro: 'Codici rientro',
   patologia: 'Patologie', luogo: 'Luoghi', sesso: 'Sesso', esito: 'Esiti', ospedale: 'Ospedali',
+  tipoMissione: 'Tipo missione',
 };
 let listaScelta = 'ospedale';
 let ultimoEsitoImport = null;
