@@ -41,18 +41,30 @@ test('righe come nel foglio "Interventi": due intestazioni, poi in ordine cronol
   assert.equal(righe[0][0], 'IDENTIFICAZIONE');
   assert.deepEqual(righe[1], [
     '#', 'DATA', 'ORA ALLERT.', 'MISSIONE', 'COMUNE', 'MEZZO', 'TIPOLOGIA', 'CODICE', 'PATOLOGIA', 'LUOGO', 'ETÀ', 'SESSO',
-    'ESITO', 'OSPEDALE', 'CODICE', 'PATOLOGIA', 'LUOGO', 'LIBERO OPERATIVO', 'DURATA (min)', 'MESE', 'ORA DEL GIORNO',
-    'Δ CODICE', 'CONTROLLI',
+    'ESITO', 'OSPEDALE', 'CODICE', 'PATOLOGIA', 'LUOGO', 'LIBERO OPERATIVO', 'TIPO MISSIONE', 'TEMPO VOLO (min)',
+    'HD', 'VD', 'HS', 'VS', 'VSP', 'VSB', 'DURATA (min)', 'MESE', 'ORA DEL GIORNO', 'Δ CODICE', 'CONTROLLI',
   ]);
+  assert.equal(righe[0][18], 'VOLO');
+  assert.equal(righe[0][26], 'CALCOLATE – non scrivere');
   assert.equal(righe.length, 5);
   assert.deepEqual(righe[2], [
     1, 46023, 612 / 1440, '99ZZ0101', 'COSSATO', 3080, 'Mike', 'GIALLO', '02 - Cardio', 'K - Casa', 72, 'Femmina',
-    'Non Necessita', null, 'VERDE', '02 - Cardio', 'K - Casa', 651 / 1440, 39, 1, 10, -1, null,
+    'Non Necessita', null, 'VERDE', '02 - Cardio', 'K - Casa', 651 / 1440, null, null, null, null, null, null, null, null,
+    39, 1, 10, -1, null,
   ]);
   assert.equal(righe[3][5], 'V-ECHO', 'i mezzi non numerici restano testo');
-  assert.equal(righe[3][18], 30, 'durata a cavallo della mezzanotte');
-  assert.equal(righe[3][21], null, 'Δ vuoto con rientro NERO');
-  assert.equal(righe[4][22], 'Missione non di 8 caratteri; Ospedale senza trasporto;', 'CONTROLLI come la formula Excel');
+  assert.equal(righe[3][26], 30, 'durata a cavallo della mezzanotte');
+  assert.equal(righe[3][29], null, 'Δ vuoto con rientro NERO');
+  assert.equal(righe[4][30], 'Missione non di 8 caratteri; Ospedale senza trasporto;', 'CONTROLLI come la formula Excel');
+});
+
+test('colonne VOLO: tipo, tempo e una X per ogni manovra; vuote per le ambulanze', () => {
+  const righe = righeExcel([
+    r({ id: 'e', data: '2026-02-01', missione: '99ZZ0301', mezzo: 'V-ECHO', tipoMissione: 'HSR', tempoVolo: 75, manovre: ['VD', 'VSP'] }),
+    r({ id: 'f', data: '2026-02-02', missione: '99ZZ0302', mezzo: '3030' }),
+  ]);
+  assert.deepEqual(righe[2].slice(18, 26), ['HSR', 75, null, 'X', null, null, 'X', null]);
+  assert.deepEqual(righe[3].slice(18, 26), [null, null, null, null, null, null, null, null]);
 });
 
 test('il file .xlsx creato con SheetJS ha intestazioni unite, formati data/ora e mezzi numerici', () => {
@@ -61,7 +73,7 @@ test('il file .xlsx creato con SheetJS ha intestazioni unite, formati data/ora e
   assert.deepEqual(Array.from(cartella.SheetNames), ['Interventi']);
   const foglio = cartella.Sheets.Interventi;
   assert.equal(foglio.A1.v, 'IDENTIFICAZIONE');
-  assert.equal(foglio['!merges'].length, 8);
+  assert.equal(foglio['!merges'].length, 9);
   assert.equal(foglio.B3.v, 46023);
   assert.equal(foglio.B3.z, 'dd/mm/yyyy');
   assert.equal(foglio.C3.z, 'hh:mm');
@@ -84,7 +96,7 @@ test('il file esportato si rilegge con tools/xlsx_to_json.py e restituisce gli s
     assert.equal(esito.status, 0, esito.stderr);
     const riletti = JSON.parse(readFileSync(json, 'utf8')).record;
     const campi = (x) => {
-      const { id, createdAt, updatedAt, deleted, ...resto } = x;
+      const { id, createdAt, updatedAt, deleted, tipoMissione, tempoVolo, manovre, ...resto } = x;
       return resto;
     };
     const attesi = RECORD.filter((x) => !x.deleted).sort((x, y) => x.data.localeCompare(y.data)).map(campi);
