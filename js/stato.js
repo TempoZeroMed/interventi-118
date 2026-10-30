@@ -91,8 +91,13 @@ export async function importaBackup(backup, adesso = new Date()) {
   return { ...riepilogo, listeAggiornate };
 }
 
+/** Il tipo di dispositivo che dà il nome ai file esportati (mai il codice di nomeDispositivo). */
+export function tipoDispositivo() {
+  return isIOS() ? 'iPhone' : 'Mac';
+}
+
 export function nomeDispositivo() {
-  return `${isIOS() ? 'iPhone' : 'Mac'} ${String(stato.meta.dispositivoId ?? '').slice(0, 4)}`.trim();
+  return `${tipoDispositivo()} ${String(stato.meta.dispositivoId ?? '').slice(0, 4)}`.trim();
 }
 
 export function backupCorrente(adesso = new Date()) {

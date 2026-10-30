@@ -150,8 +150,13 @@ export function promemoriaBackup({ ultimoBackup, modificheNonEsportate = 0, nume
   return motivi.length ? { messaggio: motivi.join(' ') } : null;
 }
 
-/** interventi118_AAAA-MM-GG_HHMM.json, con data e ora locali. */
-export function nomeFileBackup(d = new Date()) {
+/** interventi118_iPhone.json / interventi118_Mac.json: lo stesso nome a ogni esportazione, così il file si sostituisce. */
+export function nomeFileBackup(dispositivo, estensione = 'json') {
+  return `interventi118_${dispositivo}.${estensione}`;
+}
+
+/** interventi118_AAAA-MM-GG_HHMM.json, con data e ora locali: la copia storica. */
+export function nomeFileDatato(d = new Date()) {
   const due = (n) => String(n).padStart(2, '0');
   return `interventi118_${d.getFullYear()}-${due(d.getMonth() + 1)}-${due(d.getDate())}_${due(d.getHours())}${due(d.getMinutes())}.json`;
 }

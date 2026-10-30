@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { unisci, unisciListe, leggiBackup, creaBackup, nomeFileBackup, promemoriaBackup } from '../js/core/merge.js';
+import { unisci, unisciListe, leggiBackup, creaBackup, nomeFileBackup, nomeFileDatato, promemoriaBackup } from '../js/core/merge.js';
 
 const SYNC = '2026-10-20T00:00:00.000Z';
 const PRIMA = '2026-10-10T00:00:00.000Z';   // prima dell'ultima sincronizzazione
@@ -160,9 +160,15 @@ test('backup creato e riletto: stessi record e stesse liste', () => {
   assert.deepEqual(riletto.liste, liste);
 });
 
-test('nome del file di backup con data e ora locali', () => {
-  assert.equal(nomeFileBackup(new Date(2026, 9, 25, 9, 5)), 'interventi118_2026-10-25_0905.json');
-  assert.equal(nomeFileBackup(new Date(2026, 0, 3, 23, 59)), 'interventi118_2026-01-03_2359.json');
+test('nome fisso del file di backup per dispositivo', () => {
+  assert.equal(nomeFileBackup('iPhone'), 'interventi118_iPhone.json');
+  assert.equal(nomeFileBackup('Mac'), 'interventi118_Mac.json');
+  assert.equal(nomeFileBackup('Mac', 'xlsx'), 'interventi118_Mac.xlsx');
+});
+
+test('nome della copia con data e ora locali', () => {
+  assert.equal(nomeFileDatato(new Date(2026, 9, 25, 9, 5)), 'interventi118_2026-10-25_0905.json');
+  assert.equal(nomeFileDatato(new Date(2026, 0, 3, 23, 59)), 'interventi118_2026-01-03_2359.json');
 });
 
 test('promemoria backup: nessuno con un backup recente e poche modifiche', () => {
