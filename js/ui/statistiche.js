@@ -8,6 +8,7 @@ import { h, riempi, icona, impostaBanda, codice, numero, conteggio, pct, pctGia 
 import { caricaScript, CHART } from './file.js';
 import { impostaFiltri } from './elenco.js';
 import { disegnaVolo } from './volo.js';
+import { montaDomande } from './domande.js';
 
 let periodo = null; // resta scelto finché l'app è aperta
 let vista = 'interventi'; // 'interventi' | 'volo', come il periodo
@@ -103,6 +104,7 @@ export function mostra(main) {
 
   disegnaVista();
   disegnaSelettore();
+  const domande = montaDomande(main, { periodoCorrente: () => periodo });
   main.append(selettore, contenuto);
   disegna();
   const tema = matchMedia('(prefers-color-scheme: dark)');
@@ -112,6 +114,7 @@ export function mostra(main) {
     aggiorna: disegna,
     async puoiUscire() {
       tema.removeEventListener('change', cambioTema);
+      domande.smonta();
       grafici.forEach((g) => g.destroy());
       grafici = [];
       return true;

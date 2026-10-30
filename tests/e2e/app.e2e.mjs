@@ -286,6 +286,82 @@ for (const nomeBrowser of BROWSER) {
           await page.waitForFunction(() => document.querySelectorAll('.grafico canvas').length === 6);
         });
 
+        test('statistiche: domande all\'archivio, tradotte dal servizio e calcolate sul dispositivo', async () => {
+          await vai(page, '#/statistiche');
+          const riquadro = page.locator('section.domande');
+          await attendiTesto(riquadro, 'imposta la parola d\'ordine nelle Impostazioni');
+          await vai(page, '#/impostazioni');
+          const impostazioni = page.locator('section', { has: page.getByRole('heading', { name: 'Domande all\'archivio' }) });
+          await impostazioni.getByLabel('Parola d\'ordine').fill('prova');
+          await impostazioni.getByRole('button', { name: 'Salva' }).click();
+          await attendiTesto(impostazioni, 'Impostata');
+
+          // il servizio finto risponde con ciò che la prova decide; registra le richieste
+          const QUERY_ORA = {
+            tipo: 'query', interpretazione: 'Interventi per ora del giorno', misura: 'interventi', gruppi: ['ora'], filtri: [],
+            periodo: null, confronto: null, ordine: 'max', primi: null,
+          };
+          const richieste = [];
+          let risposta = { status: 200, body: { ...QUERY_ORA, modello: 'claude-haiku-5-5' } };
+          await page.route('**/api/domanda', async (route) => {
+            richieste.push(JSON.parse(route.request().postData()));
+            await route.fulfill({ status: risposta.status, contentType: 'application/json', body: JSON.stringify(risposta.body) });
+          });
+          const chiedi = async (testo) => {
+            await riquadro.getByLabel('Domanda').fill(testo);
+            await riquadro.getByRole('button', { name: 'Chiedi' }).click();
+          };
+
+          await vai(page, '#/statistiche');
+          assert.equal(await riquadro.locator('.esempi .chip').count(), 4, 'esempi a campo vuoto');
+          await chiedi('Qual è l\'ora in cui esco di più?');
+          await attendiTesto(riquadro, 'Inteso come: Interventi per ora del giorno');
+          assert.equal(await riquadro.locator('table.tabella tbody tr').count(), 24);
+          assert.ok(await riquadro.locator('.cifra .valore').isVisible());
+          await page.waitForFunction(() => document.querySelector('section.domande canvas')?.width > 0);
+          const inviata = richieste[0];
+          assert.equal(inviata.parolaOrdine, 'prova');
+          assert.equal(inviata.domanda, 'Qual è l\'ora in cui esco di più?');
+          assert.match(inviata.oggi, /^\d{4}-\d{2}-\d{2}$/);
+          assert.ok(inviata.liste.ospedale.includes('Biella'));
+          assert.ok(inviata.comuni.length > 0);
+          assert.deepEqual(Object.keys(inviata).sort(), ['comuni', 'domanda', 'liste', 'oggi', 'parolaOrdine']);
+          assert.ok(!JSON.stringify(inviata).includes('DEMO0'), 'nessun codice di missione parte con la domanda');
+          if (foto) await scattaSchermata(page, `${vp.nome}-domande`, { inCima: true });
+
+          // controdomanda: risposta nello stesso riquadro, poi la query
+          risposta = { status: 200, body: { tipo: 'controdomanda', testo: 'Intendi l\'ora di allertamento?', modello: 'claude-haiku-5-5' } };
+          await chiedi('Quando esco?');
+          await attendiTesto(riquadro, 'Intendi l\'ora di allertamento?');
+          risposta = { status: 200, body: { ...QUERY_ORA, modello: 'claude-haiku-5-5' } };
+          await riquadro.getByLabel('Risposta').fill('sì');
+          await riquadro.getByRole('button', { name: 'Rispondi' }).click();
+          await attendiTesto(riquadro, 'Inteso come');
+          assert.deepEqual(richieste.at(-1).controdomanda, { testo: 'Intendi l\'ora di allertamento?', risposta: 'sì' });
+          assert.equal(richieste.at(-1).domanda, 'Quando esco?');
+
+          // rifiuto con tre esempi toccabili
+          const esempi = ['Quanti interventi a luglio?', 'Durata media per mezzo', 'Quanti codici rossi quest\'anno?'];
+          risposta = { status: 200, body: { tipo: 'rifiuto', testo: 'Non posso rispondere con i dati dell\'app.', esempi, modello: 'claude-haiku-5-5' } };
+          await chiedi('Che tempo fa?');
+          await attendiTesto(riquadro, 'Non posso rispondere con i dati dell\'app.');
+          assert.deepEqual(await riquadro.locator('.esito-domanda .chip').allTextContents(), esempi);
+
+          // parola d'ordine sbagliata
+          risposta = { status: 401, body: { errore: 'Parola d\'ordine errata.' } };
+          await chiedi('Quanti interventi?');
+          await attendiTesto(riquadro, 'Parola d\'ordine errata: controlla le Impostazioni.');
+
+          // senza rete il campo si spegne e spiega perché
+          await page.context().setOffline(true);
+          await attendiTesto(riquadro, 'Serve la rete per fare domande.');
+          assert.ok(await riquadro.getByRole('button', { name: 'Chiedi' }).isDisabled());
+          await page.context().setOffline(false);
+          await attendiTesto(riquadro, 'La domanda, le voci delle liste e i nomi dei comuni');
+          assert.ok(await riquadro.getByRole('button', { name: 'Chiedi' }).isEnabled());
+          await page.unroute('**/api/domanda');
+        });
+
         // in fondo al blocco: salva un intervento in più, che cambierebbe i conteggi delle prove precedenti
         test('volo: sezione solo per gli elicotteri, tipo, tempo e manovre salvati', async () => {
           const sezioneVolo = page.locator('section.sezione', { has: page.getByRole('heading', { name: 'Volo', exact: true }) });

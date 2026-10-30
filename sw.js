@@ -24,6 +24,7 @@ const FILE = [
   'js/core/tablet.js',
   'js/core/volo.js',
   'js/ui/dom.js',
+  'js/ui/domande.js',
   'js/ui/elenco.js',
   'js/ui/file.js',
   'js/ui/fototablet.js',
@@ -92,6 +93,7 @@ self.addEventListener('fetch', (evento) => {
   const richiesta = evento.request;
   const url = new URL(richiesta.url);
   if (richiesta.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (url.pathname.includes('/api/')) return; // le domande all'archivio vanno sempre in rete, mai in cache
   // I file del lettore si cercano nella sua cache e, se mancano, si scaricano e si salvano lì
   const nomeCache = url.pathname.includes('/vendor/tesseract-') ? LETTORE : VERSIONE;
   evento.respondWith((async () => {
