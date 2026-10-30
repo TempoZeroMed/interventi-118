@@ -26,7 +26,7 @@ Personal, offline, private: the data never leaves the device except through an e
 
 - One record = one mission/patient, with the fields of the Excel "Interventi" sheet (date, alert time, mission code, municipality, vehicle, India/Mike type, dispatch code/pathology/place, age, sex, outcome, hospital, on-scene code/pathology/place, free-again time).
 - Colour codes VERDE < GIALLO < ROSSO (NERO only on scene) are the core vocabulary of 118 triage.
-- Data moves between iPhone and Mac through JSON files on iCloud Drive, merged by record id.
+- Data moves between iPhone and Mac through JSON files on iCloud Drive, merged by record id. Files have a fixed name per device (interventi118_iPhone.json, interventi118_Mac.json) so they overwrite instead of piling up; there is deliberately no automatic or cloud backup, because the app will be used by other nurses and no shared storage is acceptable.
 - Pseudonymised health data: no names, no identifiers beyond the mission code.
 
 ## Capabilities and Constraints

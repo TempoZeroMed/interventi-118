@@ -294,17 +294,24 @@ In **Impostazioni → Archiviazione sul dispositivo** vedi se iOS ha concesso l'
 
 ## Backup e passaggio dei dati tra Mac e iPhone
 
-Non c'è sincronizzazione automatica: i dati passano da un dispositivo all'altro con un **file di backup JSON** salvato su iCloud Drive. Il nome del file contiene data e ora: `interventi118_AAAA-MM-GG_HHMM.json`.
+Non c'è sincronizzazione automatica né backup in rete, per scelta: l'app la useranno anche colleghi e nessun archivio comune è accettabile. I dati passano da un dispositivo all'altro con un **file di backup JSON** salvato su iCloud Drive.
+
+Il file ha un **nome fisso per dispositivo**: `interventi118_iPhone.json` dall'iPhone, `interventi118_Mac.json` dal Mac. Salvandolo sempre nella stessa cartella, il sistema chiede di sostituire il file: il backup resta uno solo per dispositivo e non ci sono file vecchi da cancellare. I due file sono anche i file di scambio: ogni dispositivo importa quello dell'altro.
 
 ### Dall'iPhone al Mac
 
-1. iPhone: **Impostazioni → Esporta backup**. Si apre la condivisione: scegli **Salva su File**, poi **iCloud Drive** (ad esempio una cartella "Interventi 118"), poi **Salva**.
-2. Mac: apri l'app, **Impostazioni → Importa backup** e scegli il file da iCloud Drive.
+1. iPhone: **Impostazioni → Esporta backup**. Si apre la condivisione: scegli **Salva su File**, poi la cartella di **iCloud Drive** (ad esempio "Interventi 118"), poi **Salva**. Dalla seconda volta iOS chiede di sostituire `interventi118_iPhone.json`: tocca **Sostituisci**.
+2. Mac: apri l'app, **Impostazioni → Importa backup** e scegli `interventi118_iPhone.json` da iCloud Drive.
 
 ### Dal Mac all'iPhone
 
-1. Mac: **Impostazioni → Esporta backup**. Il file finisce in Download: spostalo in iCloud Drive.
-2. iPhone, dall'app installata: **Impostazioni → Importa backup → Sfoglia → iCloud Drive** e scegli il file.
+1. Mac: **Impostazioni → Esporta backup**. Il file si chiama `interventi118_Mac.json` (vedi sotto dove finisce).
+2. iPhone, dall'app installata: **Impostazioni → Importa backup → Sfoglia → iCloud Drive** e scegli `interventi118_Mac.json`.
+
+### Sul Mac: Safari o Chrome
+
+- **Safari** scarica nei Download e, se il file c'è già, lo rinomina in `interventi118_Mac-1.json`, `-2` e così via: l'app non può evitarlo. Rimedio: in Safari apri **Impostazioni → Generali → Posizione download** e scegli **Chiedi per ogni download**. A ogni esportazione scegli la cartella di iCloud Drive e il Mac chiede di sostituire il file.
+- **Chrome ed Edge** aprono la finestra di salvataggio con il nome già scritto: la prima volta scegli la cartella (per esempio in iCloud Drive). Le volte dopo l'app **riscrive quel file da sola**, senza chiedere. Se il file non c'è più (spostato, rinominato) o il browser non dà il permesso, si riapre la finestra di scelta e l'app ricorda la nuova posizione. Backup ed Excel hanno ciascuno il proprio file ricordato.
 
 ### Cosa succede all'import
 
@@ -327,7 +334,8 @@ A fine import compare il riepilogo:
 ### Promemoria e archivio
 
 - Nell'app compare un promemoria quando l'ultimo backup ha più di **7 giorni** o ci sono più di **10 modifiche** non esportate.
-- **Esporta Excel** crea un file `.xlsx` con le stesse colonne del foglio "Interventi", comprese quelle calcolate. Serve per l'archivio, **non** è un backup da reimportare: per quello usa il JSON.
+- **Esporta copia con data** crea `interventi118_AAAA-MM-GG_HHMM.json`, per chi vuole conservare una copia storica accanto al file fisso. Conta come backup (azzera il promemoria); in Chrome la finestra di salvataggio si apre ogni volta.
+- **Esporta Excel** crea `interventi118_iPhone.xlsx` o `interventi118_Mac.xlsx`, con la stessa regola del nome fisso, e le stesse colonne del foglio "Interventi", comprese quelle calcolate. Serve per l'archivio, **non** è un backup da reimportare: per quello usa il JSON.
 - Se perdi o cambi il telefono, i dati sono nell'ultimo backup su iCloud Drive: installa l'app sul nuovo iPhone e importalo.
 
 ---
