@@ -23,7 +23,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - name: Test (il confronto con l'Excel si salta: i dati reali non sono nel repository)
+      # il confronto con l'Excel si salta da solo: i dati reali non sono nel repository
+      - name: Test
         run: node --test
       - name: Copia solo i file dell'app
         run: |
