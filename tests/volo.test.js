@@ -99,3 +99,14 @@ test('intervallo a cavallo d\'anno: mesi con l\'anno nell\'etichetta', () => {
   const s = calcolaStatisticheVolo(record, LISTE_PREDEFINITE, { tipo: 'intervallo', da: '2026-12-01', a: '2027-01-31' });
   assert.deepEqual(s.mesi.map((m) => m.voce), ['Dic 2026', 'Gen 2027']);
 });
+
+test('un tempo di volo non numerico non entra in somme e medie', () => {
+  const record = [
+    r({ id: 'a', data: '2026-05-01', mezzo: 'V-ECHO', tempoVolo: 40 }),
+    r({ id: 'b', data: '2026-05-02', mezzo: 'V-ECHO', tempoVolo: NaN }),
+    r({ id: 'c', data: '2026-05-03', mezzo: 'V-ECHO', tempoVolo: '45 min' }),
+  ];
+  const s = calcolaStatisticheVolo(record, LISTE_PREDEFINITE, TUTTO);
+  assert.deepEqual(s.basi, { missioni: 3, conTempo: 1 });
+  assert.deepEqual([s.kpi.minutiVolo, s.tempo.media], [40, 40]);
+});

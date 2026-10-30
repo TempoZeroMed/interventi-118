@@ -85,3 +85,11 @@ test('TEMPO VOLO: numero, null se vuoto, virgola accettata', () => {
   assert.equal(impostaCampo(r, 'tempoVolo', ' ').tempoVolo, null);
   assert.equal(impostaCampo(r, 'tempoVolo', '44,5').tempoVolo, 44.5);
 });
+
+test('TEMPO VOLO ed ETÀ scritti come testo restano testo, come nella normalizzazione (mai NaN)', () => {
+  const r = recordVuoto('x', new Date(2026, 0, 1));
+  assert.equal(impostaCampo(r, 'tempoVolo', '45 min').tempoVolo, '45 min');
+  assert.equal(impostaCampo(r, 'tempoVolo', '-').tempoVolo, '-');
+  assert.equal(impostaCampo(r, 'eta', 'abc').eta, 'abc');
+  assert.equal(impostaCampo(r, 'tempoVolo', '45,').tempoVolo, '45,', 'la virgola in corso di scrittura non sparisce');
+});

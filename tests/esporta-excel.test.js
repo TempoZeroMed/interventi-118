@@ -73,7 +73,9 @@ test('il file .xlsx creato con SheetJS ha intestazioni unite, formati data/ora e
   assert.deepEqual(Array.from(cartella.SheetNames), ['Interventi']);
   const foglio = cartella.Sheets.Interventi;
   assert.equal(foglio.A1.v, 'IDENTIFICAZIONE');
-  assert.equal(foglio['!merges'].length, 9);
+  assert.equal(foglio['!merges'].length, 8, 'TEMPI ha una colonna sola: niente unione di una cella');
+  assert.ok(foglio['!merges'].every((u) => u.e.c > u.s.c), 'Excel segnala come danneggiate le unioni di una sola cella');
+  assert.equal(foglio.R1.v, 'TEMPI');
   assert.equal(foglio.B3.v, 46023);
   assert.equal(foglio.B3.z, 'dd/mm/yyyy');
   assert.equal(foglio.C3.z, 'hh:mm');

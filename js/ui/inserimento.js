@@ -3,7 +3,7 @@ import { stato, trova, salvaIntervento, eliminaIntervento, impostaMeta } from '.
 import { calcolati } from '../core/calcolati.js';
 import { avvisi, indiceMissioni, verificaSalvataggio } from '../core/controlli.js';
 import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, oraLocale, prontoPerSalvare } from '../core/modulo.js';
-import { MANOVRE, isElicottero } from '../core/campi.js';
+import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
 import { h, icona, impostaBanda, toast, conferma, dataLunga, dataBreve, numero, coppiaCodici } from './dom.js';
@@ -127,7 +127,7 @@ function costruisci(main, iniziale, originale) {
     });
     quando((x) => {
       const testo = x[chiave] === null || x[chiave] === undefined ? '' : String(x[chiave]);
-      if (input.value !== testo && Number(input.value) !== x[chiave]) input.value = testo;
+      if (input.value !== testo && normalizzaNumero(input.value) !== x[chiave]) input.value = testo;
     });
     return campo(etichetta, input);
   }

@@ -93,3 +93,13 @@ test('allineaVociSistema blocca V-ECHO e T-ECHO anche in una lista salvata senza
   assert.equal(allineata.mezzo[0].updatedAt, '2026-01-01T00:00:00.000Z');
   assert.equal(salvata.mezzo[0].sistema, false, 'non modifica l\'oggetto di partenza');
 });
+
+test('allineaVociSistema riattiva un elicottero disattivato prima che diventasse voce di sistema', () => {
+  const salvata = { mezzo: [
+    { id: 'mezzo-t-echo', voce: 'T-ECHO', attiva: false, sistema: false, updatedAt: '2026-01-01T00:00:00.000Z' },
+    { id: 'mezzo-v-echo', voce: 'V-ECHO', attiva: false, sistema: true, updatedAt: '2026-01-01T00:00:00.000Z' },
+    { id: 'mezzo-7050', voce: '7050', attiva: false, sistema: false, updatedAt: '2026-01-01T00:00:00.000Z' },
+  ] };
+  assert.deepEqual(allineaVociSistema(salvata).mezzo.map((v) => [v.voce, v.sistema, v.attiva]),
+    [['T-ECHO', true, true], ['V-ECHO', true, true], ['7050', false, false]]);
+});

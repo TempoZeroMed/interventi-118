@@ -7,7 +7,7 @@ import { arrotondaExcel, filtraPeriodo, media, mediana, mesiDelPeriodo, NOMI_MES
 const div = (a, b) => (b ? a / b : 0);
 const somma = (v) => v.reduce((s, x) => s + x, 0);
 /** COUNT(TEMPO VOLO): solo i tempi numerici; un record salvato prima dei campi di volo non ne ha. */
-const tempi = (missioni) => missioni.map((r) => r.tempoVolo).filter((t) => typeof t === 'number');
+const tempi = (missioni) => missioni.map((r) => r.tempoVolo).filter(Number.isFinite);
 const numeroManovre = (r) => (r.manovre ?? []).length;
 
 /** Colonne "Ore volo", "Volo medio" e "Con tempo" di un gruppo di missioni. */

@@ -61,7 +61,8 @@ export function righeExcel(records) {
 export function creaCartellaExcel(XLSX, records) {
   const righe = righeExcel(records);
   const foglio = XLSX.utils.aoa_to_sheet(righe);
-  foglio['!merges'] = SEZIONI.map(([, da, a]) => ({ s: { r: 0, c: da }, e: { r: 0, c: a } }));
+  // Excel segnala come danneggiata un'unione di una sola cella: TEMPI resta un'etichetta semplice
+  foglio['!merges'] = SEZIONI.filter(([, da, a]) => a > da).map(([, da, a]) => ({ s: { r: 0, c: da }, e: { r: 0, c: a } }));
   foglio['!cols'] = INTESTAZIONI.map((h) => ({ wch: Math.max(6, Math.min(24, h.length + 2)) }));
   for (let r = 2; r < righe.length; r++) {
     for (const [col, formato] of [[1, 'dd/mm/yyyy'], [2, 'hh:mm'], [17, 'hh:mm']]) {

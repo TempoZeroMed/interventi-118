@@ -92,11 +92,15 @@ export const LISTE_PREDEFINITE = Object.fromEntries(Object.entries(VOCI).map(([n
   })),
 ]));
 
-/** Le voci di sistema si riconoscono dal nome: vale anche per le liste salvate prima che lo diventassero. */
+/**
+ * Le voci di sistema si riconoscono dal nome: vale anche per le liste salvate prima che lo diventassero.
+ * Non si possono disattivare, quindi una voce disattivata prima di diventarlo torna attiva.
+ */
 export function allineaVociSistema(liste) {
+  const daAllineare = (nome, v) => (SISTEMA[nome] ?? []).includes(v.voce) && !(v.sistema && v.attiva);
   return Object.fromEntries(Object.entries(liste).map(([nome, voci]) => [
     nome,
-    voci.map((v) => (!v.sistema && (SISTEMA[nome] ?? []).includes(v.voce) ? { ...v, sistema: true } : v)),
+    voci.map((v) => (daAllineare(nome, v) ? { ...v, sistema: true, attiva: true } : v)),
   ]));
 }
 
@@ -120,9 +124,10 @@ export function minutiDaOra(testo) {
 export function normalizzaNumero(valore) {
   if (valore === null || valore === undefined) return null;
   if (typeof valore === 'number') return valore;
-  const testo = String(valore).trim().replace(',', '.');
+  const testo = String(valore).trim();
   if (testo === '') return null;
-  return /^-?\d+(\.\d+)?$/.test(testo) ? Number(testo) : testo;
+  const conPunto = testo.replace(',', '.');
+  return /^-?\d+(\.\d+)?$/.test(conPunto) ? Number(conPunto) : testo;
 }
 
 /** Codici noti, senza ripetizioni, nell'ordine delle colonne. */
