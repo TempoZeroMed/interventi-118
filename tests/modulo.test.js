@@ -1,6 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recordVuoto, impostaCampo, copiaDaInvio, oraLocale, dataLocale, prontoPerSalvare } from '../js/core/modulo.js';
+import {
+  recordVuoto, impostaCampo, copiaDaInvio, oraLocale, dataLocale, prontoPerSalvare, alternaManovra,
+} from '../js/core/modulo.js';
 
 const ADESSO = new Date(2026, 9, 29, 7, 5); // 29 ottobre 2026, 07:05 ora locale
 
@@ -10,6 +12,7 @@ test('nuovo intervento: DATA di oggi, tutto il resto vuoto', () => {
   assert.equal(r.data, '2026-10-29');
   assert.equal(r.oraAllert, '');
   assert.equal(r.eta, null);
+  assert.deepEqual([r.tipoMissione, r.tempoVolo, r.manovre], ['', null, []]);
   assert.equal(r.deleted, false);
   assert.equal(r.createdAt, ADESSO.toISOString());
 });
@@ -56,4 +59,29 @@ test('salvataggio: record normalizzato con updatedAt aggiornato e createdAt inva
   assert.equal(s.comune, 'BIELLA');
   assert.equal(s.updatedAt, '2026-10-29T08:00:00.000Z');
   assert.equal(s.createdAt, ADESSO.toISOString());
+});
+
+test('manovre: un tocco accende, un secondo tocco spegne, ordine fisso', () => {
+  let r = recordVuoto('x', new Date(2026, 0, 1));
+  r = alternaManovra(r, 'VSB');
+  r = alternaManovra(r, 'HD');
+  assert.deepEqual(r.manovre, ['HD', 'VSB']);
+  assert.deepEqual(alternaManovra(r, 'HD').manovre, ['VSB']);
+});
+
+test('cambio di mezzo: tra elicotteri i dati di volo restano, verso un\'ambulanza o togliendo il mezzo si svuotano', () => {
+  const volo = { ...recordVuoto('x', new Date(2026, 0, 1)), mezzo: 'V-ECHO', tipoMissione: 'HSR', tempoVolo: 50, manovre: ['VD'] };
+  const tEcho = impostaCampo(volo, 'mezzo', 'T-ECHO');
+  assert.deepEqual([tEcho.tipoMissione, tEcho.tempoVolo, tEcho.manovre], ['HSR', 50, ['VD']]);
+  for (const mezzo of ['3030', '']) {
+    const r = impostaCampo(volo, 'mezzo', mezzo);
+    assert.deepEqual([r.tipoMissione, r.tempoVolo, r.manovre], ['', null, []], mezzo || 'mezzo tolto');
+  }
+});
+
+test('TEMPO VOLO: numero, null se vuoto, virgola accettata', () => {
+  const r = recordVuoto('x', new Date(2026, 0, 1));
+  assert.equal(impostaCampo(r, 'tempoVolo', '44').tempoVolo, 44);
+  assert.equal(impostaCampo(r, 'tempoVolo', ' ').tempoVolo, null);
+  assert.equal(impostaCampo(r, 'tempoVolo', '44,5').tempoVolo, 44.5);
 });
