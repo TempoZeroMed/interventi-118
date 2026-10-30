@@ -189,7 +189,7 @@ export function mostra(main) {
 
   const info = h('section', { class: 'blocco' },
     h('h2', {}, 'Informazioni'),
-    h('p', {}, 'Interventi 118, versione 1.0.0. I dati restano solo su questo dispositivo: nessun server, nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file.'));
+    h('p', {}, 'Interventi 118, versione 1.1.0. I dati restano solo su questo dispositivo: nessun server, nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file.'));
 
   function disegnaTutto() {
     disegnaDati();

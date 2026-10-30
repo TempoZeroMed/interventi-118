@@ -300,6 +300,7 @@ Plain, heavy-lettered plates.
 - **Style:** filled and borderless, chip-fondo ground, ink text, 600 weight, 44px tall. Choice chips are visibly a different material from text inputs: chips are filled, inputs are light and outlined.
 - **Selected:** banda fill with banda-testo (inverted to ink with stock text at night).
 - **Altro… select:** an inline select styled as a chip (same fill, 108px minimum), turning band-filled when it holds a choice.
+- **Manoeuvre chips (Volo):** the six helicopter manoeuvres are multi-select chips, each pressed independently. Code in 800 weight, then "· name" in 500, left aligned; two columns on the phone, three from 768px. Same selected style as every chip.
 
 ### Inputs / Fields
 - **Style:** carta ground, 1.5px linea outline, raggio, 48px, tabular numerals. Custom chevron on selects.
@@ -318,6 +319,10 @@ The same strip, small, reports invio → rientro in the list, the detail band an
 
 ### Statistics
 KPIs are a grid on the stock: label small term, numeral value, faded notes, cells split by hairline linea rules under a dashed top perforation. Charts are Chart.js bars in ink (light ink at night) with linea gridlines and inchiostro-2 axes; invio/rientro charts follow chiaro = invio (26% tint with a 2px border), pieno = rientro.
+
+A two-way segmented control, **Interventi | Volo**, sits under the period control and switches the whole view; the period is shared. The Volo view counts only V-ECHO and T-ECHO: four KPIs (two columns, four from 1200px), three ink bar charts (flight hours by month, manoeuvres in %, missions by vehicle) and tables numbered V1–V5. Flight hours read as h:mm, like the Excel `[h]:mm`.
+
+The Volo section of the form appears only for V-ECHO and T-ECHO, after Tempi; the warnings block always closes the last visible section.
 
 ## Do's and Don'ts
 

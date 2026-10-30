@@ -1,11 +1,11 @@
 # Interventi 118
 
 Registro personale delle uscite 118 in ambulanza ed elisoccorso. Sostituisce il file
-`Report Interventi 118 2026 v3.xlsx`:
+`Report Interventi 118 2026 v3.xlsx` e, per le missioni in elicottero, la parte di volo di `Report Voli HEMS 2026.xlsx`:
 
 - inserimento rapido da iPhone, con una mano;
 - elenco con ricerca e filtri;
-- statistiche identiche a quelle del foglio Excel.
+- statistiche identiche a quelle dei fogli Excel, compresi tempo di volo e manovre.
 
 È una app web installabile (PWA): dopo il primo caricamento funziona anche senza rete.
 **I dati restano solo sul dispositivo.** Nessun account, nessun server, nessuna statistica d'uso. I dati escono solo quando esporti un file.
@@ -22,13 +22,14 @@ Gli screenshot usano dati inventati.
 
 1. [Avvio in locale](#avvio-in-locale)
 2. [Primo import dei dati dall'Excel](#primo-import-dei-dati-dallexcel)
-3. [Pubblicazione su GitHub Pages](#pubblicazione-su-github-pages)
-4. [Installazione su iPhone](#installazione-su-iphone)
-5. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
-6. [Test](#test)
-7. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
-8. [Struttura del progetto](#struttura-del-progetto)
-9. [Limiti noti](#limiti-noti)
+3. [Volo ed elisoccorso](#volo-ed-elisoccorso)
+4. [Pubblicazione su GitHub Pages](#pubblicazione-su-github-pages)
+5. [Installazione su iPhone](#installazione-su-iphone)
+6. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
+7. [Test](#test)
+8. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
+9. [Struttura del progetto](#struttura-del-progetto)
+10. [Limiti noti](#limiti-noti)
 
 ---
 
@@ -77,6 +78,58 @@ Infine importa `data/interventi_import.json` in ogni dispositivo, da **Impostazi
 - Su iPhone l'import va fatto dall'app installata nella schermata Home (vedi [Installazione su iPhone](#installazione-su-iphone)).
 
 > ⚠️ `data/` e il file `.xlsx` contengono dati sanitari reali. Sono esclusi da git (`.gitignore`) e non devono finire nel repository né in posti condivisi. Spostali solo nel tuo iCloud Drive personale.
+
+---
+
+## Volo ed elisoccorso
+
+Per le missioni in elicottero (mezzo **V-ECHO** o **T-ECHO**) il form mostra la sezione **Volo**, dopo "Tempi":
+
+- **Tipo missione:** HEMS, HSR o IFT. È una lista come le altre: si modifica da Impostazioni.
+- **Tempo di volo (min):** i minuti totali di volo della missione. Comprende il rientro in base, quindi può superare la durata.
+- **Manovre:** HD Hovering discesa, VD Verricello discesa, HS Hovering salita, VS Verricello salita, VSP Verricello salita pannolone, VSB Verricello salita barella. Un tocco accende la manovra, il secondo la spegne; se ne possono scegliere più di una.
+
+Se cambi il mezzo e scegli un'ambulanza, i dati di volo si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS).
+
+### Statistiche di volo
+
+In **Statistiche**, sotto il periodo, c'è l'interruttore **Interventi | Volo**. La vista Volo conta solo le missioni V-ECHO e T-ECHO del periodo e rifà le tabelle di volo del foglio "Statistiche" dell'Excel HEMS, con le stesse formule:
+
+- **Basi:** le missioni sono gli interventi in elicottero del periodo; le statistiche del tempo contano solo le missioni con il tempo di volo compilato.
+- **KPI:** missioni (per V-ECHO e T-ECHO), ore di volo, volo medio con la mediana, missioni con almeno una manovra.
+- **Tabelle:**
+  - V1 Tempo di volo: totale, media, mediana, minimo, massimo;
+  - V2 Per mezzo;
+  - V3 Tipo di missione, in % sulle missioni con il tipo compilato;
+  - V4 Manovre, in % sulle missioni;
+  - V5 Per mese.
+- **Grafici:** ore di volo per mese, manovre, missioni per mezzo.
+
+Le ore sono in ore:minuti, come il formato `[h]:mm` dell'Excel. Codici colore, patologie, luoghi, esito e orari delle missioni in elicottero restano nella vista Interventi, insieme a quelli delle ambulanze.
+
+### Import dei voli dall'Excel HEMS
+
+Le missioni in elicottero sono già nell'app, perché vengono dall'Excel del 118: lo script aggiunge solo tempo di volo, tipo di missione e manovre. Non modifica mai i file di partenza.
+
+1. **iPhone:** **Impostazioni → Esporta backup** e salvalo in iCloud Drive. Lo script lavorerà sui dati di oggi.
+2. **Mac:** lancia lo script con l'Excel HEMS e quel backup:
+
+   ```bash
+   python3 tools/hems_to_json.py "Report Voli HEMS 2026.xlsx" --base "percorso/del/backup.json"
+   ```
+
+   Per ogni riga del foglio "Voli" scrive l'esito:
+   - `completata`;
+   - `già completa`;
+   - `senza codice missione`;
+   - `non trovata`;
+   - `trovata più volte`.
+
+   Se data, mezzo o comune non coincidono con l'intervento trovato, lo segnala.
+3. Lo script crea `data/voli_import.json` con i soli interventi completati. Importalo **sull'iPhone da cui hai esportato il backup** (Impostazioni → Importa backup), poi fai il solito giro di backup verso il Mac.
+4. Le righe non completate le completi a mano dal form, aprendo l'intervento o inserendolo se manca.
+
+Se modifichi uno di quegli interventi sul telefono tra l'export del punto 1 e l'import del punto 3, vince la versione dello script e il riepilogo dell'import la elenca tra i conflitti.
 
 ---
 
@@ -181,24 +234,33 @@ A fine import compare il riepilogo:
 npm test
 ```
 
-Esegue i test unitari (oltre 100) con `node --test`. Coprono:
+Esegue i test unitari (oltre 130) con `node --test`. Coprono:
 
 - campi calcolati, compresa la durata a cavallo della mezzanotte;
-- controlli di qualità;
-- statistiche;
-- merge con conflitti ed eliminazioni;
-- liste, export Excel e file della PWA.
+- controlli di qualità, compresi quelli di volo;
+- statistiche, comprese quelle di volo;
+- merge con conflitti ed eliminazioni, anche tra backup vecchi e nuovi;
+- liste, export Excel, file della PWA e script di import dei voli.
 
 Se `data/` contiene i file creati dagli script del [primo import](#primo-import-dei-dati-dallexcel), i test confrontano anche le statistiche sui 212 interventi reali con i valori del foglio Excel. Senza quei file, quei test vengono saltati con il motivo.
+
+Allo stesso modo, le statistiche di volo si confrontano con l'Excel HEMS:
+
+```bash
+python3 tools/attese_volo.py "Report Voli HEMS 2026.xlsx"
+```
+
+Lo script crea `data/volo_attese.json`. Da quel momento `npm test` controlla tutti i 157 valori delle tabelle di volo.
 
 ```bash
 npm run e2e
 ```
 
-Esegue 28 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
+Esegue 36 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
 
 - inserimento e duplicato bloccante;
 - modifica, eliminazione, filtri e statistiche;
+- sezione Volo del form e vista Volo delle statistiche;
 - export e reimport con merge tra due dispositivi simulati;
 - export Excel e funzionamento offline.
 
@@ -230,7 +292,9 @@ Scelte fatte dove le formule dell'Excel erano ambigue, confermate prima di scriv
 2. **Missione duplicata:** il salvataggio si blocca solo se inserisci o cambi una MISSIONE mettendo un numero già usato; un duplicato già presente resta modificabile. Il controllo guarda tutto l'archivio, non solo il periodo filtrato.
 3. **Righe senza DATA:** contano solo nella vista "Tutto", non nei filtri per anno, mese o intervallo.
 4. **Tabella per mese:** mostra i mesi del periodo scelto, con l'anno quando il periodo ne copre più di uno.
-5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 5022, 5024. Sono le voci da cui dipendono statistiche e controlli.
+5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 5022, 5024, V-ECHO e T-ECHO. Sono le voci da cui dipendono statistiche e controlli.
+
+Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [Statistiche di volo](#statistiche-di-volo).
 
 ---
 
@@ -240,13 +304,13 @@ Scelte fatte dove le formule dell'Excel erano ambigue, confermate prima di scriv
 index.html, manifest.webmanifest, sw.js   app, installazione, cache offline
 css/app.css                               stile (sistema visivo descritto in DESIGN.md)
 js/core/       logica pura, senza interfaccia, coperta dai test:
-               campi, calcolati, controlli, statistiche, merge, liste, elenco, modulo, excel
-js/ui/         schermate: inserimento, elenco, statistiche, impostazioni
+               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel
+js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo), impostazioni
 js/db.js       archivio IndexedDB          js/stato.js  stato in memoria
 js/app.js      avvio e navigazione
 vendor/        Chart.js 4.5.1 (MIT) e SheetJS CE 0.20.3 (Apache 2.0), copie locali con licenza
 icons/         icona (SVG originale e PNG)
-tools/         import dall'Excel, verifica statistiche, dati demo, server di sviluppo
+tools/         import dagli Excel 118 e HEMS, verifica statistiche, dati demo, server di sviluppo
 tests/         test unitari, prove end-to-end (tests/e2e), dati demo (tests/fixtures)
 docs/screenshots/   schermate delle prove end-to-end
 ```
@@ -260,5 +324,7 @@ docs/screenshots/   schermate delle prove end-to-end
 - **Prove in WebKit, non su iPhone:** le prove automatiche girano nel motore di Safari su Mac, non su un iPhone vero. Data e ora usano i selettori nativi di iOS, che le prove non possono vedere.
 - **Archivi separati:** Safari, l'app nella schermata Home e l'app nel Dock del Mac hanno archivi separati, anche sullo stesso dispositivo.
 - **Pulizia di Safari:** cancellare i dati di navigazione di Safari cancella i dati dell'app aperta nel browser. Il backup regolare resta la protezione principale.
+- **Backup della versione 1.1:** contengono i dati di volo e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla due volte con la rete.
+- **Export Excel e dati di volo:** l'export contiene le colonne VOLO, ma `tools/xlsx_to_json.py` legge solo le colonne del 118. Per i passaggi tra dispositivi usa sempre il backup JSON.
 - **Lettura degli Excel:** l'app importa solo backup JSON. Per leggere un file Excel si usa `tools/xlsx_to_json.py`, che legge il foglio "Interventi" con la struttura attuale.
 - **Promemoria del backup sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata.
