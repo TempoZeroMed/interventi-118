@@ -14,6 +14,7 @@ const FILE = [
   'js/core/calcolati.js',
   'js/core/campi.js',
   'js/core/controlli.js',
+  'js/core/domande.js',
   'js/core/elenco.js',
   'js/core/excel.js',
   'js/core/liste.js',
