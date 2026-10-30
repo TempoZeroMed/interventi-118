@@ -1,6 +1,6 @@
 // Stato dell'app in memoria, sempre allineato a IndexedDB. Ogni scrittura passa da qui.
 import * as db from './db.js';
-import { LISTE_PREDEFINITE } from './core/campi.js';
+import { LISTE_PREDEFINITE, allineaVociSistema, normalizzaRecord } from './core/campi.js';
 import { unisci, unisciListe, creaBackup } from './core/merge.js';
 import { isIntervento } from './core/statistiche.js';
 
@@ -18,14 +18,14 @@ export const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent)
 
 export async function carica() {
   const dati = await db.leggiTutto();
-  stato.record = dati.record;
+  stato.record = dati.record.map(normalizzaRecord); // i record salvati prima dei campi di volo li hanno vuoti
   stato.meta = dati.meta;
   const mancanti = Object.fromEntries(Object.entries(LISTE_PREDEFINITE).filter(([nome]) => !dati.liste[nome]));
   // ordine delle liste come nel foglio "Liste", poi eventuali altre
-  stato.liste = Object.fromEntries([
+  stato.liste = allineaVociSistema(Object.fromEntries([
     ...Object.keys(LISTE_PREDEFINITE).map((nome) => [nome, dati.liste[nome] ?? mancanti[nome]]),
     ...Object.entries(dati.liste).filter(([nome]) => !(nome in LISTE_PREDEFINITE)),
-  ]);
+  ]));
   const meta = {};
   if (!stato.meta.dispositivoId) meta.dispositivoId = crypto.randomUUID();
   if (Object.keys(mancanti).length || Object.keys(meta).length) {
@@ -81,6 +81,7 @@ export async function importaBackup(backup, adesso = new Date()) {
   let liste = stato.liste;
   let listeAggiornate = 0;
   if (backup.liste) ({ liste, aggiornate: listeAggiornate } = unisciListe(stato.liste, backup.liste));
+  liste = allineaVociSistema(liste);
   const meta = { ultimaSincronizzazione: adesso.toISOString() };
   await db.scrivi({ record, liste, meta });
   stato.record = record;

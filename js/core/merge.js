@@ -2,12 +2,17 @@
 import { normalizzaRecord } from './campi.js';
 
 export const FORMATO = 'interventi118';
-export const VERSIONE = 1;
+export const VERSIONE = 2; // 2: campi di volo (tipoMissione, tempoVolo, manovre)
+const VERSIONI_LEGGIBILI = [1, 2];
 
-/** Contenuto del record senza updatedAt, con chiavi ordinate: due versioni uguali danno lo stesso testo. */
+/**
+ * Contenuto del record senza updatedAt, con chiavi ordinate: due versioni uguali danno lo stesso testo.
+ * Normalizzato, così un record v1 senza i campi di volo e lo stesso record con i campi vuoti coincidono.
+ */
 function contenuto(r) {
-  const chiavi = Object.keys(r).filter((k) => k !== 'updatedAt').sort();
-  return JSON.stringify(r, chiavi);
+  const n = normalizzaRecord(r);
+  const chiavi = Object.keys(n).filter((k) => k !== 'updatedAt').sort();
+  return JSON.stringify(n, chiavi);
 }
 
 const chiaveMissione = (m) => String(m ?? '').trim().toUpperCase();
@@ -104,7 +109,7 @@ export function leggiBackup(testo) {
   if (!doc || doc.formato !== FORMATO || !Array.isArray(doc.record)) {
     throw new Error('Il file scelto non è un backup di Interventi 118.');
   }
-  if (doc.versione !== VERSIONE) {
+  if (!VERSIONI_LEGGIBILI.includes(doc.versione)) {
     throw new Error(doc.versione > VERSIONE
       ? 'Il backup è stato creato da una versione più recente dell\'app: aggiorna l\'app e riprova.'
       : 'Versione del backup non riconosciuta.');

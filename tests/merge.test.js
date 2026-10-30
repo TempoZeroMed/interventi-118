@@ -131,7 +131,9 @@ test('liste: voci nuove aggiunte, rinomina più recente vince, modifica locale p
 test('lettura backup: rifiuta file non validi con un messaggio comprensibile', () => {
   assert.throws(() => leggiBackup('non è json'), /non è un file JSON valido/);
   assert.throws(() => leggiBackup('{"formato":"altro","versione":1,"record":[]}'), /non è un backup di Interventi 118/);
-  assert.throws(() => leggiBackup('{"formato":"interventi118","versione":2,"record":[]}'), /versione più recente/);
+  assert.throws(() => leggiBackup('{"formato":"interventi118","versione":3,"record":[]}'), /versione più recente/);
+  assert.throws(() => leggiBackup('{"formato":"interventi118","versione":0,"record":[]}'), /non riconosciuta/);
+  assert.deepEqual(leggiBackup('{"formato":"interventi118","versione":1,"record":[]}').record, [], 'i backup v1 si leggono ancora');
   assert.throws(() => leggiBackup('{"formato":"interventi118","versione":1,"record":[{"data":"2026-01-01"}]}'), /senza id/);
 });
 
@@ -183,4 +185,21 @@ test('promemoria backup: mai fatto, solo se ci sono interventi', () => {
   const adesso = new Date('2026-10-29T12:00:00.000Z');
   assert.match(promemoriaBackup({ ultimoBackup: null, modificheNonEsportate: 0, numeroInterventi: 3 }, adesso).messaggio, /Nessun backup/);
   assert.equal(promemoriaBackup({ ultimoBackup: null, modificheNonEsportate: 0, numeroInterventi: 0 }, adesso), null);
+});
+
+test('record v1 senza campi di volo e stesso record v2 con campi vuoti: invariato, nessun conflitto', () => {
+  const v1 = rec('1', PRIMA);
+  delete v1.tipoMissione; delete v1.tempoVolo; delete v1.manovre;
+  const v2 = { ...rec('1', DOPO1), tipoMissione: '', tempoVolo: null, manovre: [] };
+  const { riepilogo } = unisci([v1], [v2], null);
+  assert.deepEqual([riepilogo.aggiornati, riepilogo.invariati, riepilogo.conflitti.length], [0, 1, 0]);
+});
+
+test('i dati di volo viaggiano nel backup v2 e vincono se più recenti', () => {
+  const locale = rec('1', PRIMA, { mezzo: 'V-ECHO' });
+  const importato = rec('1', DOPO1, { mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: 44, manovre: ['HD'] });
+  const backup = leggiBackup(JSON.stringify(creaBackup({ record: [importato], liste: null, dispositivo: 'mac', adesso: new Date(DOPO2) })));
+  assert.equal(JSON.parse(JSON.stringify(creaBackup({ record: [], liste: null, dispositivo: 'mac' }))).versione, 2);
+  const { record } = unisci([locale], backup.record, PRIMA);
+  assert.deepEqual([record[0].tipoMissione, record[0].tempoVolo, record[0].manovre], ['HEMS', 44, ['HD']]);
 });
