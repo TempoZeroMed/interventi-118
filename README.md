@@ -136,8 +136,9 @@ Se modifichi uno di quegli interventi sul telefono tra l'export del punto 1 e l'
 ## Pubblicazione su Cloudflare Pages
 
 L'app è un insieme di file statici: Cloudflare la ospita gratis, a un indirizzo tutto suo:
-<https://interventi-118.grucce.workers.dev>. I nuovi progetti di Cloudflare Pages ora fanno parte di Cloudflare
-Workers, da qui `workers.dev`; `grucce` è il nome scelto per l'account Cloudflare.
+<https://liberoeoperativo.wolftux.workers.dev>. L'indirizzo è `<nome app>.<nome account>.workers.dev`:
+il nome dell'app è in `tools/pubblica.sh`, quello dell'account (`wolftux`, uguale per tutte le app dell'account) si cambia
+su Cloudflare in **Workers & Pages → Your subdomain → Change**.
 Un indirizzo che non condivide con altre app conta: il browser separa dati e cache per indirizzo.
 
 Si pubblica dal Mac, con un comando:
