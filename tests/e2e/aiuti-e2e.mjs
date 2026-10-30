@@ -55,11 +55,17 @@ export async function avviaBrowser(pw, nome) {
   }
 }
 
-export function nuovoContesto(browser, { width, height }, extra = {}) {
-  return browser.newContext({
+/**
+ * Contesto del browser per le prove. Senza `finestraSalvataggio` la finestra di salvataggio di Chromium
+ * (showSaveFilePicker) viene tolta, così le esportazioni scaricano il file come in Safari.
+ */
+export async function nuovoContesto(browser, { width, height }, { finestraSalvataggio = false, ...extra } = {}) {
+  const ctx = await browser.newContext({
     viewport: { width, height }, locale: 'it-IT', timezoneId: 'Europe/Rome', colorScheme: 'light',
     reducedMotion: 'reduce', acceptDownloads: true, ...extra,
   });
+  if (!finestraSalvataggio) await ctx.addInitScript(() => { delete Window.prototype.showSaveFilePicker; delete window.showSaveFilePicker; });
+  return ctx;
 }
 
 /** Aspetta che un elemento contenga un testo (stringa o espressione regolare). */

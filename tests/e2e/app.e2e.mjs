@@ -621,7 +621,7 @@ for (const nomeBrowser of BROWSER) {
       await a.getByRole('dialog').getByRole('button', { name: 'Elimina' }).click();
       await attendiTesto(a.locator('#banda h1'), 'Elenco');
       const nomeFile = await esporta(a, 'Esporta backup', fileA);
-      assert.match(nomeFile, /^interventi118_\d{4}-\d{2}-\d{2}_\d{4}\.json$/);
+      assert.equal(nomeFile, 'interventi118_Mac.json', 'nome fisso per dispositivo');
 
       // dispositivo B: stessi dati demo, una modifica e un intervento suo, poi importa il file di A
       const ctxB = await nuovoContesto(browser, vp, { serviceWorkers: 'block' });
@@ -680,9 +680,56 @@ for (const nomeBrowser of BROWSER) {
       await importa(page, DEMO);
       const file = join(cartellaFile, `${nomeBrowser}.xlsx`);
       const nome = await esporta(page, 'Esporta Excel', file);
-      assert.match(nome, /^interventi118_\d{4}-\d{2}-\d{2}_\d{4}\.xlsx$/);
+      assert.equal(nome, 'interventi118_Mac.xlsx', 'nome fisso per dispositivo');
       const intestazione = readFileSync(file).subarray(0, 2).toString();
       assert.equal(intestazione, 'PK', 'file .xlsx (zip)');
+      await ctx.close();
+    });
+
+    test('copia con data accanto al backup con nome fisso; istruzioni per Safari', async () => {
+      const ctx = await nuovoContesto(browser, VIEWPORT[0], { serviceWorkers: 'block' });
+      const page = await ctx.newPage();
+      await page.goto(server.url);
+      await importa(page, DEMO);
+      await attendiTesto(page.locator('.blocco').first(), 'Chiedi per ogni download');
+      const nome = await esporta(page, 'Esporta copia con data', join(cartellaFile, `${nomeBrowser}-datata.json`));
+      assert.match(nome, /^interventi118_\d{4}-\d{2}-\d{2}_\d{4}\.json$/);
+      await attendiTesto(page.locator('#toast'), 'Backup scaricato');
+      await ctx.close();
+    });
+
+    if (nomeBrowser === 'chromium') test('Chrome: la finestra di salvataggio si apre la prima volta, poi il file ricordato si riscrive da solo', async () => {
+      const ctx = await nuovoContesto(browser, VIEWPORT[1], { serviceWorkers: 'block', finestraSalvataggio: true });
+      // finestra finta che restituisce un file vero dell'archivio privato del browser (si salva in IndexedDB come quello scelto dall'utente)
+      await ctx.addInitScript(() => {
+        window.showSaveFilePicker = async ({ suggestedName }) => {
+          localStorage.setItem('finestre', String(Number(localStorage.getItem('finestre') ?? 0) + 1));
+          const cartella = await navigator.storage.getDirectory();
+          return cartella.getFileHandle(suggestedName, { create: true });
+        };
+      });
+      const page = await ctx.newPage();
+      await page.goto(server.url);
+      await importa(page, DEMO);
+      await attendiTesto(page.locator('.blocco').first(), 'le volte dopo l\'app lo riscrive lì da sola');
+      const finestre = () => page.evaluate(() => Number(localStorage.getItem('finestre') ?? 0));
+      const contenuto = () => page.evaluate(async () => {
+        const file = await (await navigator.storage.getDirectory()).getFileHandle('interventi118_Mac.json');
+        return JSON.parse(await (await file.getFile()).text());
+      });
+      await page.getByRole('button', { name: 'Esporta backup' }).click();
+      await attendiTesto(page.locator('#toast'), 'Backup salvato');
+      assert.equal(await finestre(), 1);
+      assert.equal((await contenuto()).record.length, demo.length);
+      await nuovoIntervento(page, { missione: 'E2EC0001', comune: 'BIELLA' });
+      await page.getByRole('button', { name: 'Salva intervento' }).click();
+      await attendiTesto(page.locator('#toast'), 'E2EC0001 salvato');
+      await page.reload();
+      await vai(page, '#/impostazioni');
+      await page.getByRole('button', { name: 'Esporta backup' }).click();
+      await attendiTesto(page.locator('#toast'), 'Backup salvato');
+      assert.equal(await finestre(), 1, 'la seconda volta niente finestra');
+      assert.equal((await contenuto()).record.length, demo.length + 1, 'il file ricordato è stato riscritto');
       await ctx.close();
     });
 

@@ -1,8 +1,8 @@
 // Impostazioni: backup e passaggio dei dati, liste dei menu, archiviazione, installazione.
 import {
-  stato, interventi, importaBackup, backupCorrente, registraEsportazione, aggiornaListe, nomeDispositivo, isIOS,
+  stato, interventi, importaBackup, backupCorrente, registraEsportazione, aggiornaListe, nomeDispositivo, tipoDispositivo, isIOS,
 } from '../stato.js';
-import { leggiBackup, nomeFileBackup } from '../core/merge.js';
+import { leggiBackup, nomeFileBackup, nomeFileDatato } from '../core/merge.js';
 import { aggiungiVoce, rinominaVoce, impostaAttiva, campiDellaLista } from '../core/liste.js';
 import { creaCartellaExcel } from '../core/excel.js';
 import { h, riempi, icona, impostaBanda, toast, conteggio, istante, dataBreve } from './dom.js';
@@ -17,19 +17,28 @@ const NOMI_LISTE = {
 let listaScelta = 'ospedale';
 let ultimoEsitoImport = null;
 
-/** Esporta il backup JSON (usato anche dal promemoria). */
-export async function esportaBackup() {
+const TOAST_BACKUP = { condiviso: 'Backup pronto: controlla di averlo salvato su File', salvato: 'Backup salvato', scaricato: 'Backup scaricato' };
+const TOAST_EXCEL = { condiviso: 'File Excel pronto', salvato: 'File Excel salvato', scaricato: 'File Excel scaricato' };
+const haFinestraSalvataggio = () => typeof window.showSaveFilePicker === 'function';
+
+async function salvaBackup(nome, opzioni) {
   try {
     const adesso = new Date();
     const blob = new Blob([JSON.stringify(backupCorrente(adesso))], { type: 'application/json' });
-    const come = await salvaFile(blob, nomeFileBackup(adesso));
+    const come = await salvaFile(blob, nome, opzioni);
     if (come === 'annullato') return;
     await registraEsportazione(adesso);
-    toast(come === 'condiviso' ? 'Backup pronto: controlla di averlo salvato su File' : 'Backup scaricato');
+    toast(TOAST_BACKUP[come]);
   } catch (errore) {
     toast(`Backup non riuscito: ${errore.message}`);
   }
 }
+
+/** Esporta il backup JSON con il nome fisso del dispositivo (usato anche dal promemoria). */
+export const esportaBackup = () => salvaBackup(nomeFileBackup(tipoDispositivo()), { ricordo: 'fileBackup' });
+
+/** Copia storica con data e ora nel nome: mai ricordata, la finestra si apre ogni volta. */
+const esportaCopiaDatata = () => salvaBackup(nomeFileDatato());
 
 async function esportaExcel() {
   try {
@@ -37,11 +46,17 @@ async function esportaExcel() {
     const XLSX = window.XLSX;
     const dati = XLSX.write(creaCartellaExcel(XLSX, stato.record), { type: 'array', bookType: 'xlsx' });
     const blob = new Blob([dati], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const come = await salvaFile(blob, nomeFileBackup(new Date()).replace(/\.json$/, '.xlsx'));
-    if (come !== 'annullato') toast(come === 'condiviso' ? 'File Excel pronto' : 'File Excel scaricato');
+    const come = await salvaFile(blob, nomeFileBackup(tipoDispositivo(), 'xlsx'), { ricordo: 'fileExcel' });
+    if (come !== 'annullato') toast(TOAST_EXCEL[come]);
   } catch (errore) {
     toast(`Export Excel non riuscito: ${errore.message}`);
   }
+}
+
+function spiegazioneBackup() {
+  if (isIOS()) return 'Esporta: si apre la condivisione, scegli "Salva su File" e la stessa cartella di iCloud Drive dell\'altra volta: iOS chiede di sostituire interventi118_iPhone.json. Sul Mac importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
+  if (haFinestraSalvataggio()) return 'Esporta: la prima volta scegli dove salvare interventi118_Mac.json, per esempio in iCloud Drive; le volte dopo l\'app lo riscrive lì da sola. Sull\'iPhone importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
+  return 'Esporta: il file si chiama interventi118_Mac.json e finisce nei Download. In Safari attiva Impostazioni → Generali → Posizione download → "Chiedi per ogni download": così scegli la cartella di iCloud Drive e il Mac chiede di sostituirlo. Sull\'iPhone importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
 }
 
 export function mostra(main) {
@@ -59,14 +74,14 @@ export function mostra(main) {
         h('dt', {}, 'Ultimo backup'), h('dd', {}, istante(stato.meta.ultimoBackup)),
         h('dt', {}, 'Modifiche non esportate'), h('dd', {}, conteggio(stato.meta.modificheNonEsportate ?? 0)),
         h('dt', {}, 'Ultimo scambio'), h('dd', {}, istante(stato.meta.ultimaSincronizzazione))),
-      h('p', {}, isIOS()
-        ? 'Esporta: si apre la condivisione, scegli "Salva su File" e poi iCloud Drive. Sul Mac importa quel file: i dati si uniscono, nessuno viene sovrascritto.'
-        : 'Esporta: il file finisce nei Download; spostalo in iCloud Drive. Sull\'iPhone importalo dall\'app: i dati si uniscono, nessuno viene sovrascritto.'),
+      h('p', {}, spiegazioneBackup()),
       h('div', { class: 'azioni' },
         h('button', { type: 'button', class: 'bottone primario', onclick: esportaBackup }, icona('esporta'), 'Esporta backup'),
         h('button', { type: 'button', class: 'bottone', onclick: () => scegli.click() }, icona('importa'), 'Importa backup'),
         h('button', { type: 'button', class: 'bottone', onclick: esportaExcel }, icona('tabella'), 'Esporta Excel'),
         scegli),
+      h('div', { class: 'azioni' },
+        h('button', { type: 'button', class: 'bottone piccolo', onclick: esportaCopiaDatata }, 'Esporta copia con data')),
       ultimoEsitoImport ? riepilogoImport(ultimoEsitoImport) : null,
     );
   }
@@ -199,6 +214,8 @@ export function mostra(main) {
 
   main.append(sezioneDati, sezioneListe, sezioneArchivio, guida, info);
   disegnaTutto();
+  // la finestra di salvataggio di Chrome vuole un tocco recente: SheetJS dev'essere già pronto al clic su Esporta Excel
+  if (haFinestraSalvataggio()) caricaScript(SHEETJS).catch(() => {});
   return { aggiorna: () => { disegnaDati(); disegnaArchivio(); } };
 }
 
