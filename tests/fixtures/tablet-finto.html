@@ -6,6 +6,8 @@
 <!--
   Imitazione della schermata "Missione" del tablet SaveOnBoard, solo per le prove end-to-end del pulsante "Foto tablet".
   Tutti i dati sono inventati (missione 99ZZ…). Le prove ne fanno uno screenshot e lo passano all'app come foto.
+  Come sul tablet, due colonne: a sinistra Target (indirizzo) e Ospedale, a destra Valutazione con il codice e le righe
+  Coscienza … Sesso, Data di nascita; la prima riga della colonna di destra sta alla stessa altezza dell'indirizzo.
   Con la classe "storta" sul tablet: foto inclinata, un po' sfocata, con meno contrasto e un riflesso.
 -->
 <style>
@@ -24,10 +26,16 @@
   .testata .mezzo { margin-left: auto; padding: 6px 16px; border-radius: 6px; background: #c9d3de; font-weight: 700; }
   .testata .stato-mezzo { color: #1d6b35; }
 
-  .corpo { padding: 26px 32px 0; }
-  .titolo { margin: 0 0 10px; font-size: 18px; font-weight: 700; letter-spacing: .08em; color: #5a6068; }
+  .corpo { display: flex; gap: 40px; padding: 26px 32px 0; }
+  .sinistra { flex: 1; }
+  .destra { width: 400px; }
+  .titolo { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: .08em; color: #5a6068; }
+  /* le intestazioni delle due colonne sono alte uguali: l'indirizzo e "Coscienza" partono alla stessa altezza */
+  .intestazione { display: flex; align-items: center; gap: 18px; height: 56px; }
   .riga { margin: 0 0 16px; font-size: 26px; }
-  .valutazione { display: flex; align-items: center; gap: 18px; }
+  /* l'etichetta grande come prima: il riquadro del codice da rileggere è largo dieci sue altezze */
+  .valutazione { margin: 0; font-size: 26px; }
+  .voce { display: flex; justify-content: space-between; height: 42px; font-size: 22px; color: #3a4048; }
   /* come sul tablet: scritta nera grande su un verde acceso, che il ritocco della foto intera scurisce fin quasi al nero */
   .codice { padding: 4px 18px; border-radius: 4px; background: #5fd21e; font-size: 34px; font-weight: 700; letter-spacing: .06em; }
   .indirizzo { font-weight: 700; }
@@ -50,18 +58,26 @@
       <span class="stato-mezzo">Operativo</span>
     </div>
     <div class="corpo">
-      <p class="titolo">TARGET</p>
-      <p class="riga valutazione">VALUTAZIONE <span class="codice">V 04 S</span></p>
-      <p class="riga indirizzo">VIA DELLE PROVE, 12 NOVARA</p>
-      <p class="riga piccola">SCALA --, PIANO 2</p>
-      <div class="blocco">
-        <p class="titolo">PAZIENTE</p>
-        <p class="riga">Sesso F</p>
-        <p class="riga">Data di nascita 40 anni</p>
+      <div class="sinistra">
+        <p class="titolo intestazione">TARGET</p>
+        <p class="riga indirizzo">VIA DELLE PROVE, 12 NOVARA</p>
+        <p class="riga piccola">SCALA --, PIANO 2</p>
+        <p class="riga piccola">Chiamante: CASA DI RIPOSO LE PROVE</p>
+        <div class="blocco">
+          <p class="titolo">OSPEDALE</p>
+          <p class="riga">OSPEDALE MAGGIORE NOVARA</p>
+        </div>
       </div>
-      <div class="blocco">
-        <p class="titolo">OSPEDALE</p>
-        <p class="riga">OSPEDALE MAGGIORE NOVARA</p>
+      <div class="destra">
+        <p class="riga valutazione intestazione">VALUTAZIONE <span class="codice">V 04 S</span></p>
+        <p class="voce"><span>Coscienza</span><span>Si</span></p>
+        <p class="voce"><span>Respiro</span><span>Si</span></p>
+        <p class="voce"><span>Motilità</span><span>--</span></p>
+        <p class="voce"><span>Emorragia</span><span>--</span></p>
+        <p class="voce"><span>Dolore</span><span>--</span></p>
+        <p class="voce"><span>Durata</span><span>--</span></p>
+        <p class="voce"><span>Sesso</span><span>F</span></p>
+        <p class="voce"><span>Data di nascita</span><span>40 anni</span></p>
       </div>
     </div>
     <div class="orari">

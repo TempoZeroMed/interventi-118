@@ -5,8 +5,8 @@ import { stato, trova } from '../stato.js';
 import { verificaSalvataggio } from '../core/controlli.js';
 import { suggerimentiComuni } from '../core/elenco.js';
 import {
-  leggiSchermata, daTesseract, spostaLettura, unisciLetture, etichetta, etichettaValutazione, zonaCodice, zonaColore,
-  coloreRiquadro, scritteSulRiquadro,
+  leggiSchermata, daTesseract, spostaLettura, unisciLetture, etichetta, zonaOrari, etichettaValutazione, zonaCodice,
+  zonaColore, coloreRiquadro, scritteSulRiquadro, etichettaNascita, zonaSesso,
 } from '../core/tablet.js';
 import { caricaScript, TESSERACT, CARTELLA_TESSERACT } from './file.js';
 import { h, icona, dataBreve } from './dom.js';
@@ -15,7 +15,7 @@ const LATO_MASSIMO = 2000;
 // dopo il contrasto i grigi medi si scuriscono (v^1,5): le scritte grigie e il bianco sui riquadri blu si staccano di più.
 // Tarato sulla foto vera del tablet, storta e con riflessi: senza, missione, mezzo, comune ed età restavano non letti.
 const CURVA = 1.5;
-const INGRANDIMENTO = 2; // la fila degli orari e il riquadro del codice si rileggono ingranditi
+const INGRANDIMENTO = 2; // la fila degli orari, il riquadro del codice e la riga Sesso si rileggono ingranditi
 // avanzamento mostrato: la lettura della foto intera fino all'80%, quelle dei ritagli il resto
 const QUOTA_INTERA = 0.8;
 
@@ -84,13 +84,6 @@ export async function preparaFoto(file) {
   }
   ctx.putImageData(immagine, 0, 0);
   return { foto: canvas, colori };
-}
-
-/** La fila degli orari: da un'altezza dell'etichetta Allarme sopra di essa a 5 sotto, larga quanto la foto. */
-function filaOrari(foto, allarme) {
-  const altezza = allarme.y1 - allarme.y0;
-  const y0 = Math.max(0, Math.floor(allarme.y0 - altezza));
-  return { x0: 0, y0, x1: foto.width, y1: Math.max(y0 + 1, Math.min(foto.height, Math.ceil(allarme.y1 + 5 * altezza))) };
 }
 
 /** La `zona` di `sorgente`, ingrandita; `ritocco(punti, larghezza, altezza)`, se c'è, ne cambia i punti RGBA. */
@@ -174,9 +167,10 @@ export function creaFotoTablet({ dopoLettura }) {
   /**
    * Foto intera, poi sempre anche i ritagli ingranditi: se c'è l'etichetta Allarme la fila degli orari, normale e
    * invertita; se c'è l'etichetta Valutazione il riquadro del codice, dalla foto a colori, con il canale più alto e, se
-   * il colore del riquadro è chiaro, con la sola scritta chiusa nel riquadro (anche bianca, sul rosso o sul nero).
+   * il colore del riquadro è chiaro, con la sola scritta chiusa nel riquadro (anche bianca, sul rosso o sul nero); se c'è
+   * "nascita" le righe Sesso e Data di nascita (la F da sola, piccola, nella foto intera diventa 'È' o si perde).
    * I ritagli trovano quello che sfugge alla foto intera (Arrivo H bianco su blu scuro, il codice sul verde) e la
-   * controllano: un orario o un codice letto in due modi diversi resta non letto, invece di entrare sbagliato.
+   * controllano: un orario, un codice o un sesso letto in due modi diversi resta non letto, invece di entrare sbagliato.
    * Il colore del riquadro, che sul tablet è quello del codice, controlla anche la lettera.
    */
   async function leggiFoto({ foto, colori }, attuale) {
@@ -189,11 +183,14 @@ export function creaFotoTablet({ dopoLettura }) {
     const coloreCodice = dove && coloreRiquadro(colori.getContext('2d')
       .getImageData(dove.x0, dove.y0, dove.x1 - dove.x0, dove.y1 - dove.y0).data);
     const soloScritta = (px, larghezza, altezza) => scritteSulRiquadro(px, larghezza, altezza, coloreCodice);
+    const nascita = etichettaNascita(intera);
+    const sesso = nascita && zonaSesso(nascita, foto);
     // gli orari prima, come sono sempre stati letti
     const ritagli = [
-      ...(allarme ? [[foto, filaOrari(foto, allarme), null], [foto, filaOrari(foto, allarme), INVERTITO]] : []),
+      ...(allarme ? [[foto, zonaOrari(allarme, foto), null], [foto, zonaOrari(allarme, foto), INVERTITO]] : []),
       ...(codice ? [[colori, codice, SCRITTA_SCURA]] : []),
       ...(codice && coloreCodice ? [[colori, codice, soloScritta]] : []),
+      ...(sesso ? [[foto, sesso, null]] : []),
     ];
     const quota = (1 - QUOTA_INTERA) / ritagli.length;
     const riletti = [];

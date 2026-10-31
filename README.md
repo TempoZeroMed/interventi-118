@@ -165,20 +165,21 @@ Gli esempi usano valori inventati.
 | Data | la barra di stato in alto, cioè il giorno in cui hai scattato la foto; il giorno prima se l'ora di allarme è più avanti dell'ora della barra | `06:15 Sab 31 Ott`, allarme 22:50 → 30/10 |
 | Ora allert. | il riquadro **Allarme** | `21:05` |
 | Libero operativo | il riquadro **Operativo** | `22:10` |
-| Comune | il testo dopo il numero civico dell'indirizzo | `VIA DELLE PROVE, 12 NOVARA` → `NOVARA` |
+| Comune | il testo dopo il numero civico dell'indirizzo, fino a dove comincia la colonna Valutazione | `VIA DELLE PROVE, 12 NOVARA` → `NOVARA` |
 | Codice, Patologia, Luogo | il codice del riquadro Valutazione, che è quello di rientro: va sia nell'invio sia nel rientro, il NERO solo nel rientro (l'invio non ce l'ha) | `V 09 L` → VERDE, `09 - …`, `L - …`; `N 19 Z` → NERO nel rientro |
 | Età | la riga "Data di nascita", con "N anni": il tablet conta un anno indietro, quindi N + 1 | `40 anni` → `41` |
-| Sesso | la riga "Sesso" | `M` → Maschio |
+| Sesso | la riga "Sesso", riletta ingrandita insieme a "Data di nascita" | `M` → Maschio |
 | Esito | **Trasportato** se sotto **Arrivo H** c'è un orario | `21:52` → Trasportato |
 | Ospedale | solo con esito Trasportato, e solo se il testo corrisponde a una voce della lista Ospedale | `OSP. MAGGIORE NOVARA` → Novara |
 | Tipologia | non dal tablet: la imposta la [regola India/Mike](#tipologia-indiamike) dopo mezzo e ora allert. | |
 
 - **Niente viene indovinato.** Un valore illeggibile o fuori formato lascia il campo com'era e finisce tra i **Non letti** (l'elenco riguarda Data, Missione, Mezzo, Ora allert., Libero operativo, Comune, Codice, Patologia, Luogo, Età e Sesso; codice, patologia e luogo contano come letti se c'è il rientro).
 - **Data.** La barra di stato non mostra l'anno: è quello che porta la data a oggi o prima. La data vale solo se anche il giorno della settimana torna, così un giorno letto male non passa. Se la barra non si legge, la data è quella del telefono (oggi, o ieri se l'allarme è più avanti dell'ora attuale) e compare tra i **Non letti**: controllala, soprattutto se la foto viene dalla libreria.
-- **Orari.** Ogni orario è quello scritto sotto la sua etichetta. Se c'è l'etichetta **Allarme**, la fila degli orari si legge tre volte: sulla foto intera e su due ritagli ingranditi, uno normale e uno invertito (per le scritte chiare sui riquadri scuri). Se due letture danno orari diversi, l'orario resta vuoto.
+- **Orari.** Ogni orario è quello scritto sotto la sua etichetta. Se c'è l'etichetta **Allarme**, la fila degli orari si legge tre volte: sulla foto intera e su due ritagli ingranditi, uno normale e uno invertito (per le scritte chiare sui riquadri scuri). Se due letture danno orari diversi, l'orario resta vuoto. Un'etichetta letta male in un ritaglio ("Alame") non conta: l'orario resta a quella giusta.
 - **Codice.** Il riquadro ha il colore del codice: verde, giallo, rosso o nero. Sul colore (per esempio la scritta nera sul verde) la foto intera spesso non lo legge. Se c'è l'etichetta **Valutazione**, l'app guarda il colore dentro il riquadro alla sua destra e rilegge il riquadro ingrandito dalla foto a colori, due volte: una con il canale più alto (scritta scura su colore acceso) e una tenendo nera solo la scritta chiusa nel riquadro, anche bianca sul rosso o sul nero. Se due letture danno codici diversi, codice, patologia e luogo restano vuoti.
 - **Colore e lettera.** Il colore del riquadro controlla la lettera: se non tornano (lettera V su un riquadro giallo), il codice resta vuoto. Se la lettera non si legge, basta il colore verde, giallo o rosso; il nero no, perché un riquadro scuro può essere solo una foto buia: serve la N.
-- **Indirizzo.** È la riga più vicina sopra "SCALA … PIANO …" con un numero civico: a volte il lettore mette in mezzo una riga di segni.
+- **Indirizzo.** È la riga più vicina sopra "SCALA … PIANO …" con un numero civico: a volte il lettore mette in mezzo una riga di segni. Sulla stessa riga, a destra, c'è la prima riga della colonna Valutazione ("Coscienza Si"), spesso letta male: le parole oltre il bordo della colonna (dove stanno Valutazione, Coscienza, …, Sesso, Data di nascita) non fanno parte dell'indirizzo.
+- **Sesso.** Nella foto intera la F da sola è piccola e spesso si legge male: se c'è "Data di nascita", le righe Sesso e Data di nascita si rileggono ingrandite. Una F letta "E" vale F, perché sul tablet ci sono solo M e F. Letto in due modi diversi (M e F), il sesso resta vuoto.
 - **Comune.** Se l'indirizzo finisce con parole di due lettere ("… DA PO") il comune vale solo se è già nell'archivio, con o senza quelle parole: un nome troncato non si inventa. Un nome nuovo vale solo se è fatto di lettere (anche accentate, con apostrofo o trattino): con una cifra o un segno rimasti resta non letto ("N0VARA"), salvo che, tolti i segni, sia un comune già nell'archivio ("NOVARA." diventa NOVARA, scritto come nell'archivio).
 - **Non letti per scelta.** Partenza, Arrivo e Partenza H non servono, perché l'app non ha quei campi. Tipo missione, tempo di volo e manovre degli elicotteri non sono sullo schermo e si compilano a mano.
 

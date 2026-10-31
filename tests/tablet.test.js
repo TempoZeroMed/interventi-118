@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   leggiSchermata, applicaLettura, orarioDa, daTesseract, spostaLettura, unisciLetture, etichetta, etichettaValutazione,
-  zonaCodice, zonaColore, coloreRiquadro, scritteSulRiquadro, CAMPI_TABLET,
+  zonaCodice, zonaColore, coloreRiquadro, scritteSulRiquadro, zonaOrari, etichettaNascita, zonaSesso, CAMPI_TABLET,
 } from '../js/core/tablet.js';
 import { recordVuoto } from '../js/core/modulo.js';
 import { LISTE_PREDEFINITE } from '../js/core/campi.js';
@@ -228,6 +228,7 @@ test('codice: il riquadro Valutazione e la zona alla sua destra da rileggere, an
   assert.equal(zonaCodice(e, { width: 1518, height: 1500 }), null); // l'etichetta sul bordo: niente da ritagliare
   assert.equal(etichettaValutazione(schermata({ codice: '' })).y0, 100);
   assert.equal(etichettaValutazione({ righe: [riga(p('vaLutTazione', 1300, 100))] }).x0, 1300); // una lettera in più
+  assert.equal(etichettaValutazione({ righe: [riga(p('vaLutTaziIone', 1300, 100))] }).x0, 1300); // due, anche nella I
   assert.equal(etichettaValutazione({ righe: [frase('VIA DELLA STAZIONE, 4', 100)] }), null);
   assert.equal(etichettaValutazione({ righe: [riga(p('VALUTA', 1300, 100), p('ZIONE', 1400, 100))] }), null); // spezzata
 });
@@ -444,4 +445,79 @@ test('daTesseract', () => {
   }] }] }] };
   assert.deepEqual(daTesseract(data), { righe: [{ testo: 'Allarme', parole: [{ testo: 'Allarme', x0: 1, y0: 2, x1: 3, y1: 4 }] }] });
   assert.deepEqual(daTesseract({ blocks: null }), { righe: [] });
+});
+
+test('orari: un\'etichetta letta male nel ritaglio, sopra quella giusta, non si prende l\'orario', () => {
+  // il ritaglio legge 'Alame' al posto di Allarme, mezzo pixel più vicino all'orario: l'orario resta di Allarme
+  const ritaglio = { righe: [riga(p('Alame', 99.5, 600.5), p('Partenza', 250, 600.5)), riga(p('21:05', 100, 640))] };
+  const { valori, nonLetti } = leggiSchermata(unisciLetture(schermata(), ritaglio), OPZ);
+  assert.equal(valori.oraAllert, '21:05');
+  assert.deepEqual(nonLetti, []);
+});
+
+test('orari: l\'orario sta fino a cinque altezze dell\'etichetta sotto di essa', () => {
+  const { righe } = schermata({ tempi: SENZA_ORARI });
+  const bassi = { righe: [...righe, orari(['21:05', '21:07', '21:20', '21:40', '21:52', '22:10']).parole
+    .reduce((r, q) => ({ ...r, parole: [...r.parole, { ...q, y0: 710, y1: 734 }] }), { testo: '', parole: [] })] };
+  const { valori } = leggiSchermata(bassi, OPZ); // etichette a y 600, alte 24: orari a 710 = 600 + 4,6 altezze
+  assert.deepEqual([valori.oraAllert, valori.liberoOperativo], ['21:05', '22:10']);
+  // a 725 = 5,2 altezze: no (cinque orari soltanto, così non scatta il ripiego sui sei orari in basso)
+  const troppo = { righe: [...righe, { ...bassi.righe.at(-1), parole: bassi.righe.at(-1).parole.slice(1).map((q) => ({ ...q, y0: 725, y1: 749 })) }] };
+  assert.equal(leggiSchermata(troppo, OPZ).valori.liberoOperativo, undefined);
+});
+
+test('zonaOrari: la fila degli orari, da un\'altezza sopra Allarme a otto sotto, larga quanto la foto', () => {
+  const allarme = p('Allarme', 100, 600); // alta 24
+  assert.deepEqual(zonaOrari(allarme, { width: 2000, height: 1500 }), { x0: 0, y0: 576, x1: 2000, y1: 816 });
+  assert.deepEqual(zonaOrari(allarme, { width: 1000, height: 700 }), { x0: 0, y0: 576, x1: 1000, y1: 700 });
+  assert.deepEqual(zonaOrari(p('Allarme', 100, 10), { width: 1000, height: 700 }), { x0: 0, y0: 0, x1: 1000, y1: 226 });
+});
+
+test('sesso: la riga "Sesso" si rilegge ingrandita, trovata da "nascita"', () => {
+  const lettura = { righe: [riga(p('Data', 1338, 1025, 45, 18), p('di', 1393, 1027, 16, 17), p('nascita', 1418, 1031, 75, 16),
+    p('88', 1594, 1033, 23, 17), p('anni', 1627, 1037, 41, 13))] };
+  const e = etichettaNascita(lettura);
+  assert.equal(e.testo, 'nascita');
+  // otto altezze a sinistra ('Data di '), quattordici a destra (il valore), cinque sopra (la riga Sesso) e una sotto
+  assert.deepEqual(zonaSesso(e, { width: 2000, height: 1500 }), { x0: 1290, y0: 951, x1: 1717, y1: 1063 });
+  assert.deepEqual(zonaSesso(e, { width: 1600, height: 1060 }), { x0: 1290, y0: 951, x1: 1600, y1: 1060 });
+  assert.equal(zonaSesso(e, { width: 1290, height: 1500 }), null);
+  assert.equal(etichettaNascita({ righe: [riga(p('nascita,', 1418, 1031))] }).testo, 'nascita,');
+  assert.equal(etichettaNascita({ righe: [riga(p('rinascita', 1418, 1031))] }), null);
+  assert.equal(etichettaNascita(schermata()), null); // nelle letture di prova la riga è una parola sola
+});
+
+test('sesso: letto solo nel ritaglio vale; letto in due modi diversi resta non letto', () => {
+  const ritaglio = (testo) => ({ righe: [frase(testo, 401)] });
+  // la foto intera non legge la F ('P'): la legge il ritaglio
+  assert.equal(leggiSchermata(unisciLetture(schermata({ sesso: 'P' }), ritaglio('Sesso F')), OPZ).valori.sesso, 'Femmina');
+  // la F letta E o È vale F: sul tablet ci sono solo M e F; con la F del ritaglio non è un disaccordo
+  assert.equal(leggi({ sesso: 'E' }).valori.sesso, 'Femmina');
+  assert.equal(leggi({ sesso: 'È' }).valori.sesso, 'Femmina');
+  assert.equal(leggiSchermata(unisciLetture(schermata({ sesso: 'È' }), ritaglio('Sesso F')), OPZ).valori.sesso, 'Femmina');
+  assert.equal(leggi({ sesso: 'P' }).valori.sesso, undefined);
+  const diversi = leggiSchermata(unisciLetture(schermata({ sesso: 'M' }), ritaglio('Sesso F')), OPZ);
+  assert.equal(diversi.valori.sesso, undefined);
+  assert.deepEqual(diversi.nonLetti, ['Sesso']);
+  assert.equal(leggiSchermata(unisciLetture(schermata({ sesso: 'F' }), ritaglio('Sesso F')), OPZ).valori.sesso, 'Femmina');
+});
+
+test('comune: la colonna di destra (Valutazione) si taglia per posizione, anche letta male', () => {
+  // l'indirizzo a sinistra e, sulla stessa riga, 'Coscienza Si' della colonna di destra letto 'Cosdenza Si'
+  const indirizzo = riga(p('FRAZIONE', 40, 160), p('PROVE,', 140, 160), p('27', 240, 160, 30), p('CAMERI', 280, 160, 150),
+    p('Cosdenza', 1100, 160), p('Si', 1300, 160, 20));
+  const { righe } = schermata();
+  const conColonna = (etichette) => ({ righe: [...righe.slice(0, 4), indirizzo, righe[5], ...etichette, ...righe.slice(6)] });
+  const sesso = riga(p('Sesso', 1070, 400, 50, 16), p('F', 1300, 400, 10, 16));
+  assert.equal(leggiSchermata(conColonna([sesso]), OPZ).valori.comune, 'CAMERI');
+  const nascita = riga(p('Data', 1070, 430, 45), p('di', 1120, 430, 16), p('nascita', 1140, 430, 75), p('40', 1300, 430), p('anni', 1330, 430));
+  assert.equal(leggiSchermata(conColonna([nascita]), OPZ).valori.comune, 'CAMERI');
+  assert.equal(leggiSchermata(conColonna([riga(p('Dolore', 1070, 300), p('--', 1300, 300))]), OPZ).valori.comune, 'CAMERI');
+  // senza nessuna etichetta della colonna di destra la posizione non dice niente: 'CAMERI COSDENZA SI' non è un comune
+  assert.equal(leggiSchermata(conColonna([]), OPZ).valori.comune, undefined);
+});
+
+test('comune: "Coscienza" nel testo chiude l\'indirizzo anche senza la C', () => {
+  assert.equal(leggi({ indirizzo: 'VIA DELLE PROVE, 12 NOVARA oscienza Si' }).valori.comune, 'NOVARA');
+  assert.equal(leggi({ indirizzo: 'VIA DELLE PROVE, 12 GALLIATE Coscienza' }).valori.comune, 'GALLIATE');
 });

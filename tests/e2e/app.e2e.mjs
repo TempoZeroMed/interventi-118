@@ -547,9 +547,9 @@ for (const nomeBrowser of BROWSER) {
             await attendiTesto(riquadro(), 'Letti 16 campi');
           });
 
-          test('foto tablet: i ritagli si rileggono sempre, la fila degli orari con Allarme e il codice con Valutazione', async () => {
-            // un contesto suo, che conta le letture chieste al lettore: la foto intera, poi i due ritagli della fila e i due
-            // del riquadro del codice
+          test('foto tablet: i ritagli si rileggono sempre: la fila degli orari con Allarme, il codice con Valutazione, Sesso con nascita', async () => {
+            // un contesto suo, che conta le letture chieste al lettore: la foto intera, poi i due ritagli della fila, i due
+            // del riquadro del codice e quello della riga Sesso
             const altro = await nuovoContesto(browser, vp, { serviceWorkers: 'block' });
             await altro.addInitScript(() => {
               const Originale = window.Worker;
@@ -567,16 +567,16 @@ for (const nomeBrowser of BROWSER) {
             await vai(qui, '#/nuovo');
             await daFoto(qui, await fotoFinta(altro));
             // anche con tutti gli orari letti: i ritagli controllano la foto intera
-            assert.equal(await letture(), 5, 'la foto intera, i due ritagli della fila degli orari e i due del codice');
+            assert.equal(await letture(), 6, 'la foto intera, i due ritagli della fila degli orari, i due del codice e Sesso');
             await attendiTesto(qui.locator('.foto-tablet .riquadro-foto'), 'Letti 16 campi');
             await svuota(qui);
             await daFoto(qui, await fotoFinta(altro, { html: TABLET_FINTO.replace('<p class="ora">21:52</p>', '<p class="ora"></p>') }));
-            assert.equal(await letture(), 10);
+            assert.equal(await letture(), 12);
             await attendiTesto(qui.locator('.foto-tablet .riquadro-foto'), 'Letti 14 campi');
             assert.equal(await scelto(qui, 'Esito'), '', 'nessun orario sotto Arrivo H: niente Trasportato');
             assert.equal(await qui.getByLabel('Libero operativo', { exact: true }).inputValue(), '22:10');
             await daFoto(qui, await fotoFinta(altro, { html: LISTA_SPESA }));
-            assert.equal(await letture(), 11, 'senza le etichette Allarme e Valutazione non c\'è niente da ritagliare');
+            assert.equal(await letture(), 13, 'senza le etichette Allarme, Valutazione e nascita non c\'è niente da ritagliare');
             await altro.close();
           });
 

@@ -19,7 +19,8 @@ export const ORDINE_APPLICAZIONE = [
 
 const CODICI = { V: 'VERDE', G: 'GIALLO', R: 'ROSSO', N: 'NERO' }; // B (bianco) non è nella lista: codice non letto
 const SOLO_RIENTRO = ['NERO']; // la lista dei codici di invio non ce l'ha
-const SESSI = { M: 'Maschio', F: 'Femmina' };
+/** Sul tablet il sesso è M o F: la F, un'asta con due tratti, il lettore la legge spesso E (o È), che non può essere una M. */
+const SESSI = { M: 'Maschio', F: 'Femmina', E: 'Femmina' };
 /** Come li scrive la barra di stato del tablet ('Sab 31 Ott'); i giorni nell'ordine di getDay(). */
 const GIORNI = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB'];
 const MESI = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
@@ -74,6 +75,8 @@ const etichettaPulita = (testo) => maiuscolo(testo).replace(/[^A-Z0-9]/g, '')
 const sembraOrario = (q) => (cifre(q.testo).match(/\d/g) ?? []).length >= 4;
 /** Nome della parola i come etichetta: 'ARRIVO' seguita da 'H' è 'ARRIVOH', come la parola unica 'ARRIVOH'. */
 const nomeEtichetta = (parole, i) => etichettaPulita(parole[i].testo) + (etichettaPulita(parole[i + 1]?.testo) === 'H' ? 'H' : '');
+/** Le sei etichette della fila degli orari, da sinistra. */
+const NOMI_FILA = ['ALLARME', 'PARTENZA', 'ARRIVO', 'PARTENZAH', 'ARRIVOH', 'OPERATIVO'];
 
 /** Le parole con quel nome ('ALLARME', 'OPERATIVO', 'ARRIVOH'), nell'ordine di lettura. */
 const etichette = (lettura, nome) => lettura.righe
@@ -90,22 +93,27 @@ function fila(lettura, e) {
       && etichettaPulita(q.testo).length > 1 && !sembraOrario(q)));
 }
 
-/** Parole sotto un'etichetta: centro entro una sua larghezza dai lati, cima tra mezza e 4 sue altezze più in basso. */
+/**
+ * Parole sotto un'etichetta: centro entro una sua larghezza dai lati, cima tra mezza e 5 sue altezze più in basso
+ * (sul tablet gli orari sono grandi il doppio delle etichette e partono circa 2,5 altezze sotto).
+ */
 function sotto(lettura, e) {
   const larghezza = e.x1 - e.x0;
   const h = altezza(e);
   return paroleDi(lettura).filter((q) => {
     const centro = centroX(q);
-    return centro >= e.x0 - larghezza && centro <= e.x1 + larghezza && q.y0 >= e.y0 + h / 2 && q.y0 <= e.y0 + 4 * h;
+    return centro >= e.x0 - larghezza && centro <= e.x1 + larghezza && q.y0 >= e.y0 + h / 2 && q.y0 <= e.y0 + 5 * h;
   });
 }
 
 /**
  * Gli orari (anche illeggibili) sotto `e` che le appartengono: quelli il cui centro è più vicino a un'etichetta della
  * fila con il suo nome che a tutte le altre. Così un orario illeggibile non lascia il posto a quello della colonna accanto.
+ * Contano solo le etichette con uno dei sei nomi: una letta male in un ritaglio ('Alame'), sovrapposta a quella giusta
+ * e per caso più vicina all'orario, non glielo porta via.
  */
 function suoi(lettura, e, nome) {
-  const etichetteFila = fila(lettura, e);
+  const etichetteFila = fila(lettura, e).filter((f) => NOMI_FILA.includes(f.nome));
   return sotto(lettura, e).filter(sembraOrario).filter((t) => {
     const distanza = (f) => Math.abs(centroX(f.q) - centroX(t));
     return etichetteFila.reduce((a, f) => (distanza(f) < distanza(a) ? f : a)).nome === nome;
@@ -123,6 +131,16 @@ export function etichetta(lettura, nome) {
   const trovate = allarme ? fila(lettura, allarme).filter((f) => f.nome === cercata).map((f) => f.q) : etichette(lettura, cercata);
   const conOrario = (e) => suoi(lettura, e, cercata).some((q) => cercata === 'ARRIVOH' || orarioDa(q.testo) !== null);
   return trovate.find(conOrario) ?? trovate[0] ?? null;
+}
+
+/**
+ * La fila degli orari da ritagliare: da un'altezza dell'etichetta Allarme sopra di essa a otto sotto (gli orari sono alti il
+ * doppio e finiscono circa 5,5 altezze sotto: con meno, le cifre tagliate in basso si leggono male), larga quanto la foto.
+ */
+export function zonaOrari(allarme, { width, height }) {
+  const h = altezza(allarme);
+  const y0 = Math.max(0, Math.floor(allarme.y0 - h));
+  return { x0: 0, y0, x1: width, y1: Math.max(y0 + 1, Math.min(height, Math.ceil(allarme.y1 + 8 * h))) };
 }
 
 /** Gli orari validi di un'etichetta, senza ripetizioni: più di uno (letture unite in disaccordo) = non letto. */
@@ -152,11 +170,6 @@ function leggiTempi(lettura, intera) {
 }
 
 // --- Il codice: sul riquadro colorato la foto intera spesso non lo legge, e si rilegge un ritaglio ---
-
-/** L'etichetta "VALUTAZIONE", anche letta male ('vaLurazione', 'vaLutTazione'); null se non c'è. */
-export function etichettaValutazione(lettura) {
-  return paroleDi(lettura).find((q) => /AL[A-Z]{1,4}ZIONE/.test(maiuscolo(q.testo).replace(/[^A-Z]/g, ''))) ?? null;
-}
 
 /** Il riquadro del codice, a destra dell'etichetta: largo dieci sue altezze, due sopra e due sotto; null se fuori dalla foto. */
 export function zonaCodice(e, { width, height }) {
@@ -235,6 +248,52 @@ export function scritteSulRiquadro(punti, larghezza, altezza, colore) {
   return punti;
 }
 
+// --- La colonna Valutazione: Sesso si rilegge ingrandito, e l'indirizzo si ferma dove la colonna comincia ---
+
+/** Le etichette delle righe della colonna Valutazione, sotto il codice; 'Data di nascita' si riconosce da 'DATA' + 'DI'. */
+const ETICHETTE_VALUTAZIONE = ['COSCIENZA', 'RESPIRO', 'MOTILITA', 'EMORRAGIA', 'DOLORE', 'DURATA', 'SESSO'];
+const sembraValutazione = (testo) => /AL[A-Z]{1,4}ZI{1,2}ONE/.test(maiuscolo(testo).replace(/[^A-Z]/g, ''));
+
+/** L'etichetta "VALUTAZIONE", anche letta male ('vaLurazione', 'vaLutTazione', 'vaLutTaziIone'); null se non c'è. */
+export function etichettaValutazione(lettura) {
+  return paroleDi(lettura).find((q) => sembraValutazione(q.testo)) ?? null;
+}
+
+/** La parola "nascita" di "Data di nascita": la riga di Sesso è subito sopra. Null se non c'è. */
+export function etichettaNascita(lettura) {
+  return paroleDi(lettura).find((q) => etichettaPulita(q.testo) === 'NASCITA') ?? null;
+}
+
+/**
+ * Il ritaglio con le righe Sesso e Data di nascita, da rileggere ingrandito: nella foto intera la riga Sesso spesso si
+ * perde, e la F da sola diventa 'È'. Da otto altezze a sinistra di "nascita" ('Data di ') a quattordici a destra (il
+ * valore), da cinque sopra a una sotto; null se fuori dalla foto.
+ */
+export function zonaSesso(e, { width, height }) {
+  const h = altezza(e);
+  const zona = {
+    x0: Math.max(0, Math.floor(e.x0 - 8 * h)), y0: Math.max(0, Math.floor(e.y0 - 5 * h)),
+    x1: Math.min(width, Math.ceil(e.x1 + 14 * h)), y1: Math.min(height, Math.ceil(e.y1 + h)),
+  };
+  return zona.x1 > zona.x0 && zona.y1 > zona.y0 ? zona : null;
+}
+
+/**
+ * Dove comincia la colonna Valutazione: un'altezza a sinistra della sua etichetta letta più a sinistra (Valutazione,
+ * Coscienza, …, Sesso, 'Data di'). Infinity se non se ne legge nessuna.
+ */
+function bordoColonnaValutazione(lettura) {
+  const etichette = lettura.righe.flatMap(({ parole }) => parole.filter((q, i) => {
+    const nome = etichettaPulita(q.testo);
+    // 'Valutazione' da sola (anche con una lettera in più), non una riga intera letta come una parola
+    return ETICHETTE_VALUTAZIONE.includes(nome) || (nome === 'DATA' && etichettaPulita(parole[i + 1]?.testo) === 'DI')
+      || (nome.length <= 14 && sembraValutazione(nome));
+  }));
+  if (!etichette.length) return Infinity;
+  const prima = etichette.reduce((a, q) => (q.x0 < a.x0 ? q : a));
+  return prima.x0 - altezza(prima);
+}
+
 // --- Gli altri campi, dal testo delle righe (in maiuscolo e senza accenti) ---
 
 function leggiMissione(testi) {
@@ -278,9 +337,10 @@ function leggiEta(testi) {
   return eta !== null && eta <= 120 ? eta : null;
 }
 
+/** 'Sesso F', nella foto intera o nel ritaglio; letto in due modi diversi (M e F) resta non letto. */
 function leggiSesso(testi) {
-  const m = primaCorrispondenza(testi, /\bSESSO\W*([MF])\b/);
-  return m ? SESSI[m[1]] : null;
+  const letti = new Set(testi.map((t) => SESSI[/\bSESSO\W*([MFE])\b/.exec(t)?.[1]]).filter(Boolean));
+  return letti.size === 1 ? [...letti][0] : null;
 }
 
 /**
@@ -313,12 +373,19 @@ function comuneDelCivico(indirizzo, comuniNoti) {
 /**
  * L'indirizzo sta nelle righe prima di "SCALA … PIANO …": la più vicina con un civico, perché il lettore a volte mette
  * in mezzo una riga di segni. Il comune segue il civico; senza civico è un comune già in archivio con cui finisce la riga.
+ * Sulla stessa riga, a destra, c'è la prima riga della colonna Valutazione ('Coscienza Si'), spesso letta male
+ * ('oscienza'): le parole oltre il bordo della colonna non fanno parte dell'indirizzo, e nemmeno il testo da 'Coscienza'.
  */
-function leggiComune(righe, comuniNoti) {
+function leggiComune(lettura, comuniNoti) {
+  const { righe } = lettura;
   const i = righe.findIndex((r) => /\b(SCALA|PIANO)\b/.test(maiuscolo(r.testo)));
   if (i < 1) return null;
+  const bordo = bordoColonnaValutazione(lettura);
+  // la prima parola resta sempre: nelle letture senza colonne il bordo può cadere a sinistra di tutto
+  const aSinistra = (r) => (r.parole?.length
+    ? r.parole.filter((q, k) => k === 0 || centroX(q) < bordo).map((q) => q.testo).join(' ') : r.testo);
   const indirizzi = righe.slice(Math.max(0, i - 3), i).reverse()
-    .map((r) => r.testo.toUpperCase().split(/\||COSCIENZA/)[0]); // via la colonna di destra
+    .map((r) => aSinistra(r).toUpperCase().split(/\||C?OSCIENZA/)[0]); // via la colonna di destra
   const conCivico = indirizzi.map((indirizzo) => comuneDelCivico(indirizzo, comuniNoti)).find((c) => c !== undefined);
   if (conCivico !== undefined) return conCivico;
   const finale = (indirizzo) => comuniNoti.filter((c) => aParole(indirizzo).endsWith(aParole(c)))
@@ -372,7 +439,7 @@ export function leggiSchermata(lettura, { liste, adesso, comuniNoti, intera = le
   const letti = {
     data: foto && dataDellaMissione(foto, tempi.oraAllert),
     missione: leggiMissione(testi), mezzo: leggiMezzo(testi, liste),
-    oraAllert: tempi.oraAllert, liberoOperativo: tempi.liberoOperativo, comune: leggiComune(lettura.righe, comuniNoti),
+    oraAllert: tempi.oraAllert, liberoOperativo: tempi.liberoOperativo, comune: leggiComune(lettura, comuniNoti),
     ...leggiCodice(testi, liste, coloreCodice), eta: leggiEta(testi), sesso: leggiSesso(testi),
   };
   const nonLetti = CAMPI_TABLET.filter(([chiave]) => letti[chiave] === null).map(([, nome]) => nome);
