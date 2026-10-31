@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { validaQuery, normalizzaTesto, comuniDistinti, estraiJson, eseguiQuery, descriviPeriodo } from '../js/core/domande.js';
 import { LISTE_PREDEFINITE } from '../js/core/campi.js';
-import { RECORD, r } from './fixtures/record-domande.js';
+import { RECORD, MULTI, r } from './fixtures/record-domande.js';
 
 const MINIMA = {
   tipo: 'query', interpretazione: 'Interventi per ora', misura: 'interventi', gruppi: ['ora'], filtri: [],
@@ -205,4 +205,10 @@ test('descrizione del periodo come nella banda delle Statistiche', () => {
   assert.equal(descriviPeriodo({ tipo: 'anno', anno: 2026 }), 'Anno 2026');
   assert.equal(descriviPeriodo({ tipo: 'intervallo', da: '2026-01-01', a: '2026-03-31' }), 'Dal 01/01/2026 al 31/03/2026');
   assert.equal(descriviPeriodo({ tipo: 'tutto' }), 'Tutto l\'archivio');
+});
+
+test('domande: una missione con due pazienti vale un intervento, la base resta sulle schede', () => {
+  const ris = esegui({ gruppi: [] }, TUTTO, MULTI);
+  assert.equal(ris.righe[0].valore, 6);
+  assert.equal(ris.base, 7);
 });

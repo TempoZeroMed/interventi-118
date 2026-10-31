@@ -4,6 +4,7 @@
 import { calcolati } from './calcolati.js';
 import { isDataValida } from './campi.js';
 import { avvisi, indiceMissioni, TIPI_AVVISO } from './controlli.js';
+import { unaPerMissione, gruppiMissione, isCollegato } from './pazienti.js';
 
 export const NOMI_MESI = ['Gen', 'Feb', 'Mar', 'Apr', 'Mag', 'Giu', 'Lug', 'Ago', 'Set', 'Ott', 'Nov', 'Dic'];
 export const FASCE_ETA = [['0–17', 0, 17], ['18–40', 18, 40], ['41–65', 41, 65], ['66–80', 66, 80], ['oltre 80', 81, 200]];
@@ -81,27 +82,41 @@ export function vociTabella(lista, valoriUsati) {
   return [...voci, ...[...usati].filter((v) => !note.has(v))];
 }
 
+/**
+ * Un'uscita vale 1: di un intervento con più pazienti (schede collegate) contano una volta, dalla prima scheda, gli
+ * interventi, la tipologia, il mezzo, l'ora, il mese e la durata (`missioni`); i pazienti, cioè codici, patologie,
+ * luoghi, esiti, ospedali, età, sesso e avvisi, si contano scheda per scheda (`righe`), e le loro percentuali che l'Excel
+ * divide per gli interventi qui si dividono per le schede. Senza interventi multipli schede e interventi coincidono.
+ */
 export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) {
   const indice = indiceMissioni(records); // i duplicati si cercano in tutto l'archivio
-  const righe = filtraPeriodo(records, periodo).map((r) => ({ r, c: calcolati(r), avvisi: avvisi(r, indice) }));
+  const selezione = filtraPeriodo(records, periodo);
+  const righe = selezione.map((r) => ({ r, c: calcolati(r), avvisi: avvisi(r, indice) }));
+  const unaPerUscita = new Set(unaPerMissione(selezione).map((r) => r.id));
+  const missioni = righe.filter(({ r }) => unaPerUscita.has(r.id));
   const conta = (cond) => righe.filter(cond).length;
   const campo = (k, valore) => conta(({ r }) => r[k] === valore);
+  const contaMissioni = (cond) => missioni.filter(cond).length;
+  const collegati = [...gruppiMissione(selezione).values()].filter(isCollegato);
 
-  const totali = righe.length;
+  const totali = missioni.length;
+  const schede = righe.length;
   const annullati = conta(({ r }) => ANNULLATI.includes(r.esito));
-  const valutati = totali - annullati;
+  const valutati = schede - annullati;
   const trasportati = campo('esito', 'Trasportato');
   const deceduti = campo('esito', 'Deceduto');
   const maschi = campo('sesso', 'Maschio');
   const femmine = campo('sesso', 'Femmina');
-  const india = campo('tipologia', 'India');
-  const mike = campo('tipologia', 'Mike');
+  const india = contaMissioni(({ r }) => r.tipologia === 'India');
+  const mike = contaMissioni(({ r }) => r.tipologia === 'Mike');
   const eta = righe.map(({ r }) => r.eta).filter((e) => typeof e === 'number');
-  const durate = righe.map(({ c }) => c.durata).filter((d) => d !== null);
+  const durate = missioni.map(({ c }) => c.durata).filter((d) => d !== null);
   const conAvvisi = conta(({ avvisi: a }) => a.length > 0);
+  const multipli = collegati.length;
+  const pazientiMultipli = collegati.reduce((n, schedeDelGruppo) => n + schedeDelGruppo.length, 0);
 
   const riepilogo = {
-    totali, annullati, annullatiPct: div(annullati, totali), valutati,
+    totali, schede, multipli, pazientiMultipli, annullati, annullatiPct: div(annullati, schede), valutati,
     trasportati, trasportatiPct: div(trasportati, valutati), deceduti, decedutiPct: div(deceduti, valutati),
     maschi, maschiPct: div(maschi, valutati), femmine, femminePct: div(femmine, valutati),
     india, indiaPct: div(india, totali), mike, mikePct: div(mike, totali),
@@ -114,16 +129,16 @@ export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) 
   const rossiRientro = campo('codiceRientro', 'ROSSO');
   const rossiInvio = campo('codiceInvio', 'ROSSO');
   const kpi = {
-    interventi: totali, valutati, annullati, annullatiPct: arrotondaExcel(div(annullati, totali) * 100, 1),
+    interventi: totali, multipli, valutati, annullati, annullatiPct: arrotondaExcel(div(annullati, schede) * 100, 1),
     trasportati, trasportatiPct: arrotondaExcel(div(trasportati, valutati) * 100, 0),
     deceduti, decedutiPct: arrotondaExcel(div(deceduti, valutati) * 100, 1),
     rossiRientro, rossiRientroPct: arrotondaExcel(div(rossiRientro, valutati) * 100, 0),
-    rossiInvio, rossiInvioPct: arrotondaExcel(div(rossiInvio, totali) * 100, 0),
+    rossiInvio, rossiInvioPct: arrotondaExcel(div(rossiInvio, schede) * 100, 0),
     neri: campo('codiceRientro', 'NERO'),
     durataMediana: riepilogo.durataMediana, durataMedia: riepilogo.durataMedia, durataMax: riepilogo.durataMax,
     etaMediana: riepilogo.etaMediana,
     maschiPct: arrotondaExcel(div(maschi, valutati) * 100, 0), femminePct: arrotondaExcel(div(femmine, valutati) * 100, 0),
-    avvisi: conAvvisi, avvisiPct: arrotondaExcel(div(conAvvisi, totali) * 100, 1),
+    avvisi: conAvvisi, avvisiPct: arrotondaExcel(div(conAvvisi, schede) * 100, 1),
   };
 
   const codiciInvio = (liste.codiceInvio ?? []).map((v) => v.voce);
@@ -131,7 +146,7 @@ export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) 
   const codici = codiciRientro.map((voce) => {
     const invio = codiciInvio.includes(voce) ? campo('codiceInvio', voce) : null;
     const rientro = campo('codiceRientro', voce);
-    return { voce, invio, invioPct: invio === null ? null : div(invio, totali), rientro, rientroPct: div(rientro, valutati) };
+    return { voce, invio, invioPct: invio === null ? null : div(invio, schede), rientro, rientroPct: div(rientro, valutati) };
   });
   const matrice = codiciInvio.map((invio) => {
     const celle = Object.fromEntries(codiciRientro.map((rientro) => [
@@ -148,7 +163,7 @@ export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) 
     .map((voce) => {
       const invio = campo(kInvio, voce);
       const rientro = campo(kRientro, voce);
-      return { voce, invio, invioPct: div(invio, totali), rientro, rientroPct: div(rientro, valutati) };
+      return { voce, invio, invioPct: div(invio, schede), rientro, rientroPct: div(rientro, valutati) };
     });
   const semplice = (lista, k, base) => vociTabella(lista, righe.map(({ r }) => r[k]))
     .map((voce) => ({ voce, n: campo(k, voce), pct: div(campo(k, voce), base) }));
@@ -156,19 +171,21 @@ export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) 
   const chiaviMesi = mesiDelPeriodo(periodo, righe.map(({ r }) => r));
   const piuAnni = new Set(chiaviMesi.map((k) => k.slice(0, 4))).size > 1;
   const mesi = chiaviMesi.map((chiave) => {
-    const delMese = righe.filter(({ r }) => isDataValida(r.data) && r.data.startsWith(`${chiave}-`));
+    const delMese = ({ r }) => isDataValida(r.data) && r.data.startsWith(`${chiave}-`);
+    const schedeDelMese = righe.filter(delMese);
+    const missioniDelMese = missioni.filter(delMese);
     const nome = NOMI_MESI[Number(chiave.slice(5, 7)) - 1];
     return {
       chiave, voce: piuAnni ? `${nome} ${chiave.slice(0, 4)}` : nome,
-      interventi: delMese.length,
-      rossiInvio: delMese.filter(({ r }) => r.codiceInvio === 'ROSSO').length,
-      trasportati: delMese.filter(({ r }) => r.esito === 'Trasportato').length,
-      durataMedia: mediaArrotondata(delMese.map(({ c }) => c.durata).filter((d) => d !== null), 0),
+      interventi: missioniDelMese.length,
+      rossiInvio: schedeDelMese.filter(({ r }) => r.codiceInvio === 'ROSSO').length,
+      trasportati: schedeDelMese.filter(({ r }) => r.esito === 'Trasportato').length,
+      durataMedia: mediaArrotondata(missioniDelMese.map(({ c }) => c.durata).filter((d) => d !== null), 0),
     };
   });
 
-  const mezzi = vociTabella(liste.mezzo, righe.map(({ r }) => r.mezzo)).map((voce) => {
-    const delMezzo = righe.filter(({ r }) => r.mezzo === voce);
+  const mezzi = vociTabella(liste.mezzo, missioni.map(({ r }) => r.mezzo)).map((voce) => {
+    const delMezzo = missioni.filter(({ r }) => r.mezzo === voce);
     return {
       voce, n: delMezzo.length, pct: div(delMezzo.length, totali),
       india: delMezzo.filter(({ r }) => r.tipologia === 'India').length,
@@ -188,14 +205,14 @@ export function calcolaStatistiche(records, liste, periodo = { tipo: 'tutto' }) 
     },
     patologia: doppia(liste.patologia, 'patologiaInvio', 'patologiaRientro'),
     luogo: doppia(liste.luogo, 'luogoInvio', 'luogoRientro'),
-    esito: semplice(liste.esito, 'esito', totali),
+    esito: semplice(liste.esito, 'esito', schede),
     fasceEta: FASCE_ETA.map(([voce, da, a]) => {
       const n = eta.filter((e) => e >= da && e <= a).length;
       return { voce, n, pct: div(n, valutati) };
     }),
     mesi,
     ore: Array.from({ length: 24 }, (_, ora) => {
-      const n = conta(({ c }) => c.ora === ora);
+      const n = contaMissioni(({ c }) => c.ora === ora);
       return { voce: due(ora), n, pct: div(n, totali) };
     }),
     mezzi,

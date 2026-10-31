@@ -25,3 +25,12 @@ export const RECORD = [
   r({ id: 'r6', deleted: true, data: '2026-01-15', missione: '04AA0006', codiceInvio: 'ROSSO', esito: 'Trasportato', ospedale: 'Novara', eta: 40 }),
   r({ id: 'r7', comune: 'BIELLA', esito: 'Trasportato' }),
 ];
+
+// Un intervento con due pazienti: due schede della stessa missione, la prima con la spunta "Paziente multiplo".
+export const MULTI = [
+  ...RECORD,
+  r({ id: 'm1', createdAt: '2026-03-01T10:00:00.000Z', data: '2026-03-01', oraAllert: '09:00', liberoOperativo: '10:00', missione: '99ZZ0101', pazienti: 2, mezzo: '3030', tipologia: 'Mike',
+    codiceInvio: 'ROSSO', codiceRientro: 'GIALLO', esito: 'Trasportato', ospedale: 'Biella', eta: 20, sesso: 'Maschio' }),
+  r({ id: 'm2', createdAt: '2026-03-01T10:05:00.000Z', data: '2026-03-01', oraAllert: '09:00', liberoOperativo: '10:00', missione: '99ZZ0101', pazienti: 2, mezzo: '3030', tipologia: 'Mike',
+    codiceInvio: 'ROSSO', codiceRientro: 'ROSSO', esito: 'Trasportato', ospedale: 'Novara', eta: 60, sesso: 'Femmina' }),
+];

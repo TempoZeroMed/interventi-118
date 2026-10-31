@@ -16,6 +16,9 @@ function statistiche118(record, liste, periodo) {
   const completi = record.map((r) => (isElicottero(r.mezzo) ? { ...r, tipoMissione: 'HEMS', tempoVolo: 0 } : r));
   const s = calcolaStatistiche(completi, liste, periodo);
   s.controlli.perTipo = s.controlli.perTipo.filter((t) => !TIPI_AVVISO_VOLO.includes(t.voce) && !TIPI_AVVISO_PAZIENTI.includes(t.voce));
+  // schede e interventi con più pazienti: righe nuove dell'app, l'Excel conta per riga
+  for (const k of ['schede', 'multipli', 'pazientiMultipli']) delete s.riepilogo[k];
+  delete s.kpi.multipli;
   return s;
 }
 

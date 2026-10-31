@@ -2,7 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcolaStatistiche, filtraPeriodo, arrotondaExcel } from '../js/core/statistiche.js';
 import { LISTE_PREDEFINITE } from '../js/core/campi.js';
-import { RECORD, r } from './fixtures/record-domande.js';
+import { RECORD, MULTI, r } from './fixtures/record-domande.js';
+import { unaPerMissione } from '../js/core/pazienti.js';
 
 const TUTTO = { tipo: 'tutto' };
 
@@ -12,7 +13,7 @@ test('KPI della dashboard', () => {
     trasportati: 1, trasportatiPct: 25, deceduti: 1, decedutiPct: 25,
     rossiRientro: 1, rossiRientroPct: 25, rossiInvio: 1, rossiInvioPct: 20, neri: 1,
     durataMediana: 42.5, durataMedia: 39, durataMax: 60, etaMediana: 50,
-    maschiPct: 75, femminePct: 50, avvisi: 0, avvisiPct: 0,
+    maschiPct: 75, femminePct: 50, avvisi: 0, avvisiPct: 0, multipli: 0,
   });
 });
 
@@ -24,6 +25,7 @@ test('tabella 1 · riepilogo (sesso ed età contano anche gli annullati, come l\
     india: 2, indiaPct: 0.4, mike: 3, mikePct: 0.6,
     etaMedia: 48, etaMediana: 50, etaMin: 5, etaMax: 85,
     durataMedia: 39, durataMediana: 42.5, durataMax: 60,
+    schede: 5, multipli: 0, pazientiMultipli: 0,
   });
 });
 
@@ -154,4 +156,27 @@ test('arrotondamento come ROUND di Excel', () => {
   assert.equal(arrotondaExcel(67.55, 1), 67.6);
   assert.equal(arrotondaExcel(2.5, 0), 3);
   assert.equal(arrotondaExcel(-2.5, 0), -3);
+});
+
+// --- Intervento con più pazienti ---
+
+test('intervento con due pazienti: conta come un intervento, i pazienti si contano per scheda', () => {
+  const s = calcolaStatistiche(MULTI, LISTE_PREDEFINITE, TUTTO);
+  assert.equal(unaPerMissione(filtraPeriodo(MULTI, TUTTO)).length, 6);
+  assert.deepEqual([s.riepilogo.totali, s.riepilogo.schede, s.riepilogo.valutati, s.riepilogo.trasportati], [6, 7, 6, 3]);
+  assert.deepEqual([s.riepilogo.multipli, s.riepilogo.pazientiMultipli, s.kpi.interventi, s.kpi.multipli], [1, 2, 6, 1]);
+  assert.equal(s.riepilogo.mike, 4, 'tipologia una volta per missione');
+  assert.equal(s.riepilogo.durataMedia, 43, 'durata una volta per missione: (60+40+10+45+60)/5');
+  assert.equal(s.mesi.find((m) => m.chiave === '2026-03').interventi, 1);
+  assert.equal(s.mesi.find((m) => m.chiave === '2026-03').trasportati, 2);
+  assert.equal(s.mezzi.find((m) => m.voce === '3030').n, 4);
+  assert.equal(s.ore.find((o) => o.voce === '09').n, 1);
+  assert.equal(s.codici.find((c) => c.voce === 'ROSSO').invio, 3, 'codici per scheda');
+  assert.equal(s.codici.find((c) => c.voce === 'ROSSO').invioPct, 3 / 7, '% invio sulle schede');
+  assert.equal(s.kpi.rossiInvioPct, 43);
+});
+
+test('senza interventi multipli niente cambia: schede = totali e le percentuali di prima', () => {
+  const s = calcolaStatistiche(RECORD, LISTE_PREDEFINITE, TUTTO);
+  assert.deepEqual([s.riepilogo.totali, s.riepilogo.schede, s.riepilogo.multipli, s.riepilogo.pazientiMultipli], [5, 5, 0, 0]);
 });

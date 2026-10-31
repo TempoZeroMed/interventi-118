@@ -3,6 +3,7 @@
 import { CAMPI, isDataValida } from './campi.js';
 import { calcolati } from './calcolati.js';
 import { filtraPeriodo, vociTabella, FASCE_ETA, ANNULLATI, media, mediana, arrotondaExcel } from './statistiche.js';
+import { unaPerMissione } from './pazienti.js';
 import { meseLungo, dataBreve } from '../ui/dom.js';
 
 export const MISURE = [
@@ -264,7 +265,7 @@ function misura(nome, righe, selezione) {
   const eta = righe.map(({ r }) => numeroONull(r.eta)).filter((e) => e !== null);
   const div = (a, b) => (b ? a / b : 0);
   switch (nome) {
-    case 'interventi': return righe.length;
+    case 'interventi': return unaPerMissione(righe.map(({ r }) => r)).length; // un'uscita vale 1, anche con più pazienti
     case 'valutati': return contaValutati(righe);
     case 'trasportati': return righe.filter(({ r }) => r.esito === 'Trasportato').length;
     case 'durataMedia': return durate.length ? arrotondaExcel(media(durate), 0) : null;
