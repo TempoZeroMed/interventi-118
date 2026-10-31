@@ -9,7 +9,7 @@ import {
   zonaColore, coloreRiquadro, scritteSulRiquadro, etichettaNascita, zonaSesso, punteggioSchermata, rotazioniDaProvare,
 } from '../core/tablet.js';
 import { caricaScript, TESSERACT, CARTELLA_TESSERACT } from './file.js';
-import { h, icona, dataBreve } from './dom.js';
+import { h, icona, messaggioDuplicato, messaggioCollegata } from './dom.js';
 
 const LATO_MASSIMO = 2000;
 // dopo il contrasto i grigi medi si scuriscono (v^1,5): le scritte grigie e il bianco sui riquadri blu si staccano di più.
@@ -318,16 +318,16 @@ export function creaFotoTablet({ dopoLettura }) {
       intera);
   }
 
-  /** Lo stesso messaggio del modulo per una missione già in archivio, con il link all'intervento salvato. */
+  /**
+   * Gli stessi riquadri del modulo per una missione già in archivio: verde se la prima scheda ha la spunta "Paziente
+   * multiplo" (la foto è di un altro paziente dello stesso intervento), rosso con il link all'intervento salvato se no.
+   */
   function duplicato(missione) {
-    const id = verificaSalvataggio({ id: null, missione }, stato.record).duplicatoDi;
-    const salvato = id && trova(id);
-    if (!salvato) return null;
-    return h('div', { class: 'messaggio errore', role: 'alert' }, icona('avviso'),
-      h('div', {},
-        h('p', {}, h('strong', {}, `La missione ${missione} è già registrata`),
-          salvato.data ? ` (${dataBreve(salvato.data)}${salvato.comune ? `, ${salvato.comune}` : ''}).` : '.'),
-        h('div', { class: 'azioni-mess' }, h('a', { class: 'bottone piccolo', href: `#/intervento/${encodeURIComponent(id)}` }, 'Apri'))));
+    const v = verificaSalvataggio({ id: null, missione }, stato.record);
+    const prima = v.collegataA && trova(v.collegataA);
+    if (prima) return messaggioCollegata(prima);
+    const salvato = v.duplicatoDi && trova(v.duplicatoDi);
+    return salvato ? messaggioDuplicato(missione, salvato, v.duplicatoDi, { nota: v.errori[1], link: 'Apri' }) : null;
   }
 
   /** Chiude il riquadro (i valori restano nel modulo) e lascia cadere una lettura ancora in corso. */

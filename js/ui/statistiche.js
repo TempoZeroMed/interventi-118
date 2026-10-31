@@ -132,13 +132,15 @@ export const unita = (t) => h('span', { class: 'unita' }, t);
 function kpi(s) {
   const k = s.kpi;
   return h('dl', { class: 'kpi' },
-    voceKpi('Interventi', [conteggio(k.interventi)], `${conteggio(k.valutati)} valutati`, `annullati: ${k.annullati} (${pctGia(k.annullatiPct)})`),
+    voceKpi('Interventi', [conteggio(k.interventi)],
+      `${conteggio(k.valutati)} valutati${k.multipli ? ` · ${conteggio(k.multipli)} con più pazienti` : ''}`,
+      `annullati: ${k.annullati} (${pctGia(k.annullatiPct)})`),
     voceKpi('Trasportati', [conteggio(k.trasportati)], `${pctGia(k.trasportatiPct)} dei valutati`, `deceduti: ${k.deceduti} (${pctGia(k.decedutiPct)})`),
     voceKpi('Rossi al rientro', [conteggio(k.rossiRientro), codice('ROSSO')], `${pctGia(k.rossiRientroPct)} dei valutati`,
       `all'invio: ${k.rossiInvio} (${pctGia(k.rossiInvioPct)}) · neri: ${k.neri}`),
     voceKpi('Durata mediana', [numero(k.durataMediana), unita('min')], k.durataMedia === null ? null : `media ${numero(k.durataMedia)} · max ${numero(k.durataMax)}`),
     voceKpi('Età mediana', [numero(k.etaMediana), unita('anni')], `${pctGia(k.maschiPct)} maschi · ${pctGia(k.femminePct)} femmine`),
-    voceKpi('Avvisi da controllare', [conteggio(k.avvisi), unita(k.avvisi === 1 ? 'riga' : 'righe')], `${pctGia(k.avvisiPct)} degli interventi`,
+    voceKpi('Avvisi da controllare', [conteggio(k.avvisi), unita(k.avvisi === 1 ? 'riga' : 'righe')], `${pctGia(k.avvisiPct)} delle schede`,
       k.avvisi ? h('a', { href: '#/elenco', onclick: () => impostaFiltri({ soloAvvisi: true, periodo: { ...periodo } }) }, 'Vedi nell\'elenco') : null),
   );
 }
@@ -203,10 +205,10 @@ function schedeGrafici(s, tele) {
   const tinta = (c) => trasparente(c, 0.26);
   const coloreCodice = (v) => colore(`--${v.toLowerCase()}`);
   const totali = s.riepilogo.totali;
-  const invio = { label: 'Invio · % su totali', borderWidth: 2 };
+  const invio = { label: 'Invio · % sulle schede', borderWidth: 2 };
   const rientro = { label: 'Rientro · % su valutati', borderWidth: 0 };
   return [
-    schedaGrafico(tele, 'Codice all\'invio e al rientro', 'Chiaro = invio (% sui totali) · pieno = rientro (% sui valutati); tra parentesi invio → rientro.',
+    schedaGrafico(tele, 'Codice all\'invio e al rientro', 'Chiaro = invio (% sulle schede) · pieno = rientro (% sui valutati); tra parentesi invio → rientro.',
       configBarre({
         etichette: s.codici.map((c) => `${c.voce} (${c.invio ?? '—'} → ${c.rientro})`),
         serie: [
@@ -217,13 +219,13 @@ function schedeGrafici(s, tele) {
         ],
         legenda: [{ fill: tinta(ink), stroke: ink }, { fill: ink }],
       })),
-    schedaGrafico(tele, 'Esiti', '% sugli interventi totali; tra parentesi il numero.',
+    schedaGrafico(tele, 'Esiti', '% sulle schede; tra parentesi il numero.',
       configBarre({ etichette: s.esito.map((e) => `${e.voce} (${e.n})`), serie: [{ label: 'Esiti', data: s.esito.map((e) => e.pct * 100), backgroundColor: ink }], orizzontale: true })),
     schedaGrafico(tele, 'Interventi per mese', '% sugli interventi totali; tra parentesi il numero.',
       configBarre({ etichette: s.mesi.map((m) => `${m.voce} (${m.interventi})`), serie: [{ label: 'Interventi', data: s.mesi.map((m) => (totali ? (m.interventi / totali) * 100 : 0)), backgroundColor: ink }] })),
     schedaGrafico(tele, 'Ora di allertamento', '% sugli interventi totali; "08" = tra le 08:00 e le 08:59.',
       configBarre({ etichette: s.ore.map((o) => o.voce), serie: [{ label: 'Interventi', data: s.ore.map((o) => o.pct * 100), backgroundColor: ink }], saltaEtichette: true })),
-    schedaGrafico(tele, 'Patologia all\'invio e al rientro', 'Chiaro = invio (% sui totali) · pieno = rientro (% sui valutati); tra parentesi invio / rientro.',
+    schedaGrafico(tele, 'Patologia all\'invio e al rientro', 'Chiaro = invio (% sulle schede) · pieno = rientro (% sui valutati); tra parentesi invio / rientro.',
       configBarre({
         etichette: s.patologia.map((p) => `${p.voce} (${p.invio} / ${p.rientro})`),
         serie: [
@@ -261,6 +263,8 @@ function tabelle(s) {
     { voce: 'Interventi totali', v: conteggio(r.totali), p: '' },
     { voce: 'Annullati / non raggiungibili', v: conteggio(r.annullati), p: pct(r.annullatiPct) },
     { voce: 'Pazienti valutati', v: conteggio(r.valutati), p: '' },
+    { voce: 'Interventi con più pazienti', v: conteggio(r.multipli), p: '' },
+    { voce: 'Pazienti negli interventi multipli', v: conteggio(r.pazientiMultipli), p: '' },
     { voce: 'Trasportati', v: conteggio(r.trasportati), p: pct(r.trasportatiPct) },
     { voce: 'Deceduti', v: conteggio(r.deceduti), p: pct(r.decedutiPct) },
     { voce: 'Maschi', v: conteggio(r.maschi), p: pct(r.maschiPct) },
@@ -277,9 +281,9 @@ function tabelle(s) {
   const rientriCodici = Object.keys(s.matrice[0]?.celle ?? {});
   const cc = s.cambioCodice;
   return [
-    tabella('1 · Riepilogo', '% annullati, India, Mike: sui totali · le altre: sui valutati.',
+    tabella('1 · Riepilogo', '% annullati: sulle schede · India, Mike: sugli interventi · le altre: sui valutati.',
       [voce, ['Valore', (x) => x.v, true], ['%', (x) => x.p, true]], riepilogo, { aperta: true }),
-    tabella('2 · Codice colore', '% invio sugli interventi totali · % rientro sui pazienti valutati.',
+    tabella('2 · Codice colore', '% invio sulle schede · % rientro sui pazienti valutati.',
       [['Codice', (x) => codice(x.voce)], n('invio'), p('invioPct', '% invio'), n('rientro'), p('rientroPct', '% rientro')], s.codici, { aperta: true }),
     tabella('3 · Da invio a rientro', 'Invio sulle righe, rientro sulle colonne.',
       [['Invio ↓ rientro →', (x) => codice(x.invio)], ...rientriCodici.map((c) => [c, (x) => conteggio(x.celle[c]), true]),
@@ -290,11 +294,11 @@ function tabelle(s) {
         { voce: 'Invariato', n: cc.invariato, pct: cc.invariatoPct },
         { voce: 'Meno grave all\'arrivo', n: cc.menoGrave, pct: cc.menoGravePct },
       ]),
-    tabella('4 · Patologia', '% invio sugli interventi totali · % rientro sui pazienti valutati.',
+    tabella('4 · Patologia', '% invio sulle schede · % rientro sui pazienti valutati.',
       [voce, n('invio'), p('invioPct', '% invio'), n('rientro'), p('rientroPct', '% rientro')], s.patologia, { zero: (x) => !x.invio && !x.rientro }),
-    tabella('5 · Luogo', '% invio sugli interventi totali · % rientro sui pazienti valutati.',
+    tabella('5 · Luogo', '% invio sulle schede · % rientro sui pazienti valutati.',
       [voce, n('invio'), p('invioPct', '% invio'), n('rientro'), p('rientroPct', '% rientro')], s.luogo, { zero: (x) => !x.invio && !x.rientro }),
-    tabella('6 · Esito', '% sugli interventi totali.', [['Esito', (x) => x.voce], n(), p()], s.esito, { zero: vuota() }),
+    tabella('6 · Esito', '% sulle schede.', [['Esito', (x) => x.voce], n(), p()], s.esito, { zero: vuota() }),
     tabella('7 · Fasce di età', '% sui pazienti valutati.', [['Fascia', (x) => x.voce], n(), p()], s.fasceEta, { zero: vuota() }),
     tabella('8 · Andamento per mese', null,
       [['Mese', (x) => x.voce], ['Interventi', (x) => conteggio(x.interventi), true], ['Rossi invio', (x) => conteggio(x.rossiInvio), true],

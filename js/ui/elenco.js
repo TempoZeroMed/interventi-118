@@ -1,6 +1,6 @@
 // Elenco cronologico con ricerca e filtri combinabili.
 import { stato, interventi } from '../stato.js';
-import { filtraElenco, ordinaRecenti } from '../core/elenco.js';
+import { filtraElenco, ordinaRecenti, etichettaPaziente, conteggioInterventi } from '../core/elenco.js';
 import { avvisi, indiceMissioni } from '../core/controlli.js';
 import { isDataValida } from '../core/campi.js';
 import { h, icona, impostaBanda, coppiaCodici, conteggio, meseLungo, meseBreve } from './dom.js';
@@ -62,10 +62,14 @@ export function mostra(main) {
     }
     const trovati = ordinaRecenti(filtraElenco(stato.record, filtri));
     const indice = indiceMissioni(stato.record);
+    // un'uscita vale un intervento anche con più pazienti; le schede in più si dicono a parte
+    const totale = conteggioInterventi(tutti);
+    const visti = conteggioInterventi(trovati);
+    const schede = (c) => (c.schede !== c.interventi ? ` · ${conteggio(c.schede)} schede` : '');
     const testata = h('div', { class: 'riepilogo-elenco' },
       h('span', { class: 'num' }, trovati.length === tutti.length
-        ? `${conteggio(tutti.length)} interventi`
-        : `${conteggio(trovati.length)} di ${conteggio(tutti.length)} interventi`),
+        ? `${conteggio(totale.interventi)} interventi${schede(totale)}`
+        : `${conteggio(visti.interventi)} di ${conteggio(totale.interventi)} interventi${schede(visti)}`),
       n || filtri.testo ? h('button', { type: 'button', class: 'bottone testo piccolo', onclick: azzera }, 'Azzera filtri') : null);
     if (!trovati.length) {
       risultati.replaceChildren(testata, h('div', { class: 'vuoto-stato' },
@@ -84,7 +88,7 @@ export function mostra(main) {
     for (const [chiave, righe] of gruppi) {
       const titolo = chiave === 'senza-data' ? 'Senza data' : `${meseLungo(Number(chiave.slice(5)))} ${chiave.slice(0, 4)}`;
       blocchi.push(h('h3', { class: 'mese-titolo' }, titolo, h('span', { class: 'num' }, conteggio(righe.length))));
-      blocchi.push(h('ul', { class: 'righe' }, righe.map((r) => riga(r, avvisi(r, indice)))));
+      blocchi.push(h('ul', { class: 'righe' }, righe.map((r) => riga(r, avvisi(r, indice), etichettaPaziente(r, indice)))));
     }
     risultati.replaceChildren(testata, ...blocchi);
   }
@@ -106,9 +110,10 @@ export function mostra(main) {
   return { aggiorna: disegna };
 }
 
-function riga(r, avvisiRiga) {
+/** `paziente`: "Paziente 2 di 3" sulle schede di un intervento con più pazienti, '' sulle altre. */
+function riga(r, avvisiRiga, paziente) {
   const [, mese, giorno] = isDataValida(r.data) ? r.data.split('-').map(Number) : [];
-  const dettagli = [r.missione || 'senza missione', [r.mezzo, r.tipologia].filter(Boolean).join(' '),
+  const dettagli = [paziente, r.missione || 'senza missione', [r.mezzo, r.tipologia].filter(Boolean).join(' '),
     r.eta !== null && r.eta !== '' ? `${r.eta} anni` : '', r.sesso ? r.sesso[0] : ''].filter(Boolean).join(' · ');
   return h('li', {}, h('a', { class: 'riga', href: `#/intervento/${encodeURIComponent(r.id)}` },
     h('span', { class: 'quando' },

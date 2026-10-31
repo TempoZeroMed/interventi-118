@@ -63,7 +63,7 @@ function tabelle(s) {
     tabella('V3 · Tipo di missione', '% sulle missioni con il tipo compilato.',
       [voce('Tipo'), n(), p(), ore],
       [...s.tipi.voci, { voce: 'Non compilato', n: s.tipi.nonCompilato, pct: null, minutiVolo: null }], { zero: vuota() }),
-    tabella('V4 · Manovre', '% sulle missioni in elicottero. Una missione può avere più manovre.',
+    tabella('V4 · Manovre', '% sulle missioni in elicottero. Una missione può avere più manovre; le manovre di tutte le schede di una missione si sommano.',
       [voce('Manovra'), n(), p()], [
         ...s.manovre.voci.map((m) => ({ voce: `${m.codice} · ${m.nome}`, n: m.n, pct: m.pct })),
         { voce: 'Almeno una manovra', ...s.manovre.almenoUna },
