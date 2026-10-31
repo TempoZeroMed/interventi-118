@@ -3,7 +3,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { calcolaStatistiche } from '../js/core/statistiche.js';
-import { TIPI_AVVISO_VOLO } from '../js/core/controlli.js';
+import { TIPI_AVVISO_VOLO, TIPI_AVVISO_PAZIENTI } from '../js/core/controlli.js';
 import { isElicottero } from '../js/core/campi.js';
 import { unisci, leggiBackup } from '../js/core/merge.js';
 import { IMPORT, ATTESE, leggiJson, differenze, motivoSkip } from './aiuti.js';
@@ -11,11 +11,11 @@ import { IMPORT, ATTESE, leggiJson, differenze, motivoSkip } from './aiuti.js';
 // I record passano dalla stessa lettura dell'import nell'app (normalizzazione compresa).
 const importati = () => leggiBackup(JSON.stringify(leggiJson(IMPORT)));
 
-/** Gli avvisi di volo non esistono nell'Excel 118: per il confronto i voli contano come completi. */
+/** Gli avvisi di volo e dei pazienti multipli non esistono nell'Excel 118: per il confronto i voli contano come completi. */
 function statistiche118(record, liste, periodo) {
   const completi = record.map((r) => (isElicottero(r.mezzo) ? { ...r, tipoMissione: 'HEMS', tempoVolo: 0 } : r));
   const s = calcolaStatistiche(completi, liste, periodo);
-  s.controlli.perTipo = s.controlli.perTipo.filter((t) => !TIPI_AVVISO_VOLO.includes(t.voce));
+  s.controlli.perTipo = s.controlli.perTipo.filter((t) => !TIPI_AVVISO_VOLO.includes(t.voce) && !TIPI_AVVISO_PAZIENTI.includes(t.voce));
   return s;
 }
 

@@ -1,11 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { avvisi, indiceMissioni, verificaSalvataggio } from '../js/core/controlli.js';
+import { avvisi, indiceMissioni, verificaSalvataggio, TIPI_AVVISO } from '../js/core/controlli.js';
 
 function rec(campi = {}) {
   return {
     id: 'a', createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
-    data: '2026-01-01', oraAllert: '10:12', missione: '99ZZ0101', comune: 'COSSATO', mezzo: '3080',
+    data: '2026-01-01', oraAllert: '10:12', missione: '99ZZ0101', pazienti: null, comune: 'COSSATO', mezzo: '3080',
     tipologia: 'Mike', codiceInvio: 'GIALLO', patologiaInvio: '02 - Cardio', luogoInvio: 'K - Casa',
     eta: 72, sesso: 'Femmina', esito: 'Non Necessita', ospedale: '', codiceRientro: 'VERDE',
     patologiaRientro: '02 - Cardio', luogoRientro: 'K - Casa', liberoOperativo: '10:51',
@@ -134,4 +134,83 @@ test('volo: tempo non valido se non intero o fuori da 0–600', () => {
   const con = (tempoVolo) => avvisiDi(rec({ mezzo: 'T-ECHO', tipoMissione: 'HEMS', tempoVolo }));
   for (const buono of [0, 44, 600]) assert.deepEqual(con(buono), [], String(buono));
   for (const cattivo of [-1, 601, 44.5, '45 min']) assert.deepEqual(con(cattivo), ['Tempo volo non valido'], String(cattivo));
+});
+
+// --- Intervento con più pazienti ---
+
+const T1 = '2026-01-01T00:05:00.000Z';
+const gruppo = (n, pazienti, extra = []) => [
+  rec({ id: 'p1', pazienti }),
+  ...Array.from({ length: n - 1 }, (_, i) => rec({ id: `p${i + 2}`, createdAt: T1, pazienti, ...(extra[i] ?? {}) })),
+];
+
+test('gruppo collegato: nessun duplicato; numero di schede confrontato con i pazienti dichiarati', () => {
+  const ok = gruppo(2, 2);
+  assert.deepEqual(avvisi(ok[0], indiceMissioni(ok)), []);
+  assert.deepEqual(avvisi(ok[1], indiceMissioni(ok)), []);
+  const troppe = gruppo(3, 2);
+  assert.deepEqual(avvisi(troppe[2], indiceMissioni(troppe)), ['Schede in più rispetto ai pazienti']);
+  const poche = gruppo(1, 3);
+  assert.deepEqual(avvisi(poche[0], indiceMissioni(poche)), ['Mancano schede paziente']);
+});
+
+test('gruppo non collegato (prima scheda senza spunta): Missione duplicata anche se la seconda ha la spunta', () => {
+  const r = [rec({ id: 'p1' }), rec({ id: 'p2', createdAt: T1, pazienti: 2 })];
+  assert.deepEqual(avvisi(r[0], indiceMissioni(r)), ['Missione duplicata']);
+  assert.deepEqual(avvisi(r[1], indiceMissioni(r)), ['Missione duplicata']);
+});
+
+test('numero pazienti non valido, diverso tra le schede, tempo di volo diverso', () => {
+  assert.deepEqual(avvisiDi(rec({ pazienti: 1 })), ['Numero pazienti non valido']);
+  assert.deepEqual(avvisiDi(rec({ pazienti: 'due' })), ['Numero pazienti non valido']);
+  assert.deepEqual(avvisiDi(rec({ pazienti: '' })), [], 'numero cancellato: lo blocca il salvataggio, non un avviso');
+  const r = gruppo(2, 2, [{ pazienti: null }]);
+  assert.deepEqual(avvisi(r[1], indiceMissioni(r)), ['Numero pazienti diverso tra le schede']);
+  const v = gruppo(2, 2, [{ tempoVolo: 30 }]).map((x) => ({ ...x, mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: x.tempoVolo ?? 25 }));
+  assert.deepEqual(avvisi(v[1], indiceMissioni(v)), ['Tempo volo diverso tra le schede']);
+  assert.deepEqual(avvisi(v[0], indiceMissioni(v)), []);
+});
+
+test('prima scheda eliminata: la seconda diventa prima e il gruppo segue la sua spunta', () => {
+  const r = [rec({ id: 'p1', deleted: true, pazienti: 2 }), rec({ id: 'p2', createdAt: T1, pazienti: 2 }), rec({ id: 'p3', createdAt: T1, pazienti: null })];
+  assert.deepEqual(avvisi(r[2], indiceMissioni(r)), ['Numero pazienti diverso tra le schede']);
+});
+
+test('salvataggio: scheda nuova con la missione di una prima scheda con la spunta si collega', () => {
+  const prima = rec({ id: 'p1', pazienti: 2 });
+  // una scheda nuova è sempre l'ultima del gruppo, anche con un createdAt più vecchio (bozza lasciata a metà)
+  const v = verificaSalvataggio(rec({ id: 'n', createdAt: '2025-12-31T00:00:00.000Z', pazienti: null }), [prima]);
+  assert.deepEqual([v.ok, v.collegataA, v.duplicatoDi], [true, 'p1', null]);
+});
+
+test('salvataggio: senza spunta sulla prima scheda resta l\'errore, con la frase sul paziente multiplo', () => {
+  const v = verificaSalvataggio(rec({ id: 'n' }), [rec({ id: 'p1' })]);
+  assert.equal(v.ok, false);
+  assert.deepEqual(v.errori, ['La MISSIONE 99ZZ0101 è già registrata.', 'Se è un altro paziente dello stesso intervento, apri la prima scheda e attiva Paziente multiplo.']);
+  assert.equal(v.duplicatoDi, 'p1');
+});
+
+test('prima scheda collegata: MISSIONE e spunta bloccate; libera se è l\'unica', () => {
+  const prima = rec({ id: 'p1', pazienti: 2 });
+  const seconda = rec({ id: 'p2', createdAt: T1, pazienti: 2 });
+  const cambioMissione = verificaSalvataggio({ ...prima, missione: '99ZZ0102' }, [prima, seconda], prima);
+  assert.deepEqual([cambioMissione.ok, cambioMissione.bloccata, cambioMissione.errori], [false, 1, ['Questa scheda è collegata a 1 altra scheda: la MISSIONE non si può cambiare.']]);
+  const toltaSpunta = verificaSalvataggio({ ...prima, pazienti: null }, [prima, seconda], prima);
+  assert.deepEqual([toltaSpunta.ok, toltaSpunta.errori], [false, ['Questa scheda è collegata a 1 altra scheda: Paziente multiplo resta attivo.']]);
+  assert.equal(verificaSalvataggio({ ...prima, pazienti: null }, [prima], prima).ok, true);
+  const collegata = verificaSalvataggio({ ...seconda, missione: '99ZZ0102', pazienti: null }, [prima, seconda], seconda);
+  assert.equal(collegata.ok, true, 'la scheda collegata cambia MISSIONE liberamente');
+  assert.equal(verificaSalvataggio(seconda, [prima, seconda], seconda).collegataA, 'p1');
+  assert.equal(verificaSalvataggio(prima, [prima, seconda], prima).collegataA, null, 'la prima scheda non è collegata a nessuno');
+});
+
+test('salvataggio: spunta accesa senza numero si blocca, un numero non valido si salva con l\'avviso', () => {
+  const vuoto = verificaSalvataggio(rec({ id: 'n', pazienti: '' }), []);
+  assert.deepEqual([vuoto.ok, vuoto.errori], [false, ['Scrivi il numero di pazienti, oppure togli Paziente multiplo.']]);
+  assert.equal(verificaSalvataggio(rec({ id: 'n', pazienti: 1 }), []).ok, true);
+});
+
+test('TIPI_AVVISO nell\'ordine della colonna CONTROLLI', () => {
+  assert.deepEqual(TIPI_AVVISO.slice(4, 9), ['Missione duplicata', 'Numero pazienti non valido', 'Schede in più rispetto ai pazienti', 'Mancano schede paziente', 'Numero pazienti diverso tra le schede']);
+  assert.equal(TIPI_AVVISO.at(-1), 'Tempo volo diverso tra le schede');
 });
