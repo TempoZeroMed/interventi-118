@@ -21,3 +21,6 @@ __pycache__/
 
 # Cartella temporanea della pubblicazione su Cloudflare
 _site/
+
+# Processi /court: appunti di lavoro
+.court/
