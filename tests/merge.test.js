@@ -10,6 +10,7 @@ const DOPO3 = '2026-10-23T00:00:00.000Z';
 
 const rec = (id, updatedAt, campi = {}) => ({
   id, createdAt: PRIMA, updatedAt, deleted: false, data: '2026-10-01', oraAllert: '10:00', missione: `04AA${id.padStart(4, '0')}`,
+  pazienti: null,
   comune: 'BIELLA', mezzo: '3030', tipologia: 'Mike', codiceInvio: 'GIALLO', patologiaInvio: '', luogoInvio: '', eta: 50,
   sesso: '', esito: '', ospedale: '', codiceRientro: '', patologiaRientro: '', luogoRientro: '', liberoOperativo: '',
   tipoMissione: '', tempoVolo: null, manovre: [],
@@ -131,7 +132,7 @@ test('liste: voci nuove aggiunte, rinomina più recente vince, modifica locale p
 test('lettura backup: rifiuta file non validi con un messaggio comprensibile', () => {
   assert.throws(() => leggiBackup('non è json'), /non è un file JSON valido/);
   assert.throws(() => leggiBackup('{"formato":"altro","versione":1,"record":[]}'), /non è un backup di Interventi 118/);
-  assert.throws(() => leggiBackup('{"formato":"interventi118","versione":3,"record":[]}'), /versione più recente/);
+  assert.throws(() => leggiBackup('{"formato":"interventi118","versione":4,"record":[]}'), /versione più recente/);
   assert.throws(() => leggiBackup('{"formato":"interventi118","versione":0,"record":[]}'), /non riconosciuta/);
   assert.deepEqual(leggiBackup('{"formato":"interventi118","versione":1,"record":[]}').record, [], 'i backup v1 si leggono ancora');
   assert.throws(() => leggiBackup('{"formato":"interventi118","versione":1,"record":[{"data":"2026-01-01"}]}'), /senza id/);
@@ -201,11 +202,21 @@ test('record v1 senza campi di volo e stesso record v2 con campi vuoti: invariat
   assert.deepEqual([riepilogo.aggiornati, riepilogo.invariati, riepilogo.conflitti.length], [0, 1, 0]);
 });
 
-test('i dati di volo viaggiano nel backup v2 e vincono se più recenti', () => {
+test('i dati di volo viaggiano nel backup e vincono se più recenti', () => {
   const locale = rec('1', PRIMA, { mezzo: 'V-ECHO' });
   const importato = rec('1', DOPO1, { mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: 44, manovre: ['HD'] });
   const backup = leggiBackup(JSON.stringify(creaBackup({ record: [importato], liste: null, dispositivo: 'mac', adesso: new Date(DOPO2) })));
-  assert.equal(JSON.parse(JSON.stringify(creaBackup({ record: [], liste: null, dispositivo: 'mac' }))).versione, 2);
+  assert.equal(JSON.parse(JSON.stringify(creaBackup({ record: [], liste: null, dispositivo: 'mac' }))).versione, 3);
   const { record } = unisci([locale], backup.record, PRIMA);
   assert.deepEqual([record[0].tipoMissione, record[0].tempoVolo, record[0].manovre], ['HEMS', 44, ['HD']]);
+});
+
+test('backup v3: si scrive 3, si leggono 1, 2 e 3; record v2 senza pazienti e stesso record v3 con null: invariato', () => {
+  assert.equal(creaBackup({ record: [], liste: {}, dispositivo: 'x' }).versione, 3);
+  const v2 = { ...rec('1', PRIMA) };
+  delete v2.pazienti;
+  const esito = unisci([rec('1', PRIMA, { pazienti: null })], [v2], SYNC);
+  assert.deepEqual(conteggi(esito), { nuovi: 0, aggiornati: 0, invariati: 1, eliminati: 0 });
+  assert.deepEqual(leggiBackup(JSON.stringify({ formato: 'interventi118', versione: 2, record: [v2] })).record[0].pazienti, null);
+  assert.throws(() => leggiBackup(JSON.stringify({ formato: 'interventi118', versione: 4, record: [] })), /più recente/);
 });

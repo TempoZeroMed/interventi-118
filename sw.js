@@ -20,6 +20,7 @@ const FILE = [
   'js/core/liste.js',
   'js/core/merge.js',
   'js/core/modulo.js',
+  'js/core/pazienti.js',
   'js/core/statistiche.js',
   'js/core/tablet.js',
   'js/core/volo.js',

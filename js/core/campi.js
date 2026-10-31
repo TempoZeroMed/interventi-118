@@ -5,6 +5,8 @@ export const CAMPI = [
   { chiave: 'data', intestazione: 'DATA', sezione: 'Identificazione' },
   { chiave: 'oraAllert', intestazione: 'ORA ALLERT.', sezione: 'Identificazione' },
   { chiave: 'missione', intestazione: 'MISSIONE', sezione: 'Identificazione' },
+  // intervento con più pazienti: il numero di pazienti, uguale su tutte le schede della missione; vuoto se singolo
+  { chiave: 'pazienti', intestazione: 'PAZIENTI', sezione: 'Identificazione' },
   { chiave: 'comune', intestazione: 'COMUNE', sezione: 'Mezzo' },
   { chiave: 'mezzo', intestazione: 'MEZZO', sezione: 'Mezzo', lista: 'mezzo' },
   { chiave: 'tipologia', intestazione: 'TIPOLOGIA', sezione: 'Mezzo', lista: 'tipologia' },
@@ -125,7 +127,7 @@ export function minutiDaOra(testo) {
   return Number(testo.slice(0, 2)) * 60 + Number(testo.slice(3, 5));
 }
 
-/** ETÀ e TEMPO VOLO: numero, null se vuoto, testo non numerico conservato (per l'avviso). */
+/** ETÀ, TEMPO VOLO e PAZIENTI: numero, null se vuoto, testo non numerico conservato (per l'avviso). */
 export function normalizzaNumero(valore) {
   if (valore === null || valore === undefined) return null;
   if (typeof valore === 'number') return valore;
@@ -140,7 +142,7 @@ export function normalizzaManovre(valore) {
   return Array.isArray(valore) ? MANOVRE.map((m) => m.codice).filter((c) => valore.includes(c)) : [];
 }
 
-/** Record completo e ripulito: spazi tolti, COMUNE e MISSIONE in maiuscolo, età e tempo di volo numerici. */
+/** Record completo e ripulito: spazi tolti, COMUNE e MISSIONE in maiuscolo, età, tempo di volo e pazienti numerici. */
 export function normalizzaRecord(r) {
   const out = {
     id: r.id,
@@ -149,7 +151,7 @@ export function normalizzaRecord(r) {
     deleted: r.deleted === true,
   };
   for (const { chiave } of CAMPI) {
-    if (chiave === 'eta' || chiave === 'tempoVolo') {
+    if (chiave === 'eta' || chiave === 'tempoVolo' || chiave === 'pazienti') {
       out[chiave] = normalizzaNumero(r[chiave]);
       continue;
     }

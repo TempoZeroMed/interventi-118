@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import {
-  isDataValida, isOraValida, normalizzaRecord, LISTE_PREDEFINITE, isElicottero, allineaVociSistema,
+  isDataValida, isOraValida, normalizzaRecord, LISTE_PREDEFINITE, isElicottero, allineaVociSistema, CAMPI,
 } from '../js/core/campi.js';
 
 const IMPORT = new URL('../data/interventi_import.json', import.meta.url);
@@ -137,4 +137,11 @@ test('allineaVociSistema: 3050 salvata come voce normale e disattivata diventa d
   ] };
   const v3050 = allineaVociSistema(salvata).mezzo.find((v) => v.voce === '3050');
   assert.deepEqual([v3050.sistema, v3050.attiva], [true, true]);
+});
+
+test('pazienti: null se vuoto, numero, testo conservato', () => {
+  assert.equal(normalizzaRecord({ id: 'a' }).pazienti, null);
+  assert.equal(normalizzaRecord({ id: 'a', pazienti: '3' }).pazienti, 3);
+  assert.equal(normalizzaRecord({ id: 'a', pazienti: 'tre' }).pazienti, 'tre');
+  assert.equal(CAMPI.findIndex((c) => c.chiave === 'pazienti'), CAMPI.findIndex((c) => c.chiave === 'missione') + 1);
 });

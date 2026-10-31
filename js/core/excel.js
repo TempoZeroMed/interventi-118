@@ -5,8 +5,8 @@ import { avvisi, indiceMissioni } from './controlli.js';
 import { isIntervento } from './statistiche.js';
 
 const SEZIONI = [
-  ['IDENTIFICAZIONE', 0, 3], ['MEZZO', 4, 6], ['INVIO DALLA CO', 7, 9], ['PAZIENTE', 10, 11], ['ESITO', 12, 13],
-  ['RIENTRO (valutazione sul posto)', 14, 16], ['TEMPI', 17, 17], ['VOLO', 18, 25], ['CALCOLATE – non scrivere', 26, 30],
+  ['IDENTIFICAZIONE', 0, 4], ['MEZZO', 5, 7], ['INVIO DALLA CO', 8, 10], ['PAZIENTE', 11, 12], ['ESITO', 13, 14],
+  ['RIENTRO (valutazione sul posto)', 15, 17], ['TEMPI', 18, 18], ['VOLO', 19, 26], ['CALCOLATE – non scrivere', 27, 31],
 ];
 // dopo LIBERO OPERATIVO: tipo e tempo di volo, poi le manovre con una X come nel foglio "Voli" dell'Excel HEMS
 const INTESTAZIONI = [
@@ -65,7 +65,7 @@ export function creaCartellaExcel(XLSX, records) {
   foglio['!merges'] = SEZIONI.filter(([, da, a]) => a > da).map(([, da, a]) => ({ s: { r: 0, c: da }, e: { r: 0, c: a } }));
   foglio['!cols'] = INTESTAZIONI.map((h) => ({ wch: Math.max(6, Math.min(24, h.length + 2)) }));
   for (let r = 2; r < righe.length; r++) {
-    for (const [col, formato] of [[1, 'dd/mm/yyyy'], [2, 'hh:mm'], [17, 'hh:mm']]) {
+    for (const [col, formato] of [[1, 'dd/mm/yyyy'], [2, 'hh:mm'], [18, 'hh:mm']]) {
       const ref = XLSX.utils.encode_cell({ r, c: col });
       if (foglio[ref] && foglio[ref].t === 'n') foglio[ref].z = formato;
     }

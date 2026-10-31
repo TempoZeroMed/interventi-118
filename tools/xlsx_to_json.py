@@ -28,12 +28,20 @@ PRIMA_RIGA, ULTIMA_RIGA = 3, 1002
 BASE_DATE = datetime.date(1899, 12, 30)  # sistema data 1900 di Excel
 NAMESPACE = uuid.uuid5(uuid.NAMESPACE_URL, "interventi118")
 
-# colonna Excel -> campo del record
+# colonna Excel -> campo del record (il foglio dell'Excel 118 e gli export dell'app fino alla 1.4)
 COLONNE = {
     "B": "data", "C": "oraAllert", "D": "missione", "E": "comune", "F": "mezzo", "G": "tipologia",
     "H": "codiceInvio", "I": "patologiaInvio", "J": "luogoInvio", "K": "eta", "L": "sesso",
     "M": "esito", "N": "ospedale", "O": "codiceRientro", "P": "patologiaRientro", "Q": "luogoRientro",
     "R": "liberoOperativo",
+}
+
+# gli export dell'app dalla 1.5.0: PAZIENTI subito dopo MISSIONE, le colonne dopo spostate di una
+COLONNE_CON_PAZIENTI = {
+    "B": "data", "C": "oraAllert", "D": "missione", "E": "pazienti", "F": "comune", "G": "mezzo", "H": "tipologia",
+    "I": "codiceInvio", "J": "patologiaInvio", "K": "luogoInvio", "L": "eta", "M": "sesso",
+    "N": "esito", "O": "ospedale", "P": "codiceRientro", "Q": "patologiaRientro", "R": "luogoRientro",
+    "S": "liberoOperativo",
 }
 
 # colonna del foglio Liste -> nome della lista nell'app
@@ -101,18 +109,25 @@ def slug(testo):
     return re.sub(r"[^a-z0-9]+", "-", t).strip("-")
 
 
+def tracciato(celle):
+    """Le colonne del foglio, dall'intestazione della riga 2: con PAZIENTI in E (export dell'app) o senza."""
+    intestazione = celle.get((PRIMA_RIGA - 1, col("E")))
+    return COLONNE_CON_PAZIENTI if converti_testo(intestazione).strip().upper() == "PAZIENTI" else COLONNE
+
+
 def leggi_record(cartella, istante):
     celle = cartella.foglio("Interventi")
+    colonne = tracciato(celle)
     record, chiavi_viste = [], {}
     for riga in range(PRIMA_RIGA, ULTIMA_RIGA + 1):
-        valori = {campo: celle.get((riga, col(lettera))) for lettera, campo in COLONNE.items()}
+        valori = {campo: celle.get((riga, col(lettera))) for lettera, campo in colonne.items()}
         r = {}
         for campo, cella in valori.items():
             if campo == "data":
                 r[campo] = converti_data(cella)
             elif campo in ("oraAllert", "liberoOperativo"):
                 r[campo] = converti_ora(cella)
-            elif campo == "eta":
+            elif campo in ("eta", "pazienti"):
                 r[campo] = converti_eta(cella)
             else:
                 r[campo] = converti_testo(cella)

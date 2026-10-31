@@ -1,7 +1,7 @@
 // Record di prova delle statistiche e delle domande all'archivio (dati inventati). Valori attesi ricavati a mano.
 export const VUOTO = {
   createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
-  data: '', oraAllert: '', missione: '', comune: '', mezzo: '', tipologia: '', codiceInvio: '',
+  data: '', oraAllert: '', missione: '', pazienti: null, comune: '', mezzo: '', tipologia: '', codiceInvio: '',
   patologiaInvio: '', luogoInvio: '', eta: null, sesso: '', esito: '', ospedale: '', codiceRientro: '',
   patologiaRientro: '', luogoRientro: '', liberoOperativo: '',
 };

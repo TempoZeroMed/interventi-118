@@ -1,9 +1,10 @@
 // Backup JSON e unione (merge) tra dispositivi: per id, vince l'updatedAt più recente.
 import { normalizzaRecord } from './campi.js';
+import { chiaveMissione } from './pazienti.js';
 
 export const FORMATO = 'interventi118';
-export const VERSIONE = 2; // 2: campi di volo (tipoMissione, tempoVolo, manovre)
-const VERSIONI_LEGGIBILI = [1, 2];
+export const VERSIONE = 3; // 2: campi di volo (tipoMissione, tempoVolo, manovre); 3: pazienti (intervento con più pazienti)
+const VERSIONI_LEGGIBILI = [1, 2, 3];
 
 /**
  * Contenuto del record senza updatedAt, con chiavi ordinate: due versioni uguali danno lo stesso testo.
@@ -14,8 +15,6 @@ function contenuto(r) {
   const chiavi = Object.keys(n).filter((k) => k !== 'updatedAt').sort();
   return JSON.stringify(n, chiavi);
 }
-
-const chiaveMissione = (m) => String(m ?? '').trim().toUpperCase();
 
 /**
  * Unisce i record importati a quelli locali. Nessun record viene tolto: le eliminazioni
