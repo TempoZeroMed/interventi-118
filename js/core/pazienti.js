@@ -50,6 +50,12 @@ export const pazientiValidi = (r) => Number.isInteger(r?.pazienti) && r.pazienti
 export const isCollegato = (schede) => schede.length > 0 && isMultiplo(schede[0]);
 
 /**
+ * "Aggiungi paziente": sulle schede di un intervento collegato (la prima scheda ha la spunta), anche se è ancora sola.
+ * Non sulla scheda con la spunta di un duplicato la cui prima scheda non ce l'ha: la scheda nuova sarebbe un duplicato.
+ */
+export const puoAggiungerePaziente = (r, records) => !r.deleted && isCollegato(schedeDi(records, r.missione));
+
+/**
  * Un'uscita vale 1: dei gruppi collegati (calcolati sui record passati) resta solo la prima scheda; le altre schede, i
  * duplicati non collegati e le schede senza MISSIONE restano tutti, nell'ordine di arrivo.
  */

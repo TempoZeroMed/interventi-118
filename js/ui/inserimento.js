@@ -7,7 +7,7 @@ import {
   bozzaConDati,
 } from '../core/modulo.js';
 import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
-import { primaScheda, propagaPazienti, isMultiplo } from '../core/pazienti.js';
+import { primaScheda, propagaPazienti, isMultiplo, puoAggiungerePaziente } from '../core/pazienti.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
 import { applicaLettura } from '../core/tablet.js';
@@ -23,7 +23,7 @@ const scorciatoie = () => (matchMedia('(min-width: 480px)').matches ? 4 : 3);
 export async function mostraNuovo(main, daId = null) {
   const bozza = stato.meta.bozza && !trova(stato.meta.bozza.id) ? stato.meta.bozza : null;
   const scheda = daId && trova(daId);
-  if (scheda && !scheda.deleted && isMultiplo(scheda)) {
+  if (scheda && puoAggiungerePaziente(scheda, stato.record)) {
     const daSostituire = bozzaConDati(bozza);
     if (daSostituire) {
       const ok = await conferma({
@@ -202,7 +202,7 @@ function costruisci(main, iniziale, originale) {
     const nota = h('p', { class: 'nota-interruttore' });
     const numeroPazienti = campoNumerico('pazienti', 'Numero pazienti');
     const riga = h('div', { class: 'riga-campi' }, numeroPazienti);
-    const aggiungi = modifica && isMultiplo(originale)
+    const aggiungi = modifica && puoAggiungerePaziente(originale, stato.record)
       ? h('a', { class: 'bottone', href: `#/nuovo/${encodeURIComponent(originale.id)}` }, icona('piu'), 'Aggiungi paziente')
       : null;
     quando((x) => {

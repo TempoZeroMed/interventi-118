@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { avvisi, indiceMissioni, verificaSalvataggio, TIPI_AVVISO } from '../js/core/controlli.js';
+import { avvisi, indiceMissioni, verificaSalvataggio, TIPI_AVVISO, TIPI_AVVISO_PAZIENTI } from '../js/core/controlli.js';
 
 function rec(campi = {}) {
   return {
@@ -222,4 +222,16 @@ test('salvataggio: una scheda già salvata e più vecchia che corregge la MISSIO
   const c = rec({ id: 'c', createdAt: T1, pazienti: 3 });
   const v = verificaSalvataggio({ ...a, missione: '99ZZ0101', pazienti: 3 }, [a, b, c], a);
   assert.deepEqual([v.ok, v.collegataA, v.duplicatoDi, v.errori], [true, 'b', null, []]);
+});
+
+test('scheda collegata con data o comune diversi dalla prima scheda: avviso sulla scheda, non sulla prima', () => {
+  // la prima scheda è del 01/01 a COSSATO; la seconda, scritta dopo mezzanotte o con un refuso nella MISSIONE, no
+  const r = gruppo(2, 2, [{ data: '2026-01-02', comune: 'BIELLA' }]);
+  assert.deepEqual(avvisi(r[1], indiceMissioni(r)), ['Data diversa tra le schede', 'Comune diverso tra le schede']);
+  assert.deepEqual(avvisi(r[0], indiceMissioni(r)), []);
+  const senzaComune = gruppo(2, 2, [{ comune: '' }]);
+  assert.deepEqual(avvisi(senzaComune[1], indiceMissioni(senzaComune)), [], 'un comune non scritto non è diverso');
+  const duplicato = [rec({ id: 'p1' }), rec({ id: 'p2', createdAt: T1, data: '2026-01-02' })];
+  assert.deepEqual(avvisi(duplicato[1], indiceMissioni(duplicato)), ['Missione duplicata'], 'solo nei gruppi collegati');
+  assert.deepEqual(TIPI_AVVISO_PAZIENTI.slice(-2), ['Data diversa tra le schede', 'Comune diverso tra le schede']);
 });

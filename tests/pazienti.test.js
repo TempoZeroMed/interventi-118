@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chiaveMissione, ordinaSchede, gruppiMissione, schedeDi, primaScheda, isMultiplo, pazientiValidi, isCollegato,
-  unaPerMissione, collegaGruppo, scollegaGruppo, propagaPazienti, gruppiDaDecidere, gruppiCollegati,
+  unaPerMissione, collegaGruppo, scollegaGruppo, propagaPazienti, gruppiDaDecidere, gruppiCollegati, puoAggiungerePaziente,
 } from '../js/core/pazienti.js';
 
 const T0 = '2026-10-01T10:00:00.000Z';
@@ -59,4 +59,16 @@ test('gruppi da decidere: duplicati non collegati e non segnati refuso; gruppi c
     rec('c', { missione: '99ZZ0003', pazienti: 2 }), rec('d', { missione: '99ZZ0003', pazienti: 2, createdAt: T1 }), rec('s', { missione: '99ZZ0004' })];
   assert.deepEqual(gruppiDaDecidere(r, ['99ZZ0002']).map((g) => [g.missione, g.schede.length]), [['99ZZ0001', 2]]);
   assert.deepEqual(gruppiCollegati(r).map((g) => [g.missione, g.schede.map((s) => s.id)]), [['99ZZ0003', ['c', 'd']]]);
+});
+
+test('Aggiungi paziente solo sulle schede di un intervento collegato', () => {
+  const sola = rec('s', { missione: '99ZZ0005', pazienti: 2 });
+  assert.ok(puoAggiungerePaziente(sola, [sola]), 'prima scheda con la spunta, ancora sola');
+  const prima = rec('1');
+  const seconda = rec('2', { createdAt: T1, pazienti: 2 });
+  assert.ok(!puoAggiungerePaziente(seconda, [prima, seconda]), 'spunta sulla seconda scheda di un duplicato: il gruppo non è collegato');
+  assert.ok(puoAggiungerePaziente(seconda, [{ ...prima, pazienti: 2 }, seconda]));
+  const singola = rec('x', { missione: '99ZZ0006' });
+  assert.ok(!puoAggiungerePaziente(singola, [singola]), 'scheda singola senza spunta');
+  assert.ok(!puoAggiungerePaziente({ ...sola, deleted: true }, [sola]), 'scheda eliminata');
 });

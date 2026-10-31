@@ -10,9 +10,13 @@ import {
  */
 export const TIPI_AVVISO_VOLO = ['Tipo missione mancante', 'Tempo volo mancante', 'Tempo volo non valido', 'Tempo volo diverso tra le schede'];
 
-/** Intervento con più pazienti: il numero di schede e il numero di pazienti dichiarato sulla prima. */
+/**
+ * Intervento con più pazienti: il numero di schede e il numero di pazienti dichiarato sulla prima; data e comune, che
+ * sono quelli della prima scheda.
+ */
 export const TIPI_AVVISO_PAZIENTI = [
   'Numero pazienti non valido', 'Schede in più rispetto ai pazienti', 'Mancano schede paziente', 'Numero pazienti diverso tra le schede',
+  'Data diversa tra le schede', 'Comune diverso tra le schede',
 ];
 
 /**
@@ -74,6 +78,12 @@ export function avvisi(r, indice) {
   if (prima && pazientiValidi(prima) && schede.length > prima.pazienti) out.push('Schede in più rispetto ai pazienti');
   if (prima && pazientiValidi(prima) && schede.length < prima.pazienti) out.push('Mancano schede paziente');
   if (prima && r.pazienti !== prima.pazienti) out.push('Numero pazienti diverso tra le schede');
+  // data e comune diversi dalla prima scheda: un refuso nella MISSIONE che ha collegato un altro intervento, o una scheda
+  // scritta dopo mezzanotte (con i filtri per mese l'intervento conterebbe in due mesi). Un campo vuoto non è diverso.
+  const diverso = (k) => prima && prima.id !== r.id && String(r[k] ?? '').trim() && String(prima[k] ?? '').trim()
+    && String(r[k]).trim().toUpperCase() !== String(prima[k]).trim().toUpperCase();
+  if (diverso('data')) out.push('Data diversa tra le schede');
+  if (diverso('comune')) out.push('Comune diverso tra le schede');
   if (MEZZI_SOLO_INDIA.includes(r.mezzo) && r.tipologia === 'Mike') out.push('Mezzo solo India');
   if (r.ospedale && r.esito !== 'Trasportato') out.push('Ospedale senza trasporto');
   if (r.eta !== null && r.eta !== undefined && (typeof r.eta !== 'number' || !Number.isInteger(r.eta) || r.eta < 0)) {

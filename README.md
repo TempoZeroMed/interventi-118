@@ -249,7 +249,7 @@ Un intervento può avere più pazienti: stessa MISSIONE, stessi allarmi, stessa 
 ### Come si usa
 
 1. Sulla **prima scheda**, la prima salvata, attiva **Paziente multiplo** (sotto MISSIONE e Ora allert.) e scrivi il **Numero pazienti**: l'app propone 2.
-2. Per un altro paziente apri una scheda dell'intervento e tocca **Aggiungi paziente**. Si apre una scheda nuova con data, ora allert., missione, comune, mezzo, tipologia, invio CO (codice, patologia, luogo), libero operativo, tipo missione e tempo di volo già scritti, copiati dalla prima scheda; età, sesso, esito, ospedale, rientro e manovre sono vuoti. Tutto resta modificabile.
+2. Per un altro paziente apri una scheda dell'intervento e tocca **Aggiungi paziente** (c'è solo quando la prima scheda ha la spunta). Si apre una scheda nuova con data, ora allert., missione, comune, mezzo, tipologia, invio CO (codice, patologia, luogo), libero operativo, tipo missione e tempo di volo già scritti, copiati dalla prima scheda; età, sesso, esito, ospedale, rientro e manovre sono vuoti. Tutto resta modificabile.
 3. Va bene anche **Nuovo intervento** con la stessa MISSIONE: appena il numero coincide, la scheda si collega da sola. Lo dice il riquadro verde "Collegata all'intervento del 12/10/2026, BIELLA: paziente multiplo (3 pazienti)", con il link alla prima scheda. Se data e comune non sono quelli giusti, la MISSIONE ha un refuso. La foto del tablet mostra lo stesso riquadro verde invece dell'errore rosso.
 
 ### Regole
@@ -260,7 +260,7 @@ Un intervento può avere più pazienti: stessa MISSIONE, stessi allarmi, stessa 
 - **Numero pazienti:** con la spunta accesa è obbligatorio. Se lo cancelli il salvataggio si ferma ("Scrivi il numero di pazienti, oppure togli Paziente multiplo."); un numero non valido (1, 2,5, un testo) si salva con un avviso.
 - **Eliminare una scheda** si può sempre e non tocca le altre. Se resta solo la prima scheda, la sua spunta torna libera.
 - **Elenco:** ogni scheda dice "Paziente 1 di 3", "Paziente 2 di 3"…, in righe separate. In cima, "N interventi · M schede".
-- **Avvisi**, che non bloccano: **Schede in più rispetto ai pazienti**, **Mancano schede paziente**, **Numero pazienti non valido**, **Numero pazienti diverso tra le schede** (può nascere da uno scambio di backup) e, per gli elicotteri, **Tempo volo diverso tra le schede**.
+- **Avvisi**, che non bloccano: **Schede in più rispetto ai pazienti**, **Mancano schede paziente**, **Numero pazienti non valido**, **Numero pazienti diverso tra le schede** (può nascere da uno scambio di backup), **Data diversa tra le schede** e **Comune diverso tra le schede** (un refuso nella MISSIONE che ha collegato un altro intervento, o una scheda scritta a mano dopo mezzanotte: data e comune dell'intervento sono quelli della prima scheda) e, per gli elicotteri, **Tempo volo diverso tra le schede**.
 - **Excel:** la colonna PAZIENTI, subito dopo MISSIONE, ha il numero su tutte le schede dell'intervento ed è vuota per l'intervento singolo. `tools/xlsx_to_json.py` legge sia questo tracciato sia quello del foglio 118, senza la colonna.
 - **Backup:** passa alla versione 3. Aggiorna l'app su tutti e due i dispositivi prima di scambiare i backup.
 
