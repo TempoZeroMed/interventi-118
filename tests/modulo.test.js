@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra,
+  recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra, collegaScheda, nuovaSchedaPaziente,
 } from '../js/core/modulo.js';
 import { tipologiaDelMezzo } from '../js/core/controlli.js';
 
@@ -115,4 +115,50 @@ test('impostaCampo: il mezzo mette la tipologia, l\'ora la ricalcola solo per 30
   assert.equal(impostaCampo(aMano, 'oraAllert', '09:30').tipologia, 'India', 'scelta a mano non toccata');
   assert.equal(impostaCampo(aMano, 'mezzo', '').tipologia, 'India', 'mezzo svuotato: tipologia com\'era');
   assert.equal(impostaCampo({ ...recordVuoto('y', ADESSO), tipologia: 'Mike' }, 'mezzo', '3050').tipologia, '', '3050 senza ora');
+});
+
+// --- Intervento con più pazienti ---
+
+test('pazienti: spunta spenta nel record nuovo, numero, numero cancellato', () => {
+  assert.equal(recordVuoto('x', new Date()).pazienti, null);
+  assert.equal(impostaCampo(recordVuoto('x', new Date()), 'pazienti', '3').pazienti, 3);
+  assert.equal(impostaCampo(recordVuoto('x', new Date()), 'pazienti', '').pazienti, '', 'numero cancellato: la spunta resta accesa');
+  assert.equal(impostaCampo(recordVuoto('x', new Date()), 'pazienti', null).pazienti, null);
+});
+
+test('collegaScheda: eredita il numero dalla prima scheda con la spunta, lo perde quando la missione cambia', () => {
+  const prima = { ...recordVuoto('p1', new Date('2026-01-01T10:00:00Z')), missione: '99ZZ0001', pazienti: 3 };
+  const nuova = { ...recordVuoto('n', new Date('2026-01-01T11:00:00Z')), missione: '99ZZ0001' };
+  const c = collegaScheda(nuova, [prima], null);
+  assert.deepEqual([c.record.pazienti, c.collegataA], [3, 'p1']);
+  const vecchia = collegaScheda({ ...nuova, createdAt: '2025-01-01T00:00:00.000Z' }, [prima], null);
+  assert.equal(vecchia.collegataA, 'p1', 'una scheda nuova è sempre l\'ultima, anche con un createdAt più vecchio');
+  const via = collegaScheda({ ...c.record, missione: '99ZZ0002' }, [prima], 'p1');
+  assert.deepEqual([via.record.pazienti, via.collegataA], [null, null]);
+  const libera = collegaScheda({ ...nuova, missione: '99ZZ0002', pazienti: 2 }, [prima], null);
+  assert.deepEqual([libera.record.pazienti, libera.collegataA], [2, null], 'una spunta messa a mano resta');
+  const senzaSpunta = collegaScheda(nuova, [{ ...prima, pazienti: null }], null);
+  assert.deepEqual([senzaSpunta.record.pazienti, senzaSpunta.collegataA], [null, null]);
+  const laPrima = collegaScheda({ ...prima, pazienti: 4 }, [prima, { ...c.record, createdAt: '2026-01-01T11:00:00.000Z' }], null);
+  assert.deepEqual([laPrima.record.pazienti, laPrima.collegataA], [4, null], 'la prima scheda non eredita dalle altre');
+});
+
+test('nuovaSchedaPaziente: campi condivisi copiati, campi del paziente vuoti', () => {
+  const prima = { ...recordVuoto('p1', new Date('2026-01-01T10:00:00Z')), data: '2026-01-01', oraAllert: '10:00', missione: '99ZZ0001', pazienti: 2,
+    comune: 'BIELLA', mezzo: 'V-ECHO', tipologia: 'Mike', codiceInvio: 'ROSSO', patologiaInvio: '01 - Trauma', luogoInvio: 'S - Sierra',
+    eta: 40, sesso: 'Maschio', esito: 'Trasportato', ospedale: 'Biella', codiceRientro: 'GIALLO', patologiaRientro: '01 - Trauma',
+    luogoRientro: 'S - Sierra', liberoOperativo: '11:30', tipoMissione: 'HEMS', tempoVolo: 35, manovre: ['VD'] };
+  const n = nuovaSchedaPaziente(prima, 'n', new Date('2026-01-02T08:00:00Z'));
+  assert.equal(n.id, 'n');
+  assert.deepEqual([n.data, n.oraAllert, n.missione, n.pazienti, n.comune, n.mezzo, n.tipologia, n.codiceInvio, n.patologiaInvio, n.luogoInvio, n.liberoOperativo, n.tipoMissione, n.tempoVolo],
+    ['2026-01-01', '10:00', '99ZZ0001', 2, 'BIELLA', 'V-ECHO', 'Mike', 'ROSSO', '01 - Trauma', 'S - Sierra', '11:30', 'HEMS', 35]);
+  assert.deepEqual([n.eta, n.sesso, n.esito, n.ospedale, n.codiceRientro, n.patologiaRientro, n.luogoRientro, n.manovre], [null, '', '', '', '', '', '', []]);
+  assert.equal(n.createdAt, '2026-01-02T08:00:00.000Z');
+});
+
+test('salvataggio di una scheda nuova: createdAt diventa l\'istante del salvataggio', () => {
+  const r = recordVuoto('x', new Date('2026-01-01T08:00:00.000Z'));
+  const adesso = new Date('2026-01-01T09:30:00.000Z');
+  assert.equal(prontoPerSalvare(r, adesso, { nuovo: true }).createdAt, '2026-01-01T09:30:00.000Z');
+  assert.equal(prontoPerSalvare(r, adesso).createdAt, '2026-01-01T08:00:00.000Z');
 });
