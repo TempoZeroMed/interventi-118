@@ -430,6 +430,71 @@ for (const nomeBrowser of BROWSER) {
           assert.equal(await premuto(tipo('HSR')), false);
         });
 
+        // in fondo al blocco anche queste: aggiungono schede e collegano DEMO0007, che cambierebbe i conteggi delle prove precedenti
+        test('paziente multiplo: prima scheda con la spunta, seconda scheda collegata, numero propagato', async () => {
+          // la prova del volo lascia aperta la scheda 99ZZ0777 modificata: si esce senza salvare
+          await vai(page, '#/nuovo');
+          const esci = page.getByRole('dialog').getByRole('button', { name: 'Esci' });
+          if (await esci.count()) await esci.click();
+          await nuovoIntervento(page, { missione: 'E2E00002', comune: 'biella' });
+          await page.getByLabel('Paziente multiplo').check();
+          await page.getByLabel('Numero pazienti').fill('');
+          assert.ok(await page.getByLabel('Paziente multiplo').isChecked(), 'numero cancellato: la spunta resta');
+          await page.getByRole('button', { name: 'Salva intervento' }).click();
+          await attendiTesto(page.locator('#toast'), 'Scrivi il numero di pazienti');
+          await page.getByLabel('Numero pazienti').fill('2');
+          await page.getByRole('button', { name: 'Salva intervento' }).click();
+          await attendiTesto(page.locator('#toast'), 'E2E00002 salvato');
+          await page.getByLabel(/^Missione/).fill('E2E00002');
+          await attendiTesto(page.locator('.messaggio.collegata'), 'BIELLA: paziente multiplo (2 pazienti)');
+          if (foto) await scattaSchermata(page, `${vp.nome}-paziente-multiplo`);
+          assert.ok(await page.getByLabel('Paziente multiplo').isChecked() && await page.getByLabel('Paziente multiplo').isDisabled());
+          await page.getByLabel('Età').fill('30');
+          await page.getByRole('button', { name: 'Salva intervento' }).click();
+          await attendiTesto(page.locator('#toast'), 'E2E00002 salvato');
+          await vai(page, '#/elenco');
+          await page.getByLabel('Cerca per missione o comune').fill('E2E00002');
+          await attendiTesto(page.locator('.righe'), 'Paziente 1 di 2');
+          await attendiTesto(page.locator('.righe'), 'Paziente 2 di 2');
+          await page.getByRole('link', { name: /Paziente 1 di 2/ }).click();
+          assert.equal(await page.getByLabel(/^Missione/).getAttribute('readonly'), '', 'prima scheda: MISSIONE bloccata');
+          await attendiTesto(page.locator('.modulo'), 'Collegata a 1 altra scheda');
+          await page.getByLabel('Numero pazienti').fill('3');
+          await page.getByRole('button', { name: 'Salva modifiche' }).click();
+          await attendiTesto(page.locator('.righe'), 'Paziente 2 di 3');
+          await page.getByRole('link', { name: /Paziente 2 di 3/ }).click();
+          await page.getByRole('link', { name: 'Aggiungi paziente' }).click();
+          await attendiTesto(page.locator('#banda h1'), 'Nuovo intervento');
+          assert.equal(await page.getByLabel(/^Missione/).inputValue(), 'E2E00002');
+          assert.equal(await page.getByLabel('Comune', { exact: true }).inputValue(), 'BIELLA');
+          assert.equal(await page.getByLabel('Età').inputValue(), '');
+          await page.getByRole('button', { name: 'Salva intervento' }).click();
+          await attendiTesto(page.locator('#toast'), 'E2E00002 salvato');
+          await vai(page, '#/statistiche');
+          await page.getByRole('button', { name: 'Tutto', exact: true }).click();
+          await attendiTesto(page.locator('.kpi'), '1 con più pazienti');
+        });
+
+        test('missioni registrate più volte: Stesso intervento e Scollega dalle Impostazioni', async () => {
+          await vai(page, '#/impostazioni');
+          const sezione = page.locator('#missioni-ripetute'); // il riepilogo dell'import usa lo stesso titolo
+          await attendiTesto(sezione, 'DEMO0007');
+          await sezione.getByRole('button', { name: 'Stesso intervento' }).first().click();
+          await attendiTesto(sezione, '2 schede, 2 pazienti');
+          await vai(page, '#/elenco');
+          await page.getByLabel('Cerca per missione o comune').fill('DEMO0007');
+          // le due schede DEMO0007 della demo sono di mesi diversi, in due liste: si cercano le righe, non la prima lista
+          await page.getByRole('link', { name: /Paziente 1 di 2/ }).waitFor();
+          assert.equal(await page.getByRole('link', { name: /Paziente 2 di 2/ }).count(), 1);
+          await vai(page, '#/impostazioni');
+          await sezione.getByRole('button', { name: 'Scollega' }).first().click();
+          await page.getByRole('dialog').getByRole('button', { name: 'Scollega' }).click();
+          await attendiTesto(sezione, 'Stesso intervento');
+          await sezione.getByRole('button', { name: 'Refuso' }).first().click();
+          await attendiTesto(sezione, 'DEMO0007 · refuso');
+          assert.equal(await sezione.getByRole('button', { name: 'Stesso intervento' }).count(), 0, 'nessun gruppo da decidere');
+        });
+
         // un contesto suo: l'orologio fissato e gli interventi salvati qui non toccano le altre prove
         describe('foto tablet', () => {
           let ctx;
@@ -512,6 +577,27 @@ for (const nomeBrowser of BROWSER) {
             await attendiTesto(page.locator('#banda h1'), 'Intervento 99ZZ0042');
             assert.equal(await page.getByLabel('Età').inputValue(), '41', 'l\'intervento salvato dalla prova precedente');
             await svuota(page);
+          });
+
+          test('foto tablet: con la spunta sulla scheda salvata la missione si collega', async () => {
+            await vai(page, '#/elenco');
+            await page.getByLabel('Cerca per missione o comune').fill('99ZZ0042');
+            await page.getByRole('link', { name: /99ZZ0042/ }).click();
+            await page.getByLabel('Paziente multiplo').check();
+            await page.getByRole('button', { name: 'Salva modifiche' }).click();
+            await attendiTesto(page.locator('#banda h1'), 'Elenco');
+            await vai(page, '#/nuovo');
+            await daFoto(page, await fotoFinta(ctx));
+            await attendiTesto(riquadro(), 'paziente multiplo (2 pazienti)');
+            assert.equal(await riquadro().locator('.messaggio.errore').count(), 0, 'niente errore rosso');
+            await svuota(page);
+            // la scheda torna singola per le prove che seguono
+            await vai(page, '#/elenco');
+            await page.getByRole('link', { name: /99ZZ0042/ }).click();
+            await page.getByLabel('Paziente multiplo').uncheck();
+            await page.getByRole('button', { name: 'Salva modifiche' }).click();
+            await attendiTesto(page.locator('#banda h1'), 'Elenco');
+            await page.getByLabel('Cerca per missione o comune').fill('');
           });
 
           test('foto tablet storta: nessun valore inventato', async () => {
