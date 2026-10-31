@@ -1,6 +1,6 @@
 // Backup JSON e unione (merge) tra dispositivi: per id, vince l'updatedAt più recente.
 import { normalizzaRecord } from './campi.js';
-import { chiaveMissione } from './pazienti.js';
+import { chiaveMissione, schedeDi, isCollegato } from './pazienti.js';
 
 export const FORMATO = 'interventi118';
 export const VERSIONE = 3; // 2: campi di volo (tipoMissione, tempoVolo, manovre); 3: pazienti (intervento con più pazienti)
@@ -70,7 +70,8 @@ export function unisci(locali, entranti, ultimaSincronizzazione) {
     if (!k || viste.has(k)) continue;
     viste.add(k);
     const ids = record.filter((r) => !r.deleted && chiaveMissione(r.missione) === k).map((r) => r.id);
-    if (ids.length > 1) riepilogo.duplicatiMissione.push({ missione: k, ids });
+    // le schede di un intervento con più pazienti hanno la stessa MISSIONE apposta: non sono duplicati
+    if (ids.length > 1 && !isCollegato(schedeDi(record, k))) riepilogo.duplicatiMissione.push({ missione: k, ids });
   }
   return { record, riepilogo };
 }

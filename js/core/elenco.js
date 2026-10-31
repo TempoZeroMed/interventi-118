@@ -1,6 +1,7 @@
 // Consultazione: ricerca, filtri combinabili, ordine cronologico, suggerimenti per il form.
 import { avvisi, indiceMissioni } from './controlli.js';
 import { filtraPeriodo } from './statistiche.js';
+import { unaPerMissione, chiaveMissione, isCollegato, pazientiValidi } from './pazienti.js';
 
 const UGUALI = ['mezzo', 'tipologia', 'codiceInvio', 'codiceRientro', 'esito', 'ospedale'];
 
@@ -18,6 +19,22 @@ export function filtraElenco(records, filtri = {}) {
     if (indice && avvisi(r, indice).length === 0) return false;
     return true;
   });
+}
+
+/**
+ * "Paziente 2 di 3" su ogni scheda di un intervento con più pazienti, nell'ordine delle schede (la prima scheda è la 1);
+ * '' per le altre schede. `indice` viene da indiceMissioni(). Con un numero di pazienti non valido: "Paziente 2 di ?".
+ */
+export function etichettaPaziente(r, indice) {
+  const schede = (!r.deleted && indice.get(chiaveMissione(r.missione))) || [];
+  const n = schede.findIndex((s) => s.id === r.id) + 1;
+  if (!n || !isCollegato(schede)) return '';
+  return `Paziente ${n} di ${pazientiValidi(schede[0]) ? schede[0].pazienti : '?'}`;
+}
+
+/** Il riepilogo in testa all'elenco: un'uscita vale un intervento anche con più pazienti; ogni scheda è un paziente. */
+export function conteggioInterventi(records) {
+  return { interventi: unaPerMissione(records).length, schede: records.length };
 }
 
 /** Dal più recente; a parità di data per ora di allertamento; le righe senza data in fondo. */

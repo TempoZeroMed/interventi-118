@@ -1,6 +1,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { filtraElenco, ordinaRecenti, suggerimentiComuni, piuUsate } from '../js/core/elenco.js';
+import {
+  filtraElenco, ordinaRecenti, suggerimentiComuni, piuUsate, etichettaPaziente, conteggioInterventi,
+} from '../js/core/elenco.js';
+import { indiceMissioni } from '../js/core/controlli.js';
 
 const VUOTO = {
   createdAt: '2026-01-01T00:00:00.000Z', updatedAt: '2026-01-01T00:00:00.000Z', deleted: false,
@@ -62,4 +65,15 @@ test('suggerimenti per COMUNE: dal più usato, poi in ordine alfabetico, senza e
 test('voci più usate per le scorciatoie del form', () => {
   assert.deepEqual(piuUsate(RECORD, ['mezzo'], 2), ['3030', '5022']);
   assert.deepEqual(piuUsate(RECORD, ['patologiaInvio', 'patologiaRientro'], 3), ['02 - Cardio']);
+});
+
+// --- Intervento con più pazienti ---
+
+test('etichetta "Paziente n di N" solo nei gruppi collegati, nell\'ordine della prima scheda', () => {
+  const g = [r({ id: 'b', createdAt: '2026-01-01T10:05:00.000Z', missione: '99ZZ0001', pazienti: 3 }), r({ id: 'a', missione: '99ZZ0001', pazienti: 3 }), r({ id: 'c', missione: '99ZZ0002' })];
+  const indice = indiceMissioni(g);
+  assert.deepEqual(g.map((x) => etichettaPaziente(x, indice)), ['Paziente 2 di 3', 'Paziente 1 di 3', '']);
+  const dup = [r({ id: 'a', missione: '99ZZ0001' }), r({ id: 'b', missione: '99ZZ0001' })];
+  assert.equal(etichettaPaziente(dup[0], indiceMissioni(dup)), '');
+  assert.deepEqual(conteggioInterventi(g), { interventi: 2, schede: 3 });
 });

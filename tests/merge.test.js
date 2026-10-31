@@ -220,3 +220,12 @@ test('backup v3: si scrive 3, si leggono 1, 2 e 3; record v2 senza pazienti e st
   assert.deepEqual(leggiBackup(JSON.stringify({ formato: 'interventi118', versione: 2, record: [v2] })).record[0].pazienti, null);
   assert.throws(() => leggiBackup(JSON.stringify({ formato: 'interventi118', versione: 4, record: [] })), /più recente/);
 });
+
+test('stessa MISSIONE in un gruppo collegato: non è un duplicato da segnalare', () => {
+  const prima = rec('1', PRIMA, { pazienti: 2 });
+  const seconda = rec('2', DOPO1, { missione: prima.missione, pazienti: null, createdAt: DOPO1 }); // salvata sull'altro dispositivo prima dell'unione
+  const esito = unisci([prima], [seconda], SYNC);
+  assert.deepEqual(esito.riepilogo.duplicatiMissione, []);
+  const senzaSpunta = unisci([rec('1', PRIMA)], [rec('2', DOPO1, { missione: rec('1', PRIMA).missione })], SYNC);
+  assert.equal(senzaSpunta.riepilogo.duplicatiMissione.length, 1, 'senza spunta resta segnalato');
+});
