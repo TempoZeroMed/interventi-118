@@ -3,6 +3,7 @@ import * as db from './db.js';
 import { LISTE_PREDEFINITE, allineaVociSistema, normalizzaRecord } from './core/campi.js';
 import { unisci, unisciListe, creaBackup } from './core/merge.js';
 import { isIntervento } from './core/statistiche.js';
+import { chiaveMissione, schedeDi, collegaGruppo, scollegaGruppo } from './core/pazienti.js';
 
 export const stato = { record: [], liste: {}, meta: {} };
 
@@ -64,6 +65,49 @@ export async function eliminaIntervento(id, adesso = new Date()) {
 export async function impostaMeta(valori) {
   await db.scrivi({ meta: valori });
   Object.assign(stato.meta, valori);
+}
+
+// --- Missioni registrate più volte: le decisioni dell'utente ---
+// refusiMissione e decisioniPazienti restano sul dispositivo (meta non va nel backup); "Stesso intervento" e "Scollega"
+// cambiano le schede, che viaggiano con il backup.
+
+const decisione = (k, scelta, schede, adesso) => [
+  ...(stato.meta.decisioniPazienti ?? []), { missione: k, scelta, schede, quando: adesso.toISOString() },
+];
+
+async function scriviGruppo(schede, meta) {
+  Object.assign(meta, modifiche(schede.length));
+  await db.scrivi({ record: schede, meta });
+  schede.forEach(sostituisci);
+  Object.assign(stato.meta, meta);
+  notifica();
+}
+
+/** "Stesso intervento": le schede della MISSIONE diventano un intervento con più pazienti, tante quanti sono le schede. */
+export async function collegaMissione(missione, adesso = new Date()) {
+  const k = chiaveMissione(missione);
+  const schede = collegaGruppo(schedeDi(stato.record, k), adesso);
+  await scriviGruppo(schede, {
+    refusiMissione: (stato.meta.refusiMissione ?? []).filter((x) => x !== k),
+    decisioniPazienti: decisione(k, 'stesso intervento', schede.length, adesso),
+  });
+}
+
+/** "Refuso": la MISSIONE esce dalle decisioni da prendere su questo dispositivo; l'avviso "Missione duplicata" resta. */
+export async function segnaRefuso(missione, adesso = new Date()) {
+  const k = chiaveMissione(missione);
+  await impostaMeta({
+    refusiMissione: [...new Set([...(stato.meta.refusiMissione ?? []), k])],
+    decisioniPazienti: decisione(k, 'refuso', schedeDi(stato.record, k).length, adesso),
+  });
+  notifica();
+}
+
+/** "Scollega": le schede tornano separate, con l'avviso "Missione duplicata", e la MISSIONE torna da decidere. */
+export async function scollegaMissione(missione, adesso = new Date()) {
+  const k = chiaveMissione(missione);
+  const schede = scollegaGruppo(schedeDi(stato.record, k), adesso);
+  await scriviGruppo(schede, { decisioniPazienti: decisione(k, 'scollegato', schede.length, adesso) });
 }
 
 /** Liste modificate nelle Impostazioni, con i record da rinominare. */

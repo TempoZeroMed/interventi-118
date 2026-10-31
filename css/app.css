@@ -172,6 +172,7 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
   padding: 10px var(--gutter); font-size: .9375rem; font-weight: 600;
 }
 .promemoria p { flex: 1 1 200px; }
+.voce-promemoria { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex: 1 1 100%; }
 @media (min-width: 960px) { .promemoria { padding: 10px 32px; } }
 
 .toast {
@@ -584,6 +585,15 @@ dialog.foto-intera img { display: block; width: 100%; height: 100%; object-fit: 
 .voce .lucchetto .ico { width: 15px; height: 15px; }
 .voce .input { height: 40px; }
 .guida { margin: 0; padding-left: 22px; display: grid; gap: 8px; max-width: 65ch; }
+/* missioni registrate più volte: una riga per gruppo, le scelte a destra (sotto, sul telefono stretto) */
+.blocco > h3 { font-size: .75rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--inchiostro-2); margin: 4px 0 8px; }
+.gruppi-missione { list-style: none; margin: 0 0 14px; padding: 0; border-top: 1px solid var(--linea); }
+.gruppi-missione li {
+  display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px 12px;
+  min-height: 52px; padding: 8px 0; border-bottom: 1px solid var(--linea); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.gruppi-missione .azioni-gruppo { display: flex; flex-wrap: wrap; gap: 8px; }
+.decisioni-missione { margin: 0; padding-left: 18px; display: grid; gap: 4px; font-size: .875rem; color: var(--inchiostro-2); font-variant-numeric: tabular-nums; }
 .guida li::marker { font-weight: 800; }
 
 /* ---------------------------------------------------------------- dialogo */

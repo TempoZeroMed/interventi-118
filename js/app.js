@@ -1,6 +1,7 @@
 // Avvio, navigazione tra le schermate, promemoria del backup, service worker.
 import { carica, stato, quandoCambia, impostaMeta, interventi } from './stato.js';
 import { promemoriaBackup } from './core/merge.js';
+import { gruppiDaDecidere } from './core/pazienti.js';
 import { h, icona } from './ui/dom.js';
 import * as inserimento from './ui/inserimento.js';
 import * as elenco from './ui/elenco.js';
@@ -48,6 +49,7 @@ async function naviga() {
   aggiornaPromemoria();
 }
 
+/** La striscia in cima: il backup da fare e le missioni registrate più volte da decidere (fuori dalle Impostazioni). */
 function aggiornaPromemoria() {
   const el = document.getElementById('promemoria');
   const p = promemoriaBackup({
@@ -55,14 +57,18 @@ function aggiornaPromemoria() {
     modificheNonEsportate: stato.meta.modificheNonEsportate ?? 0,
     numeroInterventi: interventi().length,
   });
+  const ripetute = gruppiDaDecidere(stato.record, stato.meta.refusiMissione ?? []).length;
+  const voci = [
+    p && [p.messaggio, h('button', { type: 'button', class: 'bottone piccolo', onclick: () => impostazioni.esportaBackup() }, 'Esporta backup')],
+    ripetute && [
+      `${ripetute === 1 ? '1 missione registrata' : `${ripetute} missioni registrate`} più volte: decidi se sono pazienti multipli`,
+      h('a', { class: 'bottone piccolo', href: '#/impostazioni' }, 'Vai alle Impostazioni'),
+    ],
+  ].filter(Boolean);
   const inImpostazioni = percorso().nome === 'impostazioni';
-  el.hidden = !p || inImpostazioni;
-  if (p && !inImpostazioni) {
-    el.replaceChildren(
-      icona('avviso'),
-      h('p', {}, p.messaggio),
-      h('button', { type: 'button', class: 'bottone piccolo', onclick: () => impostazioni.esportaBackup() }, 'Esporta backup'),
-    );
+  el.hidden = !voci.length || inImpostazioni;
+  if (voci.length && !inImpostazioni) {
+    el.replaceChildren(...voci.map(([testo, azione]) => h('div', { class: 'voce-promemoria' }, icona('avviso'), h('p', {}, testo), azione)));
   }
 }
 

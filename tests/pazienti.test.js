@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   chiaveMissione, ordinaSchede, gruppiMissione, schedeDi, primaScheda, isMultiplo, pazientiValidi, isCollegato,
-  unaPerMissione, collegaGruppo, scollegaGruppo, propagaPazienti,
+  unaPerMissione, collegaGruppo, scollegaGruppo, propagaPazienti, gruppiDaDecidere, gruppiCollegati,
 } from '../js/core/pazienti.js';
 
 const T0 = '2026-10-01T10:00:00.000Z';
@@ -52,4 +52,11 @@ test('collega, scollega e propaga: copie con updatedAt nuovo, originali intatti'
   const prima = rec('1', { pazienti: 3 });
   const altre = propagaPazienti(prima, [prima, rec('2', { pazienti: 2 }), rec('3', { pazienti: 3 }), rec('z', { missione: '99ZZ0009' })], adesso);
   assert.deepEqual(altre.map((x) => [x.id, x.pazienti, x.updatedAt]), [['2', 3, T1]]);
+});
+
+test('gruppi da decidere: duplicati non collegati e non segnati refuso; gruppi collegati a parte', () => {
+  const r = [rec('1'), rec('2', { createdAt: T1 }), rec('a', { missione: '99ZZ0002' }), rec('b', { missione: '99ZZ0002', createdAt: T1 }),
+    rec('c', { missione: '99ZZ0003', pazienti: 2 }), rec('d', { missione: '99ZZ0003', pazienti: 2, createdAt: T1 }), rec('s', { missione: '99ZZ0004' })];
+  assert.deepEqual(gruppiDaDecidere(r, ['99ZZ0002']).map((g) => [g.missione, g.schede.length]), [['99ZZ0001', 2]]);
+  assert.deepEqual(gruppiCollegati(r).map((g) => [g.missione, g.schede.map((s) => s.id)]), [['99ZZ0003', ['c', 'd']]]);
 });

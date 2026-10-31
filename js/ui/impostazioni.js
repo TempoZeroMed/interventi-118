@@ -1,12 +1,13 @@
 // Impostazioni: backup e passaggio dei dati, liste dei menu, archiviazione, installazione.
 import {
   stato, interventi, importaBackup, backupCorrente, registraEsportazione, aggiornaListe, nomeDispositivo, tipoDispositivo, isIOS,
-  impostaMeta,
+  impostaMeta, collegaMissione, segnaRefuso, scollegaMissione,
 } from '../stato.js';
+import { gruppiDaDecidere, gruppiCollegati } from '../core/pazienti.js';
 import { leggiBackup, nomeFileBackup, nomeFileDatato } from '../core/merge.js';
 import { aggiungiVoce, rinominaVoce, impostaAttiva, campiDellaLista } from '../core/liste.js';
 import { creaCartellaExcel } from '../core/excel.js';
-import { h, riempi, icona, impostaBanda, toast, conteggio, istante, dataBreve } from './dom.js';
+import { h, riempi, icona, impostaBanda, toast, conferma, conteggio, istante, dataBreve } from './dom.js';
 import { salvaFile, caricaScript, SHEETJS } from './file.js';
 import { impostaFiltri } from './elenco.js';
 
@@ -63,6 +64,7 @@ function spiegazioneBackup() {
 export function mostra(main) {
   impostaBanda('Impostazioni', 'Dati, liste, installazione');
   const sezioneDati = h('section', { class: 'blocco' });
+  const sezioneMissioni = h('section', { class: 'blocco', id: 'missioni-ripetute' });
   const sezioneListe = h('section', { class: 'blocco' });
   const sezioneDomande = h('section', { class: 'blocco' });
   const sezioneArchivio = h('section', { class: 'blocco' });
@@ -85,6 +87,52 @@ export function mostra(main) {
       h('div', { class: 'azioni' },
         h('button', { type: 'button', class: 'bottone piccolo', onclick: esportaCopiaDatata }, 'Esporta copia con data')),
       ultimoEsitoImport ? riepilogoImport(ultimoEsitoImport) : null,
+    );
+  }
+
+  /**
+   * Schede con la stessa MISSIONE: niente si collega da solo. Per ogni gruppo l'utente sceglie "Stesso intervento"
+   * (pazienti dello stesso intervento) o "Refuso" (da correggere a mano); un intervento collegato si scollega.
+   */
+  function disegnaMissioni() {
+    const daDecidere = gruppiDaDecidere(stato.record, stato.meta.refusiMissione ?? []);
+    const collegati = gruppiCollegati(stato.record);
+    const decisioni = (stato.meta.decisioniPazienti ?? []).slice(-20).reverse();
+    const schede = (n) => (n === 1 ? '1 scheda' : `${conteggio(n)} schede`);
+    const missione = (m) => h('a', { href: '#/elenco', onclick: () => impostaFiltri({ testo: m }) }, m);
+    const fai = async (operazione, messaggio) => {
+      try {
+        await operazione();
+        toast(messaggio);
+      } catch (errore) {
+        toast(`Non riuscito: ${errore.message}`);
+      }
+    };
+    const scollega = async (m) => {
+      const ok = await conferma({
+        titolo: `Scollegare le schede di ${m}?`, testo: 'Tornano schede separate con l\'avviso "Missione duplicata".', si: 'Scollega',
+      });
+      if (ok) await fai(() => scollegaMissione(m), `Schede di ${m} scollegate`);
+    };
+    riempi(sezioneMissioni,
+      h('h2', {}, 'Stessa missione registrata più volte'),
+      h('p', {}, 'Schede diverse con la stessa MISSIONE. Se sono pazienti dello stesso intervento, collegale: contano come un intervento. Se è un refuso, correggi la MISSIONE dalla scheda.'),
+      !daDecidere.length && !collegati.length && !decisioni.length ? h('p', { class: 'nota-tabella' }, 'Nessuna missione registrata più volte.') : null,
+      daDecidere.length ? h('ul', { class: 'gruppi-missione' }, daDecidere.map((g) => h('li', {},
+        h('span', {}, missione(g.missione), ` · ${schede(g.schede.length)}`),
+        h('span', { class: 'azioni-gruppo' },
+          h('button', { type: 'button', class: 'bottone piccolo', onclick: () => fai(() => collegaMissione(g.missione), `Schede di ${g.missione} collegate`) }, 'Stesso intervento'),
+          h('button', { type: 'button', class: 'bottone piccolo', onclick: () => fai(() => segnaRefuso(g.missione), `${g.missione} segnata come refuso`) }, 'Refuso'))))) : null,
+      collegati.length ? [
+        h('h3', {}, 'Collegati'),
+        h('ul', { class: 'gruppi-missione' }, collegati.map((g) => h('li', {},
+          h('span', {}, missione(g.missione), ` · ${schede(g.schede.length)}, ${g.schede[0].pazienti} pazienti`),
+          h('button', { type: 'button', class: 'bottone piccolo', onclick: () => scollega(g.missione) }, 'Scollega')))),
+      ] : null,
+      decisioni.length ? [
+        h('h3', {}, 'Decisioni prese'),
+        h('ul', { class: 'decisioni-missione' }, decisioni.map((d) => h('li', {}, `${istante(d.quando).replace(' alle ', ' ')} · ${d.missione} · ${d.scelta}`))),
+      ] : null,
     );
   }
 
@@ -243,16 +291,17 @@ export function mostra(main) {
 
   function disegnaTutto() {
     disegnaDati();
+    disegnaMissioni();
     disegnaListe();
     disegnaDomande();
     disegnaArchivio();
   }
 
-  main.append(sezioneDati, sezioneListe, sezioneDomande, sezioneArchivio, guida, info);
+  main.append(sezioneDati, sezioneMissioni, sezioneListe, sezioneDomande, sezioneArchivio, guida, info);
   disegnaTutto();
   // la finestra di salvataggio di Chrome vuole un tocco recente: SheetJS dev'essere già pronto al clic su Esporta Excel
   if (haFinestraSalvataggio()) caricaScript(SHEETJS).catch(() => {});
-  return { aggiorna: () => { disegnaDati(); disegnaArchivio(); } };
+  return { aggiorna: () => { disegnaDati(); disegnaMissioni(); disegnaArchivio(); } };
 }
 
 function riepilogoImport(e) {

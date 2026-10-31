@@ -78,3 +78,17 @@ export function propagaPazienti(prima, records, adesso) {
     .filter((r) => r.pazienti !== prima.pazienti)
     .map((r) => ({ ...r, pazienti: prima.pazienti, updatedAt: adesso.toISOString() }));
 }
+
+// --- Le missioni registrate più volte: nessuna conversione automatica, decide l'utente nelle Impostazioni ---
+
+const perMissione = (gruppi) => [...gruppi].map(([missione, schede]) => ({ missione, schede })).sort((a, b) => confronta(a.missione, b.missione));
+
+/** Le MISSIONI con due o più schede e la prima senza spunta, tolte quelle segnate come refuso su questo dispositivo. */
+export function gruppiDaDecidere(records, refusi = []) {
+  return perMissione([...gruppiMissione(records)].filter(([k, schede]) => schede.length > 1 && !isCollegato(schede) && !refusi.includes(k)));
+}
+
+/** Gli interventi con più pazienti: le MISSIONI la cui prima scheda ha la spunta, anche con una scheda sola. */
+export function gruppiCollegati(records) {
+  return perMissione([...gruppiMissione(records)].filter(([, schede]) => isCollegato(schede)));
+}
