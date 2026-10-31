@@ -176,7 +176,7 @@ export function mostra(main) {
 
   /** Parola d'ordine per le domande all'archivio: resta in IndexedDB, non entra nei backup e non si mostra mai. */
   function disegnaDomande(cambia = false) {
-    const aiuto = h('p', {}, 'La stessa frase impostata su Cloudflare, di almeno 16 caratteri (per esempio quattro parole a caso). Serve solo per fare domande all\'archivio dalle Statistiche; senza, l\'app funziona come prima.');
+    const aiuto = h('p', {}, 'La stessa frase impostata su Cloudflare, di almeno 12 caratteri (per esempio tre parole a caso). Serve solo per fare domande all\'archivio dalle Statistiche; senza, l\'app funziona come prima.');
     if (stato.meta.parolaOrdineDomande && !cambia) {
       riempi(sezioneDomande,
         h('h2', {}, 'Domande all\'archivio'),
@@ -190,8 +190,8 @@ export function mostra(main) {
     });
     const salva = async () => {
       const parola = campo.value.trim();
-      if (parola.length < 16) {
-        toast('La parola d\'ordine deve avere almeno 16 caratteri');
+      if (parola.length < 12) {
+        toast('La parola d\'ordine deve avere almeno 12 caratteri');
         return;
       }
       await impostaMeta({ parolaOrdineDomande: parola });
@@ -239,7 +239,7 @@ export function mostra(main) {
 
   const info = h('section', { class: 'blocco' },
     h('h2', {}, 'Informazioni'),
-    h('p', {}, 'Interventi 118, versione 1.4.2. I dati restano solo su questo dispositivo: nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file; per le domande all\'archivio partono solo la domanda, le voci delle liste e i nomi dei comuni.'));
+    h('p', {}, 'Interventi 118, versione 1.4.3. I dati restano solo su questo dispositivo: nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file; per le domande all\'archivio partono solo la domanda, le voci delle liste e i nomi dei comuni.'));
 
   function disegnaTutto() {
     disegnaDati();

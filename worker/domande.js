@@ -13,7 +13,7 @@ const ATTESA_MASSIMA = 20000;
 const MAX_VOCI = 2000;
 const MAX_CORPO = 65536; // caratteri: un archivio vero ne manda pochi KB
 const MAX_TESTO_VOCE = 200;
-const MIN_PAROLA = 16; // il servizio è pubblico: una parola corta si indovina provando
+const MIN_PAROLA = 12; // il servizio è pubblico: una parola corta si indovina provando
 const RITARDO_ERRATA = 1000; // ms prima di rispondere a una parola sbagliata: rallenta chi prova a indovinarla
 
 export const PROMPT_SISTEMA = `Traduci domande in italiano sull'archivio personale di un infermiere del 118 (ambulanza ed elisoccorso) in una query JSON. Non vedi i dati: la query la esegue l'app sul telefono. Rispondi SOLO con un oggetto JSON, senza testo prima o dopo.

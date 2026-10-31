@@ -64,11 +64,18 @@ test('parola sbagliata: la risposta arriva dopo un secondo, quella giusta subito
 
 test('parola d\'ordine su Cloudflare troppo corta: 503 senza chiamare Claude', async () => {
   const { fetchAnthropic, chiamate } = claudeFinto(JSON.stringify(QUERY));
-  const corta = { ...ENV, PAROLA_ORDINE: 'segreta' };
-  const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta({ ...CORPO, parolaOrdine: 'segreta' }), corta));
+  const corta = { ...ENV, PAROLA_ORDINE: 'undici cara' };
+  const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta({ ...CORPO, parolaOrdine: 'undici cara' }), corta));
   assert.equal(stato, 503);
-  assert.match(corpo.errore, /almeno 16 caratteri/);
+  assert.match(corpo.errore, /almeno 12 caratteri/);
   assert.equal(chiamate.length, 0);
+});
+
+test('parola d\'ordine su Cloudflare di 12 caratteri: accettata', async () => {
+  const { fetchAnthropic } = claudeFinto(JSON.stringify(QUERY));
+  const giusta = { ...ENV, PAROLA_ORDINE: 'mela sole re' };
+  const { stato } = await leggi(await creaGestore({ fetchAnthropic })(richiesta({ ...CORPO, parolaOrdine: 'mela sole re' }), giusta));
+  assert.equal(stato, 200);
 });
 
 test('richiesta troppo grande: 400 senza chiamare Claude', async () => {

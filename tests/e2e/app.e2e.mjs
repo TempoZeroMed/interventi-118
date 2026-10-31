@@ -839,11 +839,11 @@ for (const nomeBrowser of BROWSER) {
       await page.goto(server.url);
       await vai(page, '#/impostazioni');
       const sezione = page.locator('section', { has: page.getByRole('heading', { name: 'Domande all\'archivio' }) });
-      await sezione.getByLabel('Parola d\'ordine').fill('abc');
+      await sezione.getByLabel('Parola d\'ordine').fill('undici cara');
       await sezione.getByRole('button', { name: 'Salva' }).click();
-      await attendiTesto(page.locator('#toast'), 'almeno 16 caratteri');
+      await attendiTesto(page.locator('#toast'), 'almeno 12 caratteri');
       assert.equal(await sezione.getByRole('button', { name: 'Cambia' }).count(), 0, 'una parola corta non si salva');
-      await sezione.getByLabel('Parola d\'ordine').fill('una frase lunga di prova');
+      await sezione.getByLabel('Parola d\'ordine').fill('mela sole re');
       await sezione.getByRole('button', { name: 'Salva' }).click();
       await attendiTesto(sezione, 'Impostata');
       await page.reload();
@@ -851,7 +851,7 @@ for (const nomeBrowser of BROWSER) {
       await attendiTesto(sezione, 'Impostata');
       assert.equal(await sezione.getByRole('button', { name: 'Cambia' }).count(), 1);
       assert.equal(await sezione.locator('input').count(), 0, 'nessun campo con la parola');
-      assert.ok(!(await sezione.textContent()).includes('frase lunga'));
+      assert.ok(!(await sezione.textContent()).includes('mela sole'));
       await sezione.getByRole('button', { name: 'Cambia' }).click();
       assert.equal(await sezione.getByLabel('Parola d\'ordine').inputValue(), '', 'il campo riparte vuoto');
       await ctx.close();
