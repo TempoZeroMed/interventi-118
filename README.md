@@ -4,6 +4,7 @@ Registro personale delle uscite 118 in ambulanza ed elisoccorso. Sostituisce il 
 `Report Interventi 118 2026 v3.xlsx` e, per le missioni in elicottero, la parte di volo di `Report Voli HEMS 2026.xlsx`:
 
 - inserimento rapido da iPhone, con una mano, anche da una foto della schermata "Missione" del tablet;
+- interventi con più pazienti: una scheda per paziente, contati come un intervento;
 - elenco con ricerca e filtri;
 - statistiche identiche a quelle dei fogli Excel, compresi tempo di volo e manovre;
 - domande libere all'archivio ("qual è l'ora in cui esco di più?"), con la risposta calcolata sul telefono.
@@ -26,14 +27,15 @@ Gli screenshot usano dati inventati.
 3. [Volo ed elisoccorso](#volo-ed-elisoccorso)
 4. [Foto del tablet](#foto-del-tablet)
 5. [Tipologia India/Mike](#tipologia-indiamike)
-6. [Domande all'archivio](#domande-allarchivio)
-7. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
-8. [Installazione su iPhone](#installazione-su-iphone)
-9. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
-10. [Test](#test)
-11. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
-12. [Struttura del progetto](#struttura-del-progetto)
-13. [Limiti noti](#limiti-noti)
+6. [Interventi con più pazienti](#interventi-con-più-pazienti)
+7. [Domande all'archivio](#domande-allarchivio)
+8. [Pubblicazione su Cloudflare Pages](#pubblicazione-su-cloudflare-pages)
+9. [Installazione su iPhone](#installazione-su-iphone)
+10. [Backup e passaggio dei dati tra Mac e iPhone](#backup-e-passaggio-dei-dati-tra-mac-e-iphone)
+11. [Test](#test)
+12. [Come sono calcolate le statistiche](#come-sono-calcolate-le-statistiche)
+13. [Struttura del progetto](#struttura-del-progetto)
+14. [Limiti noti](#limiti-noti)
 
 ---
 
@@ -93,7 +95,7 @@ Per le missioni in elicottero (mezzo **V-ECHO**, **T-ECHO**, **C-ECHO** o **A-EC
 - **Tempo di volo (min):** i minuti totali di volo della missione. Comprende il rientro in base, quindi può superare la durata.
 - **Manovre:** HD Hovering discesa, VD Verricello discesa, HS Hovering salita, VS Verricello salita, VSP Verricello salita pannolone, VSB Verricello salita barella. Un tocco accende la manovra, il secondo la spegne; se ne possono scegliere più di una.
 
-Se passi da un elicottero all'altro i dati di volo restano; se scegli un'ambulanza si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS).
+Se passi da un elicottero all'altro i dati di volo restano; se scegli un'ambulanza si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS). In un [intervento con più pazienti](#interventi-con-più-pazienti) il tempo di volo è uno solo: una scheda con un tempo diverso da quello della prima ha l'avviso **Tempo volo diverso tra le schede**.
 
 ### Statistiche di volo
 
@@ -105,7 +107,7 @@ In **Statistiche**, sotto il periodo, c'è l'interruttore **Interventi | Volo**.
   - V1 Tempo di volo: totale, media, mediana, minimo, massimo;
   - V2 Per mezzo;
   - V3 Tipo di missione, in % sulle missioni con il tipo compilato;
-  - V4 Manovre, in % sulle missioni;
+  - V4 Manovre, in % sulle missioni (in un intervento con più pazienti le manovre di tutte le schede si sommano);
   - V5 Per mese.
 - **Grafici:** ore di volo per mese, manovre, missioni per mezzo.
 
@@ -233,6 +235,43 @@ La tipologia si imposta da sola quando scegli il mezzo o l'ora di allertamento, 
 - La tipologia si può sempre cambiare a mano, e non c'è nessun avviso nuovo.
 - Gli interventi già salvati non cambiano: la regola agisce solo quando cambi mezzo o ora nel modulo.
 - 3050 e 6021 sono voci di sistema della lista Mezzo, come 3040, 5022 e 5024: la regola si basa sul nome, quindi non si possono rinominare né disattivare.
+
+---
+
+## Interventi con più pazienti
+
+Un intervento può avere più pazienti: stessa MISSIONE, stessi allarmi, stessa uscita; cambiano codice colore, patologia, esito, età e sesso. Ogni paziente ha la sua scheda, tutte con la stessa MISSIONE, senza suffissi.
+
+| Scheda collegata |
+|---|
+| ![Scheda collegata](docs/screenshots/390-paziente-multiplo.png) |
+
+### Come si usa
+
+1. Sulla **prima scheda**, la prima salvata, attiva **Paziente multiplo** (sotto MISSIONE e Ora allert.) e scrivi il **Numero pazienti**: l'app propone 2.
+2. Per un altro paziente apri una scheda dell'intervento e tocca **Aggiungi paziente**. Si apre una scheda nuova con data, ora allert., missione, comune, mezzo, tipologia, invio CO (codice, patologia, luogo), libero operativo, tipo missione e tempo di volo già scritti, copiati dalla prima scheda; età, sesso, esito, ospedale, rientro e manovre sono vuoti. Tutto resta modificabile.
+3. Va bene anche **Nuovo intervento** con la stessa MISSIONE: appena il numero coincide, la scheda si collega da sola. Lo dice il riquadro verde "Collegata all'intervento del 12/10/2026, BIELLA: paziente multiplo (3 pazienti)", con il link alla prima scheda. Se data e comune non sono quelli giusti, la MISSIONE ha un refuso. La foto del tablet mostra lo stesso riquadro verde invece dell'errore rosso.
+
+### Regole
+
+- **Senza la spunta sulla prima scheda** resta l'errore di sempre, "La MISSIONE … è già registrata", con l'indicazione di attivare Paziente multiplo sulla prima scheda: il controllo dei refusi non cambia.
+- **Scheda collegata:** spunta e numero vengono dalla prima scheda e sono bloccati. Cambiando la MISSIONE il legame si scioglie e la spunta si spegne.
+- **Prima scheda:** finché ha altre schede collegate, MISSIONE e spunta sono bloccate ("Collegata a 2 altre schede"). Il numero si cambia lì, e al salvataggio passa sulle altre schede. La prima scheda è la prima salvata (a parità d'istante decide l'id), quindi è la stessa su Mac e iPhone dopo uno scambio di backup.
+- **Numero pazienti:** con la spunta accesa è obbligatorio. Se lo cancelli il salvataggio si ferma ("Scrivi il numero di pazienti, oppure togli Paziente multiplo."); un numero non valido (1, 2,5, un testo) si salva con un avviso.
+- **Eliminare una scheda** si può sempre e non tocca le altre. Se resta solo la prima scheda, la sua spunta torna libera.
+- **Elenco:** ogni scheda dice "Paziente 1 di 3", "Paziente 2 di 3"…, in righe separate. In cima, "N interventi · M schede".
+- **Avvisi**, che non bloccano: **Schede in più rispetto ai pazienti**, **Mancano schede paziente**, **Numero pazienti non valido**, **Numero pazienti diverso tra le schede** (può nascere da uno scambio di backup) e, per gli elicotteri, **Tempo volo diverso tra le schede**.
+- **Excel:** la colonna PAZIENTI, subito dopo MISSIONE, ha il numero su tutte le schede dell'intervento ed è vuota per l'intervento singolo. `tools/xlsx_to_json.py` legge sia questo tracciato sia quello del foglio 118, senza la colonna.
+- **Backup:** passa alla versione 3. Aggiorna l'app su tutti e due i dispositivi prima di scambiare i backup.
+
+### Missioni già registrate più volte
+
+Niente si collega da solo. In **Impostazioni**, la sezione **Stessa missione registrata più volte** elenca le schede con la stessa MISSIONE la cui prima scheda non ha la spunta: per esempio un intervento con due pazienti registrato prima della versione 1.5.0, o due schede arrivate con un import. Per ogni gruppo scegli:
+
+- **Stesso intervento:** le schede diventano pazienti dello stesso intervento, con il numero di pazienti uguale al numero di schede;
+- **Refuso:** il gruppo esce dall'elenco e l'avviso "Missione duplicata" resta finché non correggi la MISSIONE dalla scheda. Vale solo sul dispositivo dove lo scegli: sull'altro il gruppo resta da decidere.
+
+Sotto ci sono gli interventi già collegati, con **Scollega** per tornare a schede separate con l'avviso "Missione duplicata", e le ultime decisioni prese. Finché ci sono gruppi da decidere, la striscia in cima all'app lo ricorda, con **Vai alle Impostazioni**. "Stesso intervento" e "Scollega" cambiano le schede e viaggiano con il backup; "Refuso" e l'elenco delle decisioni restano sul dispositivo.
 
 ---
 
@@ -374,7 +413,7 @@ A fine import compare il riepilogo:
 
 - **Nuovi**, **Aggiornati**, **Invariati**;
 - **Conflitti:** lo stesso intervento modificato su tutti e due i dispositivi dall'ultimo scambio. Viene tenuta la versione più recente e l'elenco dice quali erano;
-- **Stessa missione registrata più volte:** succede se hai inserito lo stesso intervento su Mac e iPhone. Restano entrambi, con l'avviso "Missione duplicata", e decidi tu quale eliminare.
+- **Stessa missione registrata più volte:** succede se hai inserito lo stesso intervento su Mac e iPhone. Restano entrambi, con l'avviso "Missione duplicata": se è lo stesso paziente, eliminane uno; se sono pazienti diversi dello stesso intervento, collegali dalla sezione [Stessa missione registrata più volte](#missioni-già-registrate-più-volte) delle Impostazioni. Le schede di un intervento con più pazienti non compaiono qui.
 
 **Consiglio:** se hai lavorato su un solo dispositivo, esporta da lì e importa nell'altro. Se hai lavorato su entrambi, fai il giro completo: esporta da A e importa in B, poi esporta da B e importa in A. Alla fine i due archivi sono identici.
 
@@ -393,13 +432,14 @@ A fine import compare il riepilogo:
 npm test
 ```
 
-Esegue i test unitari (oltre 220) con `node --test`. Coprono:
+Esegue i test unitari (oltre 270) con `node --test`. Coprono:
 
 - campi calcolati, compresa la durata a cavallo della mezzanotte;
 - controlli di qualità, compresi quelli di volo;
 - statistiche, comprese quelle di volo;
 - merge con conflitti ed eliminazioni, anche tra backup vecchi e nuovi;
 - regola India/Mike per mezzo e orario;
+- interventi con più pazienti: prima scheda, collegamento, avvisi, statistiche per missione e per scheda, unione dei backup;
 - lettura della schermata del tablet, su testi inventati;
 - domande all'archivio: validazione della query, calcolo sul dispositivo e Worker con un Claude finto (nessuna chiamata vera);
 - salvataggio con nome fisso e file ricordato (finestra di salvataggio finta);
@@ -419,11 +459,12 @@ Lo script crea `data/volo_attese.json`. Da quel momento `npm test` controlla tut
 npm run e2e
 ```
 
-Esegue 89 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
+Esegue 109 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
 
 - inserimento e duplicato bloccante;
 - modifica, eliminazione, filtri e statistiche;
 - sezione Volo del form e vista Volo delle statistiche;
+- interventi con più pazienti: spunta e numero, scheda collegata con il riquadro verde, Aggiungi paziente, statistiche, decisioni sulle missioni registrate più volte e foto del tablet con la spunta;
 - foto del tablet, con una schermata finta e dati inventati: campi evidenziati, missione già salvata, foto storta o sbagliata, lettore assente;
 - export e reimport con merge tra due dispositivi simulati;
 - export Excel, copia con data e, in Chromium, riscrittura del file ricordato;
@@ -446,8 +487,8 @@ Con `E2E_BROWSER=webkit npm run e2e` provi un solo motore.
 
 Le definizioni sono quelle del foglio "Istruzioni" e delle formule del foglio "Statistiche":
 
-- **Interventi totali:** righe con DATA o MISSIONE.
-- **Pazienti valutati:** totali − "Annullato da CO" − "Non Raggiungibile".
+- **Interventi totali:** righe con DATA o MISSIONE. Le schede di un [intervento con più pazienti](#interventi-con-più-pazienti) contano una volta: un'uscita vale 1.
+- **Pazienti valutati:** schede − "Annullato da CO" − "Non Raggiungibile".
 - **Percentuali degli ospedali:** sui soli trasportati.
 - **Codici VERDE < GIALLO < ROSSO:** il NERO, presente solo al rientro, è escluso dal confronto invio/rientro.
 - **Durata:** libero operativo − ora di allertamento. Se il libero operativo è dopo la mezzanotte, si conta il giorno dopo.
@@ -460,6 +501,8 @@ Scelte fatte dove le formule dell'Excel erano ambigue, confermate prima di scriv
 4. **Tabella per mese:** mostra i mesi del periodo scelto, con l'anno quando il periodo ne copre più di uno.
 5. **Voci di sistema bloccate:** non si rinominano né si disattivano i 4 codici, India/Mike, Maschio/Femmina, Trasportato, Deceduto, Annullato da CO, Non Raggiungibile e i mezzi 3040, 3050, 5022, 5024, 6021, V-ECHO, T-ECHO, C-ECHO e A-ECHO. Sono le voci da cui dipendono statistiche, controlli e regola [India/Mike](#tipologia-indiamike). C-ECHO e A-ECHO non sono nel foglio "Liste" dell'Excel: l'app li aggiunge da sola in fondo alla lista Mezzo, anche su un dispositivo che aveva già le sue liste.
 
+**Interventi con più pazienti.** Contano una volta per missione, dalla prima scheda, gli interventi e le tabelle per mese, mezzo e ora, India/Mike e le durate. Contano scheda per scheda i pazienti: valutati, codici, patologie, luoghi, esiti, ospedali, età e sesso. Le percentuali che l'Excel divide per gli interventi (annullati, invio, esiti, avvisi) qui si dividono per le schede: senza interventi multipli schede e interventi coincidono e i numeri sono quelli dell'Excel. Nel riepilogo ci sono due righe in più, **Interventi con più pazienti** e **Pazienti negli interventi multipli**; il KPI Interventi aggiunge "N con più pazienti". Nella vista Volo il tempo di volo conta una volta per missione e le manovre di tutte le schede si sommano. Un gruppo di schede con la stessa MISSIONE ma senza la spunta resta un duplicato e conta per riga, come nell'Excel.
+
 Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [Statistiche di volo](#statistiche-di-volo).
 
 ---
@@ -470,7 +513,8 @@ Le statistiche di volo seguono il foglio "Statistiche" dell'Excel HEMS: vedi [St
 index.html, manifest.webmanifest, sw.js   app, installazione, cache offline
 css/app.css                               stile (sistema visivo descritto in DESIGN.md)
 js/core/       logica pura, senza interfaccia, coperta dai test:
-               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel, tablet, domande
+               campi, calcolati, controlli, statistiche, volo, merge, liste, elenco, modulo, excel, tablet, domande,
+               pazienti (gruppo di schede di una MISSIONE, prima scheda, collegamento)
 js/ui/         schermate: inserimento, elenco, statistiche (con la vista volo e le domande all'archivio), impostazioni;
                fototablet (foto, ritocco e lettore della schermata del tablet)
 worker/        Worker Cloudflare: file statici e traduzione delle domande con Claude (POST /api/domanda)
@@ -493,10 +537,10 @@ docs/screenshots/   schermate delle prove end-to-end
 - **Prove in WebKit, non su iPhone:** le prove automatiche girano nel motore di Safari su Mac, non su un iPhone vero. Data e ora usano i selettori nativi di iOS, che le prove non possono vedere.
 - **Archivi separati:** Safari, l'app nella schermata Home e l'app nel Dock del Mac hanno archivi separati, anche sullo stesso dispositivo.
 - **Pulizia di Safari:** cancellare i dati di navigazione di Safari cancella i dati dell'app aperta nel browser. Il backup regolare resta la protezione principale.
-- **Backup della versione 1.1:** contengono i dati di volo e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla due volte con la rete.
+- **Backup delle versioni 1.1 e 1.5:** contengono campi nuovi (i dati di volo dalla 1.1, il numero di pazienti dalla 1.5) e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla due volte con la rete.
 - **Export Excel e dati di volo:** l'export contiene le colonne VOLO, ma `tools/xlsx_to_json.py` legge solo le colonne del 118. Per i passaggi tra dispositivi usa sempre il backup JSON.
 - **Lettura della foto non provata su iPhone:** sia le prove automatiche sia la prova su una foto vera girano in WebKit su Mac. Tempi, menu **Scatta foto** / **Libreria foto** e primo scaricamento del lettore vanno verificati a mano sul telefono.
 - **Lettura della foto: un aiuto, non una garanzia.** Il lettore può sbagliare, soprattutto con foto storte, mosse o con riflessi: i campi evidenziati vanno sempre ricontrollati. Quello che non legge o non riconosce resta vuoto.
 - **Lettura degli Excel:** l'app importa solo backup JSON. Per leggere un file Excel si usa `tools/xlsx_to_json.py`, che legge il foglio "Interventi" con la struttura attuale.
 - **Domande all'archivio:** servono la rete, i due segreti su Cloudflare e la parola d'ordine nelle Impostazioni. Claude può fraintendere una domanda: la riga "Inteso come" dice come l'ha capita, e la risposta vale per quella lettura. Le domande coprono i campi dell'intervento (compresi tipo missione e tempo di volo), non le altre statistiche di volo. Le prove automatiche usano risposte finte: la prima domanda vera va provata a mano dopo aver impostato i segreti.
-- **Promemoria del backup sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata.
+- **Promemoria sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata. Con anche le missioni registrate più volte da decidere la striscia ha due righe e spinge di più, finché non decidi nelle Impostazioni.
