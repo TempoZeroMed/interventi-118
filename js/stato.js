@@ -107,7 +107,10 @@ export async function segnaRefuso(missione, adesso = new Date()) {
 export async function scollegaMissione(missione, adesso = new Date()) {
   const k = chiaveMissione(missione);
   const schede = scollegaGruppo(schedeDi(stato.record, k), adesso);
-  await scriviGruppo(schede, { decisioniPazienti: decisione(k, 'scollegato', schede.length, adesso) });
+  await scriviGruppo(schede, {
+    refusiMissione: (stato.meta.refusiMissione ?? []).filter((x) => x !== k), // anche se un tempo era stata segnata come refuso
+    decisioniPazienti: decisione(k, 'scollegato', schede.length, adesso),
+  });
 }
 
 /** Liste modificate nelle Impostazioni, con i record da rinominare. */
