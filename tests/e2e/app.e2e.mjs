@@ -108,8 +108,11 @@ const NOME_NON_LETTO = {
   luogoInvio: NOMI_TABLET.luogoRientro,
 };
 
-/** Apre la pagina finta del tablet in una scheda nuova, grande come una foto, e ne restituisce lo screenshot PNG. */
-async function fotoFinta(ctx, { storta = false, indirizzo = null, html = TABLET_FINTO } = {}) {
+/**
+ * Apre la pagina finta del tablet in una scheda nuova, grande come una foto, e ne restituisce lo screenshot PNG;
+ * con `gradi` (90, 180, 270) lo gira in senso orario, come una foto scattata con il telefono girato.
+ */
+async function fotoFinta(ctx, { storta = false, indirizzo = null, html = TABLET_FINTO, gradi = 0 } = {}) {
   const scheda = await ctx.newPage();
   await scheda.setViewportSize({ width: 1400, height: 920 });
   await scheda.setContent(html);
@@ -118,8 +121,25 @@ async function fotoFinta(ctx, { storta = false, indirizzo = null, html = TABLET_
     if (via) document.querySelector('.indirizzo').textContent = via;
   }, { storta, indirizzo });
   const png = await scheda.screenshot({ type: 'png' });
+  if (!gradi) {
+    await scheda.close();
+    return png;
+  }
+  const girata = await scheda.evaluate(async ({ b64, g }) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${b64}`;
+    await img.decode();
+    const canvas = document.createElement('canvas');
+    canvas.width = g % 180 ? img.height : img.width;
+    canvas.height = g % 180 ? img.width : img.height;
+    const c = canvas.getContext('2d');
+    c.translate(canvas.width / 2, canvas.height / 2);
+    c.rotate((g * Math.PI) / 180);
+    c.drawImage(img, -img.width / 2, -img.height / 2);
+    return canvas.toDataURL('image/png').split(',')[1];
+  }, { b64: png.toString('base64'), g: gradi });
   await scheda.close();
-  return png;
+  return Buffer.from(girata, 'base64');
 }
 
 /** Sceglie la foto con il pulsante "Foto tablet", senza aspettare la lettura. */
@@ -513,6 +533,16 @@ for (const nomeBrowser of BROWSER) {
             }
           });
 
+          test('foto tablet girata di 90, 180 o 270 gradi: si legge come quella dritta', async () => {
+            for (const gradi of [90, 180, 270]) {
+              await svuota(page);
+              await daFoto(page, await fotoFinta(ctx, { gradi }));
+              assert.equal(await riquadro().count(), 1, `${gradi}°: la foto girata si legge`);
+              assert.deepEqual(await leggiModulo(page), DAL_TABLET, `${gradi}°`);
+              await page.getByRole('button', { name: 'Togli foto' }).click();
+            }
+          });
+
           test('foto tablet: seconda foto, dopo valori della prima e valori scritti a mano', async () => {
             await svuota(page);
             const senzaComune = await fotoFinta(ctx, { indirizzo: 'STRADA DEL BOSCO' });
@@ -576,7 +606,8 @@ for (const nomeBrowser of BROWSER) {
             assert.equal(await scelto(qui, 'Esito'), '', 'nessun orario sotto Arrivo H: niente Trasportato');
             assert.equal(await qui.getByLabel('Libero operativo', { exact: true }).inputValue(), '22:10');
             await daFoto(qui, await fotoFinta(altro, { html: LISTA_SPESA }));
-            assert.equal(await letture(), 13, 'senza le etichette Allarme, Valutazione e nascita non c\'è niente da ritagliare');
+            // non è la schermata: si riprova girata di 180°, 90° e 270° (quattro letture), poi niente da ritagliare
+            assert.equal(await letture(), 16, 'le quattro rotazioni della foto intera; senza Allarme, Valutazione e nascita nessun ritaglio');
             await altro.close();
           });
 

@@ -2,7 +2,7 @@
 // Non vede né trasmette dati: gli interventi stanno in IndexedDB, non passano di qui.
 // Cambiando un file dell'app, aggiorna VERSIONE perché i dispositivi scarichino la nuova copia.
 
-const VERSIONE = 'interventi118-v1.4.4';
+const VERSIONE = 'interventi118-v1.4.5';
 const FILE = [
   './',
   'index.html',

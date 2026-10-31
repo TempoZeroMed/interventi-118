@@ -7,7 +7,7 @@ import vm from 'node:vm';
 
 const SORGENTE = readFileSync(new URL('../sw.js', import.meta.url), 'utf8');
 const BASE = 'https://esempio.test/';
-const VERSIONE = 'interventi118-v1.4.4';
+const VERSIONE = 'interventi118-v1.4.5';
 const LETTORE = 'lettore-testo-7.0.0';
 const CARTELLA = 'vendor/tesseract-7.0.0/';
 const FILE_LETTORE = ['tesseract.min.js', 'worker.min.js', 'ita.traineddata.gz'].map((f) => CARTELLA + f);

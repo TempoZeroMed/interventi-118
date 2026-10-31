@@ -6,7 +6,7 @@ import { verificaSalvataggio } from '../core/controlli.js';
 import { suggerimentiComuni } from '../core/elenco.js';
 import {
   leggiSchermata, daTesseract, spostaLettura, unisciLetture, etichetta, zonaOrari, etichettaValutazione, zonaCodice,
-  zonaColore, coloreRiquadro, scritteSulRiquadro, etichettaNascita, zonaSesso,
+  zonaColore, coloreRiquadro, scritteSulRiquadro, etichettaNascita, zonaSesso, punteggioSchermata, rotazioniDaProvare,
 } from '../core/tablet.js';
 import { caricaScript, TESSERACT, CARTELLA_TESSERACT } from './file.js';
 import { h, icona, dataBreve } from './dom.js';
@@ -18,6 +18,9 @@ const CURVA = 1.5;
 const INGRANDIMENTO = 2; // la fila degli orari, il riquadro del codice e la riga Sesso si rileggono ingranditi
 // avanzamento mostrato: la lettura della foto intera fino all'80%, quelle dei ritagli il resto
 const QUOTA_INTERA = 0.8;
+// con almeno tante parole fisse della schermata la foto è dritta e non si provano le altre rotazioni (dritta se ne leggono
+// una decina; girata nessuna). Con una sola si provano lo stesso, perché una parola può uscire per caso.
+const PAROLE_FISSE_SICURE = 2;
 
 /** Un ritocco di un ritaglio che fa di ogni punto il grigio tono(r, g, b). Nella foto ritoccata r = g = b. */
 const inGrigio = (tono) => (px) => {
@@ -84,6 +87,21 @@ export async function preparaFoto(file) {
   }
   ctx.putImageData(immagine, 0, 0);
   return { foto: canvas, colori };
+}
+
+/** La foto preparata girata di `gradi` in senso orario (90, 180 o 270): sia quella in grigi sia quella a colori. */
+export function giraFoto({ foto, colori }, gradi) {
+  const gira = (sorgente) => {
+    const canvas = Object.assign(document.createElement('canvas'), {
+      width: gradi % 180 ? sorgente.height : sorgente.width, height: gradi % 180 ? sorgente.width : sorgente.height,
+    });
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.rotate((gradi * Math.PI) / 180);
+    ctx.drawImage(sorgente, -sorgente.width / 2, -sorgente.height / 2);
+    return canvas;
+  };
+  return { foto: gira(foto), colori: gira(colori) };
 }
 
 /** La `zona` di `sorgente`, ingrandita; `ritocco(punti, larghezza, altezza)`, se c'è, ne cambia i punti RGBA. */
@@ -165,7 +183,27 @@ export function creaFotoTablet({ dopoLettura }) {
   }
 
   /**
-   * Foto intera, poi sempre anche i ritagli ingranditi: se c'è l'etichetta Allarme la fila degli orari, normale e
+   * La foto intera letta nel verso giusto: com'è e, se non vi si riconosce la schermata, girata. Il lettore non legge il
+   * testo girato, e l'orientamento scritto nella foto non basta: una foto scattata con il telefono in piano sopra il
+   * tablet, o già girata nella libreria, arriva coricata. Si prova ogni rotazione finché la schermata si riconosce
+   * (abbastanza parole fisse); se non si riconosce mai, vale la lettura con più parole fisse, a parità la foto com'è.
+   * Null se nel frattempo la lettura è stata lasciata cadere.
+   */
+  async function leggiNelVersoGiusto(preparata, attuale) {
+    let migliore = null;
+    for (const gradi of rotazioniDaProvare(preparata.foto)) {
+      if (!attuale()) return null;
+      const girata = gradi ? giraFoto(preparata, gradi) : preparata;
+      const intera = await riconosci(girata.foto, (p) => attuale() && avanzamento(p * QUOTA_INTERA, gradi !== 0));
+      const punteggio = punteggioSchermata(intera);
+      if (!migliore || punteggio > migliore.punteggio) migliore = { ...girata, intera, punteggio };
+      if (punteggio >= PAROLE_FISSE_SICURE) break;
+    }
+    return migliore;
+  }
+
+  /**
+   * Foto intera, nel verso giusto, poi sempre anche i ritagli ingranditi: se c'è l'etichetta Allarme la fila degli orari, normale e
    * invertita; se c'è l'etichetta Valutazione il riquadro del codice, dalla foto a colori, con il canale più alto e, se
    * il colore del riquadro è chiaro, con la sola scritta chiusa nel riquadro (anche bianca, sul rosso o sul nero); se c'è
    * "nascita" le righe Sesso e Data di nascita (la F da sola, piccola, nella foto intera diventa 'È' o si perde).
@@ -173,9 +211,11 @@ export function creaFotoTablet({ dopoLettura }) {
    * controllano: un orario, un codice o un sesso letto in due modi diversi resta non letto, invece di entrare sbagliato.
    * Il colore del riquadro, che sul tablet è quello del codice, controlla anche la lettera.
    */
-  async function leggiFoto({ foto, colori }, attuale) {
+  async function leggiFoto(preparata, attuale) {
     const opzioni = { liste: stato.liste, adesso: new Date(), comuniNoti: suggerimentiComuni(stato.record) };
-    const intera = await riconosci(foto, (p) => attuale() && avanzamento(p * QUOTA_INTERA));
+    const dritta = await leggiNelVersoGiusto(preparata, attuale);
+    if (!dritta) return null;
+    const { foto, colori, intera } = dritta;
     const allarme = etichetta(intera, 'ALLARME');
     const valutazione = etichettaValutazione(intera);
     const codice = valutazione && zonaCodice(valutazione, foto);
@@ -251,9 +291,9 @@ export function creaFotoTablet({ dopoLettura }) {
     }
   }
 
-  function avanzamento(frazione) {
+  function avanzamento(frazione, girata = false) {
     const n = Math.round(frazione * 100);
-    testo.textContent = `Leggo la foto… ${n}%`;
+    testo.textContent = `Leggo la foto${girata ? ' girata' : ''}… ${n}%`;
     bottone.style.setProperty('--avanzamento', `${n}%`);
   }
 

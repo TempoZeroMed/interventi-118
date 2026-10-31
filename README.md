@@ -148,7 +148,7 @@ Lo screenshot usa una schermata inventata.
 ### Come si usa
 
 1. Tocca **Foto tablet**: il menu di iOS offre **Scatta foto** e **Libreria foto**.
-2. Fotografa lo schermo dritto, intero e senza riflessi. Il pulsante mostra l'avanzamento ("Leggo la foto… 40%"); la lettura richiede qualche secondo.
+2. Fotografa lo schermo dritto, intero e senza riflessi. Il pulsante mostra l'avanzamento ("Leggo la foto… 40%"); la lettura richiede qualche secondo. Se la foto arriva girata (il telefono tenuto in piano sopra il tablet, o una foto già girata nella libreria), l'app la gira da sola e lo dice ("Leggo la foto girata… 40%"): ci mette un po' di più.
 3. Compare il riquadro con la miniatura, quanti campi sono stati letti e l'elenco dei **Non letti**. Toccando la miniatura rivedi la foto intera; **Togli foto** chiude il riquadro, e i valori restano nel modulo.
 4. I campi letti prendono il posto di quelli già nel modulo e sono evidenziati con **dalla foto**, finché non li tocchi o non salvi. Ricontrolli quelli evidenziati e completi quelli non letti.
 
@@ -181,6 +181,7 @@ Gli esempi usano valori inventati.
 - **Indirizzo.** È la riga più vicina sopra "SCALA … PIANO …" con un numero civico: a volte il lettore mette in mezzo una riga di segni. Sulla stessa riga, a destra, c'è la prima riga della colonna Valutazione ("Coscienza Si"), spesso letta male: le parole oltre il bordo della colonna (dove stanno Valutazione, Coscienza, …, Sesso, Data di nascita) non fanno parte dell'indirizzo.
 - **Sesso.** Nella foto intera la F da sola è piccola e spesso si legge male: se c'è "Data di nascita", le righe Sesso e Data di nascita si rileggono ingrandite. Una F letta "E" vale F, perché sul tablet ci sono solo M e F. Letto in due modi diversi (M e F), il sesso resta vuoto.
 - **Comune.** Se l'indirizzo finisce con parole di due lettere ("… DA PO") il comune vale solo se è già nell'archivio, con o senza quelle parole: un nome troncato non si inventa. Un nome nuovo vale solo se è fatto di lettere (anche accentate, con apostrofo o trattino): con una cifra o un segno rimasti resta non letto ("N0VARA"), salvo che, tolti i segni, sia un comune già nell'archivio ("NOVARA." diventa NOVARA, scritto come nell'archivio).
+- **Foto girata.** Il lettore non legge il testo girato, e l'orientamento scritto nella foto non basta: con il telefono tenuto in piano sopra il tablet il giroscopio può segnarla girata, e una foto della libreria può esserlo già. Se nella foto com'è non si riconosce la schermata (le parole fisse: Allarme, Partenza, Operativo, Valutazione, Coscienza, "Data di nascita", Ospedale…), l'app la riprova girata di 90°, 180° e 270°, prima le rotazioni più probabili (una foto verticale è quasi di sicuro girata di un quarto), finché la schermata si riconosce. Ogni tentativo costa una lettura in più.
 - **Non letti per scelta.** Partenza, Arrivo e Partenza H non servono, perché l'app non ha quei campi. Tipo missione, tempo di volo e manovre degli elicotteri non sono sullo schermo e si compilano a mano.
 
 ### La foto non esce dal telefono

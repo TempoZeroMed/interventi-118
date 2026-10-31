@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import {
   leggiSchermata, applicaLettura, orarioDa, daTesseract, spostaLettura, unisciLetture, etichetta, etichettaValutazione,
   zonaCodice, zonaColore, coloreRiquadro, scritteSulRiquadro, zonaOrari, etichettaNascita, zonaSesso, CAMPI_TABLET,
+  punteggioSchermata, rotazioniDaProvare,
 } from '../js/core/tablet.js';
 import { recordVuoto } from '../js/core/modulo.js';
 import { LISTE_PREDEFINITE } from '../js/core/campi.js';
@@ -520,4 +521,23 @@ test('comune: la colonna di destra (Valutazione) si taglia per posizione, anche 
 test('comune: "Coscienza" nel testo chiude l\'indirizzo anche senza la C', () => {
   assert.equal(leggi({ indirizzo: 'VIA DELLE PROVE, 12 NOVARA oscienza Si' }).valori.comune, 'NOVARA');
   assert.equal(leggi({ indirizzo: 'VIA DELLE PROVE, 12 GALLIATE Coscienza' }).valori.comune, 'GALLIATE');
+});
+
+test('punteggioSchermata: quante parole fisse della schermata si leggono; una foto girata non ne ha', () => {
+  assert.ok(punteggioSchermata(schermata()) >= 2);
+  // quello che il lettore tira fuori da un testo girato: segni e sillabe
+  assert.equal(punteggioSchermata({ righe: [frase('|| ~ — . ,, \'\' !', 10), frase('Ut 1} ; pe', 40)] }), 0);
+  assert.equal(punteggioSchermata({ righe: [] }), 0);
+  // "Valutazione" letta male conta; la stessa parola due volte conta una; il segno di spunta e la H non disturbano
+  assert.equal(punteggioSchermata({ righe: [frase('vaLurazione', 10)] }), 1);
+  assert.equal(punteggioSchermata({ righe: [frase('Allarme', 10), frase('Allarme', 40)] }), 1);
+  assert.equal(punteggioSchermata({ righe: [riga(p('Y_Allarme', 100, 600), p('Partenza', 250, 600), p('Arrivo', 400, 600), p('H', 500, 600, 20))] }), 3);
+  assert.equal(punteggioSchermata({ righe: [frase('SaveOnBoard | Missione in corso: 99ZZ0042/3', 40), frase('Data di nascita 40 anni', 430)] }), 1);
+  assert.equal(punteggioSchermata({ righe: [riga(p('Data', 1070, 430, 45), p('di', 1120, 430, 16), p('nascita', 1140, 430, 75))] }), 1);
+});
+
+test('rotazioniDaProvare: prima la foto com\'è; poi, se è verticale, i 90°, altrimenti i 180°', () => {
+  assert.deepEqual(rotazioniDaProvare({ width: 1500, height: 2000 }), [0, 90, 270, 180]);
+  assert.deepEqual(rotazioniDaProvare({ width: 2000, height: 1500 }), [0, 180, 90, 270]);
+  assert.deepEqual(rotazioniDaProvare({ width: 1000, height: 1000 }), [0, 180, 90, 270]);
 });

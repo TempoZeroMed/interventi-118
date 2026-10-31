@@ -294,6 +294,34 @@ function bordoColonnaValutazione(lettura) {
   return prima.x0 - altezza(prima);
 }
 
+// --- La foto girata: il lettore non legge il testo girato, e la foto si riprova girata finché la schermata non si riconosce ---
+
+/** Le parole fisse della schermata Missione, come le dà nomeEtichetta (e 'VALUTAZIONE' anche letta male). */
+const PAROLE_FISSE = [...NOMI_FILA, ...ETICHETTE_VALUTAZIONE, 'NASCITA', 'OSPEDALE', 'SCALA', 'PIANO', 'TARGET', 'SAVEONBOARD'];
+
+/**
+ * Quante parole fisse diverse della schermata ci sono nella lettura (etichette degli orari e della colonna Valutazione,
+ * "nascita", "Ospedale", "Scala", "Piano", "Missione in corso"…). Da una foto girata il lettore tira fuori solo segni e
+ * sillabe: zero. Serve a capire se la foto va girata, prima di leggere i campi.
+ */
+export function punteggioSchermata(lettura) {
+  const trovate = new Set(lettura.righe.flatMap(({ parole }) => parole.map((q, i) => {
+    const nome = nomeEtichetta(parole, i);
+    return PAROLE_FISSE.includes(nome) ? nome : sembraValutazione(q.testo) ? 'VALUTAZIONE' : null;
+  })).filter(Boolean));
+  if (lettura.righe.some((r) => /MISSIONE\s+IN\s+CORSO/.test(maiuscolo(r.testo)))) trovate.add('MISSIONE IN CORSO');
+  return trovate.size;
+}
+
+/**
+ * I gradi (in senso orario) con cui provare a leggere la foto, dal più probabile: prima com'è; poi, se è verticale,
+ * girata di 90° e di 270° (lo schermo del tablet è orizzontale: una foto verticale è quasi di sicuro girata di un quarto),
+ * altrimenti di 180° (il telefono tenuto al contrario) e poi dei quarti.
+ */
+export function rotazioniDaProvare({ width, height }) {
+  return height > width ? [0, 90, 270, 180] : [0, 180, 90, 270];
+}
+
 // --- Gli altri campi, dal testo delle righe (in maiuscolo e senza accenti) ---
 
 function leggiMissione(testi) {
