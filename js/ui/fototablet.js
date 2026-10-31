@@ -4,7 +4,10 @@
 import { stato, trova } from '../stato.js';
 import { verificaSalvataggio } from '../core/controlli.js';
 import { suggerimentiComuni } from '../core/elenco.js';
-import { leggiSchermata, daTesseract, spostaLettura, unisciLetture, etichetta } from '../core/tablet.js';
+import {
+  leggiSchermata, daTesseract, spostaLettura, unisciLetture, etichetta, etichettaValutazione, zonaCodice, zonaColore,
+  coloreRiquadro, scritteSulRiquadro,
+} from '../core/tablet.js';
 import { caricaScript, TESSERACT, CARTELLA_TESSERACT } from './file.js';
 import { h, icona, dataBreve } from './dom.js';
 
@@ -12,9 +15,18 @@ const LATO_MASSIMO = 2000;
 // dopo il contrasto i grigi medi si scuriscono (v^1,5): le scritte grigie e il bianco sui riquadri blu si staccano di più.
 // Tarato sulla foto vera del tablet, storta e con riflessi: senza, missione, mezzo, comune ed età restavano non letti.
 const CURVA = 1.5;
-const INGRANDIMENTO = 2; // la fila degli orari si rilegge ingrandita
-// avanzamento mostrato: la lettura della foto intera fino all'80%, le due della fila degli orari il resto
+const INGRANDIMENTO = 2; // la fila degli orari e il riquadro del codice si rileggono ingranditi
+// avanzamento mostrato: la lettura della foto intera fino all'80%, quelle dei ritagli il resto
 const QUOTA_INTERA = 0.8;
+
+/** Un ritocco di un ritaglio che fa di ogni punto il grigio tono(r, g, b). Nella foto ritoccata r = g = b. */
+const inGrigio = (tono) => (px) => {
+  for (let i = 0; i < px.length; i += 4) px[i] = px[i + 1] = px[i + 2] = tono(px[i], px[i + 1], px[i + 2]);
+};
+const INVERTITO = inGrigio((v) => 255 - v); // i riquadri scuri con le scritte chiare diventano scritte scure su chiaro
+// Il riquadro del codice ha il colore del codice: in grigi il ritocco scurisce il verde acceso quasi come la scritta nera,
+// quindi si rilegge dalla foto a colori. Il canale più alto rende chiaro ogni colore acceso e lascia scura una scritta nera.
+const SCRITTA_SCURA = inGrigio((r, g, b) => Math.max(r, g, b));
 
 const NON_SI_APRE = 'Non riesco ad aprire questa foto: riprova con un\'altra.';
 const SENZA_LETTORE = 'Il lettore non è ancora disponibile: apri l\'app una volta con la rete e riprova.';
@@ -36,16 +48,19 @@ async function apri(file) {
 
 /**
  * La foto pronta per il lettore: orientata, lato lungo al massimo 2000 px, in grigi, contrasto tra il 2° e il 98° percentile,
- * grigi medi più scuri.
+ * grigi medi più scuri. `colori` è la stessa foto prima dei grigi, per rileggere il riquadro colorato del codice.
  */
 export async function preparaFoto(file) {
   const bitmap = await apri(file);
   const scala = Math.min(1, LATO_MASSIMO / Math.max(bitmap.width, bitmap.height));
-  const canvas = Object.assign(document.createElement('canvas'), {
+  const nuovo = () => Object.assign(document.createElement('canvas'), {
     width: Math.round(bitmap.width * scala), height: Math.round(bitmap.height * scala),
   });
+  const canvas = nuovo();
+  const colori = nuovo();
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  colori.getContext('2d').drawImage(canvas, 0, 0);
   bitmap.close();
   const immagine = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const px = immagine.data;
@@ -68,30 +83,30 @@ export async function preparaFoto(file) {
     px[4 * i + 3] = 255;
   }
   ctx.putImageData(immagine, 0, 0);
-  return canvas;
+  return { foto: canvas, colori };
 }
 
-/** La fila degli orari: da un'altezza dell'etichetta Allarme sopra di essa a 5 sotto, larga quanto la foto, ingrandita. */
-function ritaglia(foto, allarme, invertito) {
+/** La fila degli orari: da un'altezza dell'etichetta Allarme sopra di essa a 5 sotto, larga quanto la foto. */
+function filaOrari(foto, allarme) {
   const altezza = allarme.y1 - allarme.y0;
-  const dy = Math.max(0, Math.floor(allarme.y0 - altezza));
-  const fine = Math.min(foto.height, Math.ceil(allarme.y1 + 5 * altezza));
+  const y0 = Math.max(0, Math.floor(allarme.y0 - altezza));
+  return { x0: 0, y0, x1: foto.width, y1: Math.max(y0 + 1, Math.min(foto.height, Math.ceil(allarme.y1 + 5 * altezza))) };
+}
+
+/** La `zona` di `sorgente`, ingrandita; `ritocco(punti, larghezza, altezza)`, se c'è, ne cambia i punti RGBA. */
+function ritaglia(sorgente, { x0, y0, x1, y1 }, ritocco) {
   const canvas = Object.assign(document.createElement('canvas'), {
-    width: foto.width * INGRANDIMENTO, height: Math.max(1, fine - dy) * INGRANDIMENTO,
+    width: (x1 - x0) * INGRANDIMENTO, height: (y1 - y0) * INGRANDIMENTO,
   });
   const ctx = canvas.getContext('2d', { willReadFrequently: true });
   ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(foto, 0, dy, foto.width, fine - dy, 0, 0, canvas.width, canvas.height);
-  if (invertito) { // i riquadri scuri con le scritte chiare diventano scritte scure su chiaro
+  ctx.drawImage(sorgente, x0, y0, x1 - x0, y1 - y0, 0, 0, canvas.width, canvas.height);
+  if (ritocco) {
     const immagine = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    for (let i = 0; i < immagine.data.length; i += 4) {
-      immagine.data[i] = 255 - immagine.data[i];
-      immagine.data[i + 1] = 255 - immagine.data[i + 1];
-      immagine.data[i + 2] = 255 - immagine.data[i + 2];
-    }
+    ritocco(immagine.data, canvas.width, canvas.height);
     ctx.putImageData(immagine, 0, 0);
   }
-  return { canvas, dy };
+  return canvas;
 }
 
 /** Il riquadro della foto e il suo lettore. `dopoLettura({ valori, nonLetti })` riceve solo letture con qualche valore. */
@@ -157,25 +172,39 @@ export function creaFotoTablet({ dopoLettura }) {
   }
 
   /**
-   * Foto intera, poi, se c'è l'etichetta Allarme, sempre anche la fila degli orari ingrandita, normale e invertita.
-   * I ritagli trovano gli orari che sfuggono alla foto intera (Arrivo H bianco su blu scuro) e la controllano: un orario
-   * letto in due modi diversi sotto la stessa etichetta resta non letto, invece di entrare sbagliato.
+   * Foto intera, poi sempre anche i ritagli ingranditi: se c'è l'etichetta Allarme la fila degli orari, normale e
+   * invertita; se c'è l'etichetta Valutazione il riquadro del codice, dalla foto a colori, con il canale più alto e, se
+   * il colore del riquadro è chiaro, con la sola scritta chiusa nel riquadro (anche bianca, sul rosso o sul nero).
+   * I ritagli trovano quello che sfugge alla foto intera (Arrivo H bianco su blu scuro, il codice sul verde) e la
+   * controllano: un orario o un codice letto in due modi diversi resta non letto, invece di entrare sbagliato.
+   * Il colore del riquadro, che sul tablet è quello del codice, controlla anche la lettera.
    */
-  async function leggiFoto(foto, attuale) {
+  async function leggiFoto({ foto, colori }, attuale) {
     const opzioni = { liste: stato.liste, adesso: new Date(), comuniNoti: suggerimentiComuni(stato.record) };
     const intera = await riconosci(foto, (p) => attuale() && avanzamento(p * QUOTA_INTERA));
     const allarme = etichetta(intera, 'ALLARME');
-    if (!allarme) return leggiSchermata(intera, opzioni);
-    const ritagli = [];
-    for (const [i, invertito] of [false, true].entries()) {
+    const valutazione = etichettaValutazione(intera);
+    const codice = valutazione && zonaCodice(valutazione, foto);
+    const dove = valutazione && zonaColore(valutazione, foto);
+    const coloreCodice = dove && coloreRiquadro(colori.getContext('2d')
+      .getImageData(dove.x0, dove.y0, dove.x1 - dove.x0, dove.y1 - dove.y0).data);
+    const soloScritta = (px, larghezza, altezza) => scritteSulRiquadro(px, larghezza, altezza, coloreCodice);
+    // gli orari prima, come sono sempre stati letti
+    const ritagli = [
+      ...(allarme ? [[foto, filaOrari(foto, allarme), null], [foto, filaOrari(foto, allarme), INVERTITO]] : []),
+      ...(codice ? [[colori, codice, SCRITTA_SCURA]] : []),
+      ...(codice && coloreCodice ? [[colori, codice, soloScritta]] : []),
+    ];
+    const quota = (1 - QUOTA_INTERA) / ritagli.length;
+    const riletti = [];
+    for (const [i, [sorgente, zona, ritocco]] of ritagli.entries()) {
       if (!attuale()) return null;
-      const { canvas, dy } = ritaglia(foto, allarme, invertito);
-      const quota = (1 - QUOTA_INTERA) / 2;
-      const lettura = await riconosci(canvas, (p) => attuale() && avanzamento(QUOTA_INTERA + (i + p) * quota));
-      ritagli.push(spostaLettura(lettura, { scala: INGRANDIMENTO, dx: 0, dy }));
+      const lettura = await riconosci(ritaglia(sorgente, zona, ritocco),
+        (p) => attuale() && avanzamento(QUOTA_INTERA + (i + p) * quota));
+      riletti.push(spostaLettura(lettura, { scala: INGRANDIMENTO, dx: zona.x0, dy: zona.y0 }));
     }
     // la foto intera prima: a parità vince lei; il ripiego sui sei orari si calcola solo su di lei
-    return leggiSchermata(unisciLetture(intera, ...ritagli), { ...opzioni, intera });
+    return leggiSchermata(unisciLetture(intera, ...riletti), { ...opzioni, intera, coloreCodice });
   }
 
   async function leggi(file) {
@@ -183,9 +212,9 @@ export function creaFotoTablet({ dopoLettura }) {
     const numero = letture;
     const attuale = () => numero === letture;
     inLettura(true);
-    let foto;
+    let preparata;
     try {
-      foto = await preparaFoto(file);
+      preparata = await preparaFoto(file);
     } catch {
       if (attuale()) errore(NON_SI_APRE); // es. una foto HEIC in un browser che non la apre, o un file che non è una foto
       return;
@@ -193,7 +222,7 @@ export function creaFotoTablet({ dopoLettura }) {
     if (!attuale()) return;
     let risultato;
     try {
-      risultato = await leggiFoto(foto, attuale);
+      risultato = await leggiFoto(preparata, attuale);
     } catch (e) {
       if (!attuale()) return;
       chiudiLettore(); // al prossimo tocco si ricrea

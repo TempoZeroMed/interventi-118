@@ -2,7 +2,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  leggiSchermata, applicaLettura, orarioDa, daTesseract, spostaLettura, unisciLetture, etichetta,
+  leggiSchermata, applicaLettura, orarioDa, daTesseract, spostaLettura, unisciLetture, etichetta, etichettaValutazione,
+  zonaCodice, zonaColore, coloreRiquadro, scritteSulRiquadro, CAMPI_TABLET,
 } from '../js/core/tablet.js';
 import { recordVuoto } from '../js/core/modulo.js';
 import { LISTE_PREDEFINITE } from '../js/core/campi.js';
@@ -18,11 +19,12 @@ const ETICHETTE = filaEtichette();
 const orari = (valori) => riga(...valori.map((o, i) => o && p(o, 100 + 150 * i, 640)).filter(Boolean));
 
 // Le posizioni imitano la schermata: barra di stato, testata con mezzo e stato, target, paziente, ospedale, orari.
-function schermata({ missione = '99ZZ0042/3', mezzo = 'N03050', indirizzo = 'VIA DELLE PROVE, 12 NOVARA | Coscienza SI',
-  codice = 'R 04 S', eta = '40 anni', sesso = 'F', ospedale = 'OSPEDALE MAGGIORE NOVARA',
-  tempi = ['21:05', '21:07', '21:20', '21:40', '21:52', '22:10'], conEtichette = true, etichette = ETICHETTE } = {}) {
+function schermata({ barra = ['06:15', 'Sab 31 Ott'], missione = '99ZZ0042/3', mezzo = 'N03050',
+  indirizzo = 'VIA DELLE PROVE, 12 NOVARA | Coscienza SI', codice = 'R 04 S', eta = '40 anni', sesso = 'F',
+  ospedale = 'OSPEDALE MAGGIORE NOVARA', tempi = ['21:05', '21:07', '21:20', '21:40', '21:52', '22:10'], conEtichette = true,
+  etichette = ETICHETTE } = {}) {
   return { righe: [
-    riga(p('06:15', 40, 10, 60), p('Sab 31 Ott', 110, 10, 120)),
+    riga(p(barra[0], 40, 10, 60), p(barra[1], 110, 10, 120)),
     frase(`SaveOnBoard | Missione in corso: ${missione}`, 40), riga(p(mezzo, 900, 40), p('Operativo', 1000, 40)),
     frase(`TARGET VALUTAZIONE ${codice}`, 100), frase(indirizzo, 160), frase('SCALA --, PIANO 2 Respiro SI', 190),
     frase(`Sesso ${sesso}`, 400), frase(`Data di nascita ${eta}`, 430), frase('OSPEDALE', 460), frase(ospedale, 490),
@@ -69,15 +71,37 @@ test('mezzo: le 4 cifre dopo N0, solo se in lista', () => {
   assert.ok(fuoriLista.nonLetti.includes('Mezzo'));
 });
 
-test('data: oggi, o ieri se l\'allarme è più avanti dell\'ora attuale', () => {
-  assert.equal(leggi({}, { adesso: new Date(2026, 9, 31, 6, 15) }).valori.data, '2026-10-30');
-  assert.equal(leggi({}, { adesso: new Date(2026, 9, 31, 23, 30) }).valori.data, '2026-10-31');
+// la foto letta due giorni dopo, dalla Libreria foto: la data non è quella del telefono
+const DOPO = { adesso: new Date(2026, 10, 2, 10, 0) };
+const SENZA_ORARI = [null, null, null, null, null, null];
+
+test('data: quella della barra di stato del tablet, o il giorno prima se l\'allarme è più avanti della sua ora', () => {
+  assert.equal(leggi({}, DOPO).valori.data, '2026-10-30'); // foto alle 06:15 di sabato 31, allarme alle 21:05
+  assert.equal(leggi({ barra: ['23:30', 'Sab 31 Ott'] }, DOPO).valori.data, '2026-10-31');
   const tempi = ['23:55', '23:57', '00:05', '00:10', '00:12', '00:18'];
-  assert.equal(leggi({ tempi }, { adesso: new Date(2026, 10, 1, 0, 20) }).valori.data, '2026-10-31');
-  const senzaOrari = leggi({ tempi: [null, null, null, null, null, null] });
+  assert.equal(leggi({ tempi, barra: ['00:20', 'Dom 1 Nov'] }, DOPO).valori.data, '2026-10-31');
+  assert.equal(leggi({ barra: ['O6.l5', 'sab 3l ott'] }, DOPO).valori.data, '2026-10-30'); // O e l dove vanno cifre
+  const senzaOrari = leggi({ tempi: SENZA_ORARI }, DOPO);
   assert.equal(senzaOrari.valori.data, '2026-10-31');
-  assert.ok(senzaOrari.nonLetti.includes('Ora allert.'));
-  assert.ok(senzaOrari.nonLetti.includes('Libero operativo'));
+  assert.deepEqual(senzaOrari.nonLetti, ['Ora allert.', 'Libero operativo']);
+});
+
+test('data: l\'anno manca sulla barra, è quello che la porta a oggi o prima', () => {
+  const capodanno = { adesso: new Date(2026, 0, 2, 9, 0) };
+  assert.equal(leggi({ barra: ['23:40', 'Mer 31 Dic'] }, capodanno).valori.data, '2025-12-31');
+  assert.equal(leggi({ barra: ['23:40', 'Ven 2 Gen'] }, capodanno).valori.data, '2026-01-02'); // oggi
+});
+
+test('data non letta sulla barra: oggi o ieri secondo il telefono, come prima, ma tra i non letti', () => {
+  // giorno della settimana che non torna (un giorno letto male), giorno o ora illeggibili, data che non esiste, niente barra
+  const barre = [['06:15', 'Ven 31 Ott'], ['06:15', 'Sab 3? Ott'], ['0?:15', 'Sab 31 Ott'], ['06:15', 'Sab 31 Nov'],
+    ['', '']];
+  for (const barra of barre) {
+    const { valori, nonLetti } = leggi({ barra }, DOPO);
+    assert.equal(valori.data, '2026-11-01', barra.join(' ')); // allarme alle 21:05, più avanti delle 10:00 del telefono
+    assert.deepEqual(nonLetti, ['Data'], barra.join(' '));
+  }
+  assert.equal(leggi({ barra: ['', ''], tempi: SENZA_ORARI }, DOPO).valori.data, '2026-11-02');
 });
 
 test('orarioDa corregge solo dove il formato è certo', () => {
@@ -194,6 +218,101 @@ test('letture unite: le etichette lette solo nel ritaglio fanno parte della fila
   assert.deepEqual([valori.oraAllert, valori.liberoOperativo, valori.esito], ['21:05', '22:10', 'Trasportato']);
 });
 
+test('codice: il riquadro Valutazione e la zona alla sua destra da rileggere, anche con l\'etichetta letta male', () => {
+  const lettura = { righe: [riga(p('@', 1300, 490, 40, 30), p('vaLurazione', 1354, 495, 164, 21),
+    p('NIDI', 1541, 471, 141, 68))] };
+  const e = etichettaValutazione(lettura);
+  assert.equal(e.testo, 'vaLurazione');
+  assert.deepEqual(zonaCodice(e, { width: 2000, height: 1500 }), { x0: 1518, y0: 453, x1: 1728, y1: 558 });
+  assert.deepEqual(zonaCodice(e, { width: 1600, height: 500 }), { x0: 1518, y0: 453, x1: 1600, y1: 500 }); // dentro la foto
+  assert.equal(zonaCodice(e, { width: 1518, height: 1500 }), null); // l'etichetta sul bordo: niente da ritagliare
+  assert.equal(etichettaValutazione(schermata({ codice: '' })).y0, 100);
+  assert.equal(etichettaValutazione({ righe: [riga(p('vaLutTazione', 1300, 100))] }).x0, 1300); // una lettera in più
+  assert.equal(etichettaValutazione({ righe: [frase('VIA DELLA STAZIONE, 4', 100)] }), null);
+  assert.equal(etichettaValutazione({ righe: [riga(p('VALUTA', 1300, 100), p('ZIONE', 1400, 100))] }), null); // spezzata
+});
+
+test('codice: letto solo nel ritaglio, attaccato; letto in due modi diversi resta non letto', () => {
+  const intera = schermata({ codice: 'NIDI' }); // il codice sul riquadro colorato, illeggibile nella foto intera
+  const ritaglio = (testo) => ({ righe: [riga(p(testo, 1541, 100))] });
+  const { valori } = leggiSchermata(unisciLetture(intera, ritaglio('G13Q Li'), ritaglio('vasi')), OPZ);
+  assert.deepEqual([valori.codiceInvio, valori.codiceRientro], ['GIALLO', 'GIALLO']);
+  assert.deepEqual([valori.patologiaInvio, valori.luogoRientro], ['13 - Dermato', 'Q - Scuola']);
+  assert.equal(leggiSchermata(unisciLetture(schermata(), ritaglio('R04S')), OPZ).valori.codiceInvio, 'ROSSO');
+  const diversi = leggiSchermata(unisciLetture(intera, ritaglio('G 13 Q'), ritaglio('G 18 Q')), OPZ);
+  assert.deepEqual([diversi.valori.codiceInvio, diversi.valori.patologiaInvio, diversi.valori.luogoInvio],
+    [undefined, undefined, undefined]);
+  assert.deepEqual(diversi.nonLetti, ['Codice', 'Patologia', 'Luogo']);
+});
+
+test('colore del riquadro: verde, giallo, rosso, nero; null se non è chiaro', () => {
+  // i punti RGBA di una zona, da una lista di [colore, quanti]
+  const punti = (...parti) => Uint8ClampedArray.from(parti.flatMap(([rgb, n]) => Array(n).fill([...rgb, 255]).flat()));
+  const nero = [15, 15, 15];
+  const bianco = [240, 240, 240];
+  assert.equal(coloreRiquadro(punti([[95, 215, 30], 65], [nero, 35])), 'VERDE');
+  assert.equal(coloreRiquadro(punti([[60, 120, 25], 65], [nero, 35])), 'VERDE'); // foto scura
+  assert.equal(coloreRiquadro(punti([[242, 194, 48], 65], [nero, 35])), 'GIALLO');
+  assert.equal(coloreRiquadro(punti([[220, 30, 40], 65], [bianco, 35])), 'ROSSO');
+  assert.equal(coloreRiquadro(punti([nero, 65], [bianco, 35])), 'NERO');
+  assert.equal(coloreRiquadro(punti([bianco, 65], [nero, 35])), null); // un riflesso copre il riquadro
+  assert.equal(coloreRiquadro(punti([[95, 215, 30], 40], [[220, 30, 40], 40], [nero, 20])), null); // né l'uno né l'altro
+  assert.equal(coloreRiquadro(punti([[40, 90, 200], 65], [bianco, 35])), null); // blu: non è il colore di un codice
+  assert.equal(coloreRiquadro(new Uint8ClampedArray()), null);
+});
+
+test('colore del riquadro: si guarda dentro il riquadro, subito a destra dell\'etichetta', () => {
+  const e = p('VALUTAZIONE', 1354, 495, 164, 20);
+  assert.deepEqual(zonaColore(e, { width: 2000, height: 1500 }), { x0: 1548, y0: 485, x1: 1638, y1: 525 });
+  assert.deepEqual(zonaColore(e, { width: 1600, height: 510 }), { x0: 1548, y0: 485, x1: 1600, y1: 510 });
+  assert.equal(zonaColore(e, { width: 1540, height: 1500 }), null);
+});
+
+test('scritte sul riquadro: nere solo quelle chiuse dentro il riquadro, di qualunque colore siano', () => {
+  // un ritaglio di 9×7: pannello bianco intorno ('.'), il riquadro ('#'), la scritta al centro e una x fuori, sul bordo
+  const disegno = (riquadro, scritta, pannello) => (righe) => Uint8ClampedArray.from(righe.join('').split('')
+    .flatMap((c) => [...({ '#': riquadro, x: scritta, '.': pannello }[c]), 255]));
+  const nero = [15, 15, 15];
+  const bianco = [240, 240, 240];
+  const righe = ['.........', '.#######.', '.###x###.', '.##xxx##.', '.###x###.', '.#######.', '...x.....'];
+  const attesa = ['.........', '.........', '....x....', '...xxx...', '....x....', '.........', '.........'].join('')
+    .split('').map((c) => (c === 'x' ? 0 : 255));
+  const grigi = (punti) => Array.from({ length: punti.length / 4 }, (_, i) => punti[4 * i]);
+  for (const [colore, riquadro, scritta] of [['VERDE', [95, 215, 30], nero], ['NERO', nero, bianco], ['ROSSO', [220, 30, 40], bianco]]) {
+    const punti = disegno(riquadro, scritta, bianco)(righe);
+    assert.deepEqual(grigi(scritteSulRiquadro(punti, 9, 7, colore)), attesa, colore);
+  }
+});
+
+test('codice: il colore del riquadro conferma la lettera, e basta da solo se la lettera manca, tranne il nero', () => {
+  const con = (codice, coloreCodice) => leggiSchermata(schermata({ codice }), { ...OPZ, coloreCodice });
+  assert.equal(con('R 04 S', 'ROSSO').valori.codiceRientro, 'ROSSO');
+  assert.equal(con('R 04 S', null).valori.codiceRientro, 'ROSSO'); // colore non chiaro: vale la lettera
+  const diversi = con('V 04 S', 'GIALLO'); // lettera e colore in disaccordo: il codice non si legge, numero e luogo sì
+  assert.deepEqual([diversi.valori.codiceInvio, diversi.valori.codiceRientro], [undefined, undefined]);
+  assert.deepEqual(diversi.nonLetti, ['Codice']);
+  assert.deepEqual([diversi.valori.patologiaRientro, diversi.valori.luogoRientro], ['04 - Neuro', 'S - Sierra']);
+  const soloColore = con('NIDI', 'VERDE'); // la scritta illeggibile: il codice dal colore, patologia e luogo no
+  assert.deepEqual([soloColore.valori.codiceInvio, soloColore.valori.codiceRientro], ['VERDE', 'VERDE']);
+  assert.deepEqual(soloColore.nonLetti, ['Patologia', 'Luogo']);
+  assert.equal(con('B 19 Z', 'GIALLO').valori.codiceRientro, 'GIALLO'); // B non è un codice: vale il colore
+  // un riquadro scuro può essere solo una foto buia: senza la N il nero non si legge
+  assert.equal(con('NIDI', 'NERO').valori.codiceRientro, undefined);
+  assert.ok(con('NIDI', 'NERO').nonLetti.includes('Codice'));
+});
+
+test('codice nero: solo nel rientro, l\'invio non ha il NERO; patologia e luogo in tutti e due', () => {
+  for (const coloreCodice of [null, 'NERO']) {
+    const { valori, nonLetti } = leggiSchermata(schermata({ codice: 'N 19 Z' }), { ...OPZ, coloreCodice });
+    assert.deepEqual([valori.codiceInvio, valori.codiceRientro], [undefined, 'NERO']);
+    assert.deepEqual([valori.patologiaInvio, valori.patologiaRientro], ['19 - Altro', '19 - Altro']);
+    assert.deepEqual([valori.luogoInvio, valori.luogoRientro], ['Z - Altro', 'Z - Altro']);
+    assert.deepEqual(nonLetti, []);
+  }
+  const r = applicaLettura(recordVuoto('x', ADESSO), leggi({ codice: 'N 19 Z' }).valori);
+  assert.deepEqual([r.codiceInvio, r.codiceRientro], ['', 'NERO']);
+});
+
 test('codice in invio e rientro; B lascia vuoto il codice', () => {
   const v = leggi({ codice: 'V 09L' }).valori; // manca lo spazio tra numero e lettera, come capita al lettore
   assert.deepEqual([v.codiceInvio, v.codiceRientro], ['VERDE', 'VERDE']);
@@ -234,6 +353,15 @@ test('comune: dopo il civico, colonna di destra tagliata, senza civico un comune
   const ignoto = leggi({ indirizzo: 'STRADA DEL BOSCO' });
   assert.equal(ignoto.valori.comune, undefined);
   assert.ok(ignoto.nonLetti.includes('Comune'));
+});
+
+test('comune: una riga di segni tra l\'indirizzo e "SCALA" non lo nasconde', () => {
+  const { righe } = schermata({ indirizzo: 'VIA DELLE PROVE, 7 GALLIATE Coscienza si' });
+  const conSegni = { righe: [...righe.slice(0, 5), frase('v =', 175), ...righe.slice(5)] };
+  assert.equal(leggiSchermata(conSegni, OPZ).valori.comune, 'GALLIATE');
+  const noto = schermata({ indirizzo: 'STRADA PROVINCIALE TRECATE' });
+  assert.equal(leggiSchermata({ righe: [...noto.righe.slice(0, 5), frase('v =', 175), ...noto.righe.slice(5)] }, OPZ)
+    .valori.comune, 'TRECATE');
 });
 
 test('comune: in fondo si tolgono i segni di un carattere e quelli senza lettere', () => {
@@ -299,7 +427,7 @@ test('ospedale: voce più lunga contenuta nel testo, accenti ignorati', () => {
 test('foto sbagliata: nessun campo, nemmeno la data', () => {
   const { valori, nonLetti } = leggiSchermata({ righe: [frase('LISTA DELLA SPESA 12 UOVA', 100)] }, OPZ);
   assert.deepEqual(valori, {});
-  assert.equal(nonLetti.length, 10);
+  assert.deepEqual(nonLetti, CAMPI_TABLET.map(([, nome]) => nome));
 });
 
 test('applicaLettura: ordine del form e regole', () => {

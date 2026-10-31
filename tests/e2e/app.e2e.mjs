@@ -92,17 +92,20 @@ const TABLET_FINTO = readFileSync(join(RADICE, 'tests/fixtures/tablet-finto.html
 const LISTA_SPESA = '<body style="margin:0;padding:120px;background:#fff;font:56px Arial,sans-serif">LISTA DELLA SPESA</body>';
 const RULLINO = 'Se l\'hai presa dalla Libreria foto, resta nel Rullino: cancellala da Foto quando hai finito.';
 
-/** Quello che la foto dritta della pagina finta mette nel modulo (foto alle 06:15 del 31/10, allarme la sera prima). */
+/**
+ * Quello che la foto dritta della pagina finta mette nel modulo: la barra di stato del tablet dice 06:15 di sabato 31/10,
+ * l'allarme è della sera prima, e la foto si legge due giorni dopo (l'orologio delle prove).
+ */
 const DAL_TABLET = {
   data: '2026-10-30', oraAllert: '21:05', liberoOperativo: '22:10', missione: '99ZZ0042', comune: 'NOVARA', mezzo: '3050',
-  tipologia: 'India', codiceInvio: 'ROSSO', codiceRientro: 'ROSSO', patologiaInvio: '04 - Neuro', patologiaRientro: '04 - Neuro',
+  tipologia: 'India', codiceInvio: 'VERDE', codiceRientro: 'VERDE', patologiaInvio: '04 - Neuro', patologiaRientro: '04 - Neuro',
   luogoInvio: 'S - Sierra', luogoRientro: 'S - Sierra', eta: '41', sesso: 'Femmina', esito: 'Trasportato', ospedale: 'Novara',
 };
-/** Il nome con cui un campo compare tra i "Non letti"; il rientro segue l'invio. Data, tipologia ed esito non ci sono. */
+/** Il nome con cui un campo compare tra i "Non letti"; l'invio segue il rientro. Tipologia, esito e ospedale non ci sono. */
 const NOMI_TABLET = Object.fromEntries(CAMPI_TABLET);
 const NOME_NON_LETTO = {
-  ...NOMI_TABLET, codiceRientro: NOMI_TABLET.codiceInvio, patologiaRientro: NOMI_TABLET.patologiaInvio,
-  luogoRientro: NOMI_TABLET.luogoInvio,
+  ...NOMI_TABLET, codiceInvio: NOMI_TABLET.codiceRientro, patologiaInvio: NOMI_TABLET.patologiaRientro,
+  luogoInvio: NOMI_TABLET.luogoRientro,
 };
 
 /** Apre la pagina finta del tablet in una scheda nuova, grande come una foto, e ne restituisce lo screenshot PNG. */
@@ -421,8 +424,8 @@ for (const nomeBrowser of BROWSER) {
             page.on('console', (m) => { if (m.type() === 'error') errori.push(m.text()); });
             await page.goto(server.url);
             await importa(page, DEMO);
-            // per tutte le prove del blocco, anche lanciate da sole: foto alle 06:15 del 31/10, allarme la sera prima
-            await page.clock.setFixedTime(new Date('2026-10-31T06:15:00'));
+            // per tutte le prove del blocco, anche lanciate da sole: la foto (06:15 del 31/10 sul tablet) si legge il 2/11
+            await page.clock.setFixedTime(new Date('2026-11-02T10:00:00'));
           });
           after(async () => ctx?.close());
 
@@ -462,6 +465,25 @@ for (const nomeBrowser of BROWSER) {
             assert.equal(await evidenziati().count(), 0);
           });
 
+          test('foto tablet: il riquadro del codice ha il colore del codice, anche con la scritta bianca', async () => {
+            const casi = [ // riquadro, scritta, codice; poi codice invio e rientro, patologia, luogo
+              ['#121212', '#fff', 'N 19 Z', '', 'NERO', '19 - Altro', 'Z - Altro'], // l'invio non ha il NERO
+              ['#d9262c', '#fff', 'R 04 S', 'ROSSO', 'ROSSO', '04 - Neuro', 'S - Sierra'],
+              ['#f5c518', '#111', 'G 13 Q', 'GIALLO', 'GIALLO', '13 - Dermato', 'Q - Scuola'],
+            ];
+            for (const [riquadro, scritta, codice, ...attesi] of casi) {
+              await svuota(page);
+              const html = TABLET_FINTO.replace('<span class="codice">V 04 S</span>',
+                `<span class="codice" style="background: ${riquadro}; color: ${scritta}">${codice}</span>`);
+              await daFoto(page, await fotoFinta(ctx, { html }));
+              const modulo = await leggiModulo(page);
+              assert.deepEqual([modulo.codiceInvio, modulo.codiceRientro, modulo.patologiaInvio, modulo.patologiaRientro,
+                modulo.luogoInvio, modulo.luogoRientro], [attesi[0], attesi[1], attesi[2], attesi[2], attesi[3], attesi[3]], codice);
+              assert.deepEqual(await nonLetti(page), [], codice);
+            }
+            await svuota(page);
+          });
+
           test('foto tablet: la missione già salvata si segnala subito', async () => {
             await vai(page, '#/nuovo');
             await daFoto(page, await fotoFinta(ctx));
@@ -482,9 +504,10 @@ for (const nomeBrowser of BROWSER) {
             for (const [chiave, atteso] of Object.entries(DAL_TABLET)) {
               const valore = modulo[chiave];
               const nome = NOME_NON_LETTO[chiave];
-              // senza ora allert. la data è quella di oggi; data, tipologia, esito e ospedale non hanno un nome tra i non letti
+              // la data c'è sempre: non letta sul tablet, è tra i non letti; letta, senza ora allert. è quella della barra.
+              // Tipologia, esito e ospedale non hanno un nome tra i non letti
               const nonLetto = chiave === 'data'
-                ? valore === '2026-10-31' && mancanti.includes(NOMI_TABLET.oraAllert)
+                ? mancanti.includes(nome) || (valore === '2026-10-31' && mancanti.includes(NOMI_TABLET.oraAllert))
                 : valore === '' && (!nome || mancanti.includes(nome));
               assert.ok(valore === atteso || nonLetto, `${chiave}: "${valore}" (non letti: ${mancanti.join(', ')})`);
             }
@@ -524,8 +547,9 @@ for (const nomeBrowser of BROWSER) {
             await attendiTesto(riquadro(), 'Letti 16 campi');
           });
 
-          test('foto tablet: la fila degli orari si rilegge sempre, se c\'è l\'etichetta Allarme', async () => {
-            // un contesto suo, che conta le letture chieste al lettore: la foto intera, poi i due ritagli della fila
+          test('foto tablet: i ritagli si rileggono sempre, la fila degli orari con Allarme e il codice con Valutazione', async () => {
+            // un contesto suo, che conta le letture chieste al lettore: la foto intera, poi i due ritagli della fila e i due
+            // del riquadro del codice
             const altro = await nuovoContesto(browser, vp, { serviceWorkers: 'block' });
             await altro.addInitScript(() => {
               const Originale = window.Worker;
@@ -543,16 +567,16 @@ for (const nomeBrowser of BROWSER) {
             await vai(qui, '#/nuovo');
             await daFoto(qui, await fotoFinta(altro));
             // anche con tutti gli orari letti: i ritagli controllano la foto intera
-            assert.equal(await letture(), 3, 'la foto intera e i due ritagli della fila degli orari');
+            assert.equal(await letture(), 5, 'la foto intera, i due ritagli della fila degli orari e i due del codice');
             await attendiTesto(qui.locator('.foto-tablet .riquadro-foto'), 'Letti 16 campi');
             await svuota(qui);
             await daFoto(qui, await fotoFinta(altro, { html: TABLET_FINTO.replace('<p class="ora">21:52</p>', '<p class="ora"></p>') }));
-            assert.equal(await letture(), 6);
+            assert.equal(await letture(), 10);
             await attendiTesto(qui.locator('.foto-tablet .riquadro-foto'), 'Letti 14 campi');
             assert.equal(await scelto(qui, 'Esito'), '', 'nessun orario sotto Arrivo H: niente Trasportato');
             assert.equal(await qui.getByLabel('Libero operativo', { exact: true }).inputValue(), '22:10');
             await daFoto(qui, await fotoFinta(altro, { html: LISTA_SPESA }));
-            assert.equal(await letture(), 7, 'senza l\'etichetta Allarme non c\'è una fila da ritagliare');
+            assert.equal(await letture(), 11, 'senza le etichette Allarme e Valutazione non c\'è niente da ritagliare');
             await altro.close();
           });
 
@@ -580,7 +604,7 @@ for (const nomeBrowser of BROWSER) {
 
           test('foto tablet: un errore a metà lettura, con il lettore caricato, non chiede di riaprire l\'app', async () => {
             // un contesto suo, dove il secondo getImageData della pagina fallisce: il primo è il ritocco della foto
-            // intera, il secondo il ritaglio invertito della fila degli orari, dopo che il lettore ha già letto
+            // intera, il secondo il colore del riquadro del codice, dopo che il lettore ha già letto la foto intera
             const altro = await nuovoContesto(browser, vp, { serviceWorkers: 'block' });
             await altro.addInitScript(() => {
               const originale = CanvasRenderingContext2D.prototype.getImageData;

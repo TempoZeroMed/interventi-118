@@ -31,7 +31,9 @@ Criteri di riuscita:
 6. **Missione già in archivio**: avviso subito, con "Apri".
 7. **Regole del tablet** (indicate dall'utente): missione = parte prima della barra; mezzo = cifre dopo "N0"; l'età sul
    tablet è un anno indietro, quindi +1; il codice in alto va sia nell'invio sia nel rientro.
-8. **Data**: oggi, oppure ieri se l'ora di allarme è più avanti dell'ora attuale.
+8. **Data**: oggi, oppure ieri se l'ora di allarme è più avanti dell'ora attuale. *Cambiata il 2026-10-31 (versione
+   1.4.2)*: una foto presa dalla libreria giorni dopo riceveva la data del telefono. Ora la data è quella della barra di
+   stato del tablet; la regola di prima resta solo se la barra non si legge, con la data tra i "non letti".
 9. **Esito**: "Trasportato" se c'è un orario in "Arrivo H"; ospedale solo se corrisponde a una voce della lista.
 10. **India/Mike per mezzo e orario**, anche nell'inserimento a mano, **senza avvisi nuovi** (punto 2).
 
@@ -43,11 +45,11 @@ Esempi con dati inventati.
 |---|---|---|---|
 | Missione | testata, "Missione in corso: …" | la parte prima della `/`; valida solo se di 8 caratteri: 2 cifre, 2 lettere, 4 cifre (come `04AA0000`) | `04ZZ1234/2` → `04ZZ1234` |
 | Mezzo | riquadro in alto a destra, "N0…" | le cifre dopo `N0`; valido solo se è una voce della lista `mezzo`, attiva o disattivata | `N03030` → `3030` |
-| Data | non dal tablet | data del telefono; ieri se l'ora di allarme è più avanti dell'ora attuale | foto alle 06:15, allarme 22:50 → ieri |
+| Data | barra di stato in alto (dal 2026-10-31) | data e ora della barra, anno che porta la data a oggi o prima, valida solo se il giorno della settimana torna; il giorno prima se l'ora di allarme è più avanti dell'ora della barra. Barra illeggibile: data del telefono come prima (ieri se l'allarme è più avanti dell'ora attuale) e "Data" tra i non letti | `06:15 Sab 31 Ott`, allarme 22:50 → 30/10 |
 | Ora allert. | riquadro "Allarme" | ora `hh:mm` valida | `21:05` |
 | Libero operativo | riquadro "Operativo" | ora `hh:mm` valida | `22:10` |
 | Comune | riga dell'indirizzo sotto "TARGET" | il testo dopo il numero civico, solo se fatto di lettere (anche accentate, con apostrofo o trattino) o se è un comune già in archivio; senza numero civico, il comune già usato nell'archivio con cui finisce l'indirizzo | `VIA DELLE PROVE, 12 NOVARA` → `NOVARA` |
-| Codice invio e codice rientro | riquadro "VALUTAZIONE" | prima lettera: V → VERDE, G → GIALLO, R → ROSSO; altre lettere: vuoto | `V 09 L` → VERDE |
+| Codice invio e codice rientro | riquadro "VALUTAZIONE" | prima lettera: V → VERDE, G → GIALLO, R → ROSSO, N → NERO (dal 2026-10-31, solo nel rientro: l'invio non ce l'ha); altre lettere: vuoto. Dal 2026-10-31: il codice è quello di rientro e il riquadro ha il suo colore (verde, giallo, rosso, nero), che controlla la lettera (in disaccordo: vuoto) e basta da solo senza lettera, tranne il nero; il riquadro si rilegge dalla foto a colori (canale più alto, e solo la scritta chiusa nel riquadro); due codici diversi tra le letture: vuoto | `V 09 L` → VERDE |
 | Patologia invio e rientro | stesso riquadro | il numero → la voce della lista che inizia con quel numero | `09` → `09 - Gastro` |
 | Luogo invio e rientro | stesso riquadro | l'ultima lettera → la voce della lista che inizia con quella lettera | `L` → `L - Lavoro` |
 | Età | riga "Data di nascita" | "N anni" → N + 1, tra 0 e 120; altre scritte (date, mesi): non letta | `40 anni` → `41` |

@@ -6,10 +6,10 @@ import { isOraValida, minutiDaOra } from './campi.js';
 
 /** Campi della scheda che stanno sulla schermata, con il nome da mostrare tra i "non letti". */
 export const CAMPI_TABLET = [
-  ['missione', 'Missione'], ['mezzo', 'Mezzo'], ['oraAllert', 'Ora allert.'], ['liberoOperativo', 'Libero operativo'],
-  ['comune', 'Comune'], ['codiceInvio', 'Codice'], ['patologiaInvio', 'Patologia'], ['luogoInvio', 'Luogo'],
-  ['eta', 'Età'], ['sesso', 'Sesso'],
-];
+  ['data', 'Data'], ['missione', 'Missione'], ['mezzo', 'Mezzo'], ['oraAllert', 'Ora allert.'],
+  ['liberoOperativo', 'Libero operativo'], ['comune', 'Comune'], ['codiceRientro', 'Codice'], ['patologiaRientro', 'Patologia'],
+  ['luogoRientro', 'Luogo'], ['eta', 'Età'], ['sesso', 'Sesso'],
+]; // il codice sul tablet è quello di rientro: se c'è il rientro è letto, anche quando l'invio resta vuoto (NERO)
 
 /** Ordine del form: l'ora allert. entra prima del mezzo (la tipologia la usa), l'esito prima dell'ospedale. */
 export const ORDINE_APPLICAZIONE = [
@@ -17,8 +17,12 @@ export const ORDINE_APPLICAZIONE = [
   'patologiaInvio', 'patologiaRientro', 'luogoInvio', 'luogoRientro', 'eta', 'sesso', 'esito', 'ospedale',
 ];
 
-const CODICI = { V: 'VERDE', G: 'GIALLO', R: 'ROSSO' }; // B (bianco) non è nella lista: codice non letto
+const CODICI = { V: 'VERDE', G: 'GIALLO', R: 'ROSSO', N: 'NERO' }; // B (bianco) non è nella lista: codice non letto
+const SOLO_RIENTRO = ['NERO']; // la lista dei codici di invio non ce l'ha
 const SESSI = { M: 'Maschio', F: 'Femmina' };
+/** Come li scrive la barra di stato del tablet ('Sab 31 Ott'); i giorni nell'ordine di getDay(). */
+const GIORNI = ['DOM', 'LUN', 'MAR', 'MER', 'GIO', 'VEN', 'SAB'];
+const MESI = ['GEN', 'FEB', 'MAR', 'APR', 'MAG', 'GIU', 'LUG', 'AGO', 'SET', 'OTT', 'NOV', 'DIC'];
 /** Una parola del nome di un comune: lettere, anche accentate, con un apostrofo o un trattino in mezzo ('SANT'ANDREA'). */
 const SOLO_LETTERE = /^\p{L}+(?:['’-]\p{L}+)*$/u;
 
@@ -147,6 +151,90 @@ function leggiTempi(lettura, intera) {
   return { oraAllert: sei?.[0] ?? null, liberoOperativo: sei?.[5] ?? null, trasportato: trasportato || sei !== null };
 }
 
+// --- Il codice: sul riquadro colorato la foto intera spesso non lo legge, e si rilegge un ritaglio ---
+
+/** L'etichetta "VALUTAZIONE", anche letta male ('vaLurazione', 'vaLutTazione'); null se non c'è. */
+export function etichettaValutazione(lettura) {
+  return paroleDi(lettura).find((q) => /AL[A-Z]{1,4}ZIONE/.test(maiuscolo(q.testo).replace(/[^A-Z]/g, ''))) ?? null;
+}
+
+/** Il riquadro del codice, a destra dell'etichetta: largo dieci sue altezze, due sopra e due sotto; null se fuori dalla foto. */
+export function zonaCodice(e, { width, height }) {
+  const h = altezza(e);
+  const zona = {
+    x0: Math.floor(e.x1), y0: Math.max(0, Math.floor(e.y0 - 2 * h)),
+    x1: Math.min(width, Math.ceil(e.x1 + 10 * h)), y1: Math.min(height, Math.ceil(e.y1 + 2 * h)),
+  };
+  return zona.x1 > zona.x0 && zona.y1 > zona.y0 ? zona : null;
+}
+
+/** Dove si guarda il colore: dentro il riquadro, da una volta e mezza a sei altezze dell'etichetta alla sua destra. */
+export function zonaColore(e, { width, height }) {
+  const h = altezza(e);
+  const zona = {
+    x0: Math.floor(e.x1 + 1.5 * h), y0: Math.max(0, Math.floor(e.y0 - h / 2)),
+    x1: Math.min(width, Math.ceil(e.x1 + 6 * h)), y1: Math.min(height, Math.ceil(e.y1 + h / 2)),
+  };
+  return zona.x1 > zona.x0 && zona.y1 > zona.y0 ? zona : null;
+}
+
+/** Il tipo di un punto: 'scuro', 'chiaro' (bianco o grigio), o la tinta di un colore acceso ('VERDE', 'altro'…). */
+function tipoDelPunto(r, g, b) {
+  const alto = Math.max(r, g, b);
+  const croma = alto - Math.min(r, g, b);
+  if (alto < 60) return 'scuro';
+  if (croma < 50 || croma < 0.35 * alto) return 'chiaro';
+  const tinta = (alto === r ? ((g - b) / croma + 6) % 6 : alto === g ? (b - r) / croma + 2 : (r - g) / croma + 4) * 60;
+  if (tinta < 20 || tinta >= 320) return 'ROSSO';
+  if (tinta >= 35 && tinta < 70) return 'GIALLO';
+  return tinta >= 75 && tinta < 170 ? 'VERDE' : 'altro';
+}
+
+/**
+ * Il colore del riquadro del codice dai punti RGBA di zonaColore: sul tablet è il colore del codice. Vale se copre almeno
+ * metà della zona (la scritta ne prende una parte); con più punti scuri che altro è NERO. Altrimenti null.
+ */
+export function coloreRiquadro(punti) {
+  const conti = {};
+  for (let i = 0; i < punti.length; i += 4) {
+    const tipo = tipoDelPunto(punti[i], punti[i + 1], punti[i + 2]);
+    conti[tipo] = (conti[tipo] ?? 0) + 1;
+  }
+  const meta = punti.length / 4 / 2;
+  const colore = Object.keys(conti).find((tipo) => conti[tipo] >= meta);
+  return { VERDE: 'VERDE', GIALLO: 'GIALLO', ROSSO: 'ROSSO', scuro: 'NERO' }[colore] ?? null;
+}
+
+/**
+ * La scritta del riquadro del codice, nera su bianco, dai punti RGBA di un ritaglio (cambiati qui). Diventano bianchi i
+ * punti del colore del riquadro e quelli raggiunti dal bordo del ritaglio senza attraversarlo (il pannello intorno, anche
+ * se è chiaro come una scritta bianca); resta nero solo quello che il riquadro chiude dentro: la scritta, di ogni colore.
+ */
+export function scritteSulRiquadro(punti, larghezza, altezza, colore) {
+  const tipo = colore === 'NERO' ? 'scuro' : colore;
+  const n = larghezza * altezza;
+  const bianco = new Uint8Array(n);
+  for (let i = 0; i < n; i++) bianco[i] = tipoDelPunto(punti[4 * i], punti[4 * i + 1], punti[4 * i + 2]) === tipo ? 1 : 0;
+  const daVedere = [];
+  const raggiunto = (i) => {
+    if (bianco[i]) return;
+    bianco[i] = 1;
+    daVedere.push(i);
+  };
+  for (let x = 0; x < larghezza; x++) [x, n - larghezza + x].forEach(raggiunto);
+  for (let y = 0; y < altezza; y++) [y * larghezza, y * larghezza + larghezza - 1].forEach(raggiunto);
+  while (daVedere.length) {
+    const i = daVedere.pop();
+    const x = i % larghezza;
+    if (x > 0) raggiunto(i - 1);
+    if (x < larghezza - 1) raggiunto(i + 1);
+    if (i >= larghezza) raggiunto(i - larghezza);
+    if (i < n - larghezza) raggiunto(i + larghezza);
+  }
+  for (let i = 0; i < n; i++) punti[4 * i] = punti[4 * i + 1] = punti[4 * i + 2] = bianco[i] ? 255 : 0;
+  return punti;
+}
+
 // --- Gli altri campi, dal testo delle righe (in maiuscolo e senza accenti) ---
 
 function leggiMissione(testi) {
@@ -163,14 +251,22 @@ function leggiMezzo(testi, liste) {
     .map((m) => cifre(m[1])).find((mezzo) => voci.includes(mezzo)) ?? null;
 }
 
-/** 'R 04 S': codice, patologia e luogo, uguali in invio e in rientro. */
-function leggiCodice(testi, liste) {
-  const m = primaCorrispondenza(testi, /\b([VGRB])\s*(\d{2})\s*([KSLPQYZ])\b/);
-  const codice = m ? CODICI[m[1]] ?? null : null;
+/**
+ * 'R 04 S': codice, patologia e luogo, uguali in invio e in rientro (il NERO solo nel rientro). Letto in due modi diversi
+ * (la foto intera e i ritagli del riquadro) resta non letto, come un orario. `colore` è quello del riquadro: se non torna
+ * con la lettera il codice resta non letto; senza lettera basta lui, ma non il nero, che può essere solo una foto buia.
+ */
+function leggiCodice(testi, liste, colore) {
+  const trovati = testi.flatMap((t) => [...t.matchAll(/\b([VGRBN])\s*(\d{2})\s*([KSLPQYZ])\b/g)]);
+  const m = new Set(trovati.map((x) => x.slice(1).join(''))).size === 1 ? trovati[0] : null;
+  const daLettera = m ? CODICI[m[1]] ?? null : null;
+  const codice = daLettera && colore && daLettera !== colore ? null
+    : daLettera ?? (colore === 'NERO' ? null : colore);
   const patologia = m ? voceCheInizia(liste.patologia, `${m[2]} -`) : null;
   const luogo = m ? voceCheInizia(liste.luogo, `${m[3]} -`) : null;
   return {
-    codiceInvio: codice, codiceRientro: codice, patologiaInvio: patologia, patologiaRientro: patologia,
+    codiceInvio: SOLO_RIENTRO.includes(codice) ? null : codice, codiceRientro: codice,
+    patologiaInvio: patologia, patologiaRientro: patologia,
     luogoInvio: luogo, luogoRientro: luogo,
   };
 }
@@ -208,15 +304,26 @@ function comuneDopoIlCivico(testo, comuniNoti) {
   return noto(nome) ?? (parole.every((parola) => SOLO_LETTERE.test(parola)) ? nome : null);
 }
 
-/** L'indirizzo è la riga prima di "SCALA … PIANO …"; il comune segue il civico, o è un comune già in archivio. */
+/** Il comune dopo il civico di `indirizzo` ('…, 12 NOVARA'); undefined se non c'è un civico. */
+function comuneDelCivico(indirizzo, comuniNoti) {
+  const m = /,\s*\d+(?:\s*\/\s*[\p{L}\d]+|\p{L}(?!\p{L}))?\s+(\p{L}.*?)\s*$/u.exec(indirizzo); // ', 12', ', 3/B', ', 5A'
+  return m ? comuneDopoIlCivico(m[1], comuniNoti) : undefined;
+}
+
+/**
+ * L'indirizzo sta nelle righe prima di "SCALA … PIANO …": la più vicina con un civico, perché il lettore a volte mette
+ * in mezzo una riga di segni. Il comune segue il civico; senza civico è un comune già in archivio con cui finisce la riga.
+ */
 function leggiComune(righe, comuniNoti) {
   const i = righe.findIndex((r) => /\b(SCALA|PIANO)\b/.test(maiuscolo(r.testo)));
   if (i < 1) return null;
-  const indirizzo = righe[i - 1].testo.toUpperCase().split(/\||COSCIENZA/)[0]; // via la colonna di destra
-  const m = /,\s*\d+(?:\s*\/\s*[\p{L}\d]+|\p{L}(?!\p{L}))?\s+(\p{L}.*?)\s*$/u.exec(indirizzo); // ', 12', ', 3/B', ', 5A'
-  if (m) return comuneDopoIlCivico(m[1], comuniNoti);
-  const finali = comuniNoti.filter((c) => aParole(indirizzo).endsWith(aParole(c)));
-  return finali.sort((a, b) => b.length - a.length)[0] ?? null;
+  const indirizzi = righe.slice(Math.max(0, i - 3), i).reverse()
+    .map((r) => r.testo.toUpperCase().split(/\||COSCIENZA/)[0]); // via la colonna di destra
+  const conCivico = indirizzi.map((indirizzo) => comuneDelCivico(indirizzo, comuniNoti)).find((c) => c !== undefined);
+  if (conCivico !== undefined) return conCivico;
+  const finale = (indirizzo) => comuniNoti.filter((c) => aParole(indirizzo).endsWith(aParole(c)))
+    .sort((a, b) => b.length - a.length)[0];
+  return indirizzi.map(finale).find(Boolean) ?? null;
 }
 
 /** La riga dopo "OSPEDALE": la voce della lista più lunga che vi compare come parole intere. */
@@ -228,27 +335,50 @@ function leggiOspedale(testi, liste) {
   return trovate.sort((a, b) => b.voce.length - a.voce.length)[0]?.voce ?? null;
 }
 
-/** Oggi, o ieri se l'allarme è più avanti dell'ora attuale (missione di ieri sera, foto dopo mezzanotte). */
-function dataDellaMissione(adesso, oraAllert) {
-  const ieri = oraAllert !== null && minutiDaOra(oraAllert) > adesso.getHours() * 60 + adesso.getMinutes();
-  return dataLocale(ieri ? new Date(adesso.getFullYear(), adesso.getMonth(), adesso.getDate() - 1) : adesso);
+/**
+ * Il momento della foto, dalla barra di stato del tablet ('06:15 Sab 31 Ott'). L'anno non c'è: è quello che porta la data
+ * a oggi o prima. Vale solo se il giorno della settimana torna, così un giorno letto male non passa; altrimenti null.
+ */
+function leggiBarraDiStato(testi, adesso) {
+  const barra = new RegExp(`(\\S+)\\s+(${GIORNI.join('|')})\\s+(\\S{1,2})\\s+(${MESI.join('|')})\\b`);
+  const m = primaCorrispondenza(testi, barra);
+  const ora = m ? orarioDa(m[1]) : null;
+  const giorno = m ? cifre(m[3]) : '';
+  if (ora === null || !/^\d{1,2}$/.test(giorno)) return null;
+  const mese = MESI.indexOf(m[4]);
+  const il = (anno) => new Date(anno, mese, Number(giorno), ...ora.split(':').map(Number));
+  const anno = adesso.getFullYear();
+  const foto = dataLocale(il(anno)) > dataLocale(adesso) ? il(anno - 1) : il(anno);
+  const esiste = foto.getMonth() === mese && foto.getDate() === Number(giorno);
+  return esiste && GIORNI[foto.getDay()] === m[2] ? foto : null;
+}
+
+/** Il giorno di `momento` (la foto), o quello prima se l'allarme è più avanti della sua ora (foto dopo mezzanotte). */
+function dataDellaMissione(momento, oraAllert) {
+  const ieri = oraAllert !== null && minutiDaOra(oraAllert) > momento.getHours() * 60 + momento.getMinutes();
+  return dataLocale(ieri ? new Date(momento.getFullYear(), momento.getMonth(), momento.getDate() - 1) : momento);
 }
 
 /**
  * Valori del form letti dalla schermata e nomi dei campi di CAMPI_TABLET non letti. Nessun campo letto: `valori` vuoto.
+ * `adesso` serve per l'anno della barra di stato e, se la barra non si legge, al posto della sua data e ora.
  * Con una lettura unita ai ritagli, `intera` è quella della sola foto intera: il ripiego sui sei orari si calcola lì.
+ * `coloreCodice` è il colore del riquadro del codice (coloreRiquadro), se lo si è guardato.
  */
-export function leggiSchermata(lettura, { liste, adesso, comuniNoti, intera = lettura }) {
+export function leggiSchermata(lettura, { liste, adesso, comuniNoti, intera = lettura, coloreCodice = null }) {
   const testi = lettura.righe.map((r) => maiuscolo(r.testo));
   const tempi = leggiTempi(lettura, intera);
+  const foto = leggiBarraDiStato(testi, adesso);
   const letti = {
+    data: foto && dataDellaMissione(foto, tempi.oraAllert),
     missione: leggiMissione(testi), mezzo: leggiMezzo(testi, liste),
     oraAllert: tempi.oraAllert, liberoOperativo: tempi.liberoOperativo, comune: leggiComune(lettura.righe, comuniNoti),
-    ...leggiCodice(testi, liste), eta: leggiEta(testi), sesso: leggiSesso(testi),
+    ...leggiCodice(testi, liste, coloreCodice), eta: leggiEta(testi), sesso: leggiSesso(testi),
   };
   const nonLetti = CAMPI_TABLET.filter(([chiave]) => letti[chiave] === null).map(([, nome]) => nome);
   if (nonLetti.length === CAMPI_TABLET.length) return { valori: {}, nonLetti };
-  letti.data = dataDellaMissione(adesso, tempi.oraAllert);
+  // barra illeggibile: la data tra i non letti, e intanto quella di prima, come se la foto fosse di adesso
+  letti.data ??= dataDellaMissione(adesso, tempi.oraAllert);
   letti.esito = tempi.trasportato ? 'Trasportato' : null;
   letti.ospedale = tempi.trasportato ? leggiOspedale(testi, liste) : null;
   const valori = Object.fromEntries(ORDINE_APPLICAZIONE.filter((k) => letti[k] !== null).map((k) => [k, letti[k]]));
