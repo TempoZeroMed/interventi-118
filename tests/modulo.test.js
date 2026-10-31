@@ -171,3 +171,10 @@ test('bozzaConDati: la bozza che il modulo lascia da solo (solo la data di oggi)
   assert.equal(bozzaConDati({ ...vuota, eta: 30 }), true);
   assert.equal(bozzaConDati({ ...vuota, manovre: ['VD'] }), true);
 });
+
+test('collegaScheda: una scheda salvata più vecchia che prende la MISSIONE di un gruppo collegato ne eredita il numero', () => {
+  const a = { ...recordVuoto('a', new Date('2026-01-01T09:00:00Z')), missione: '99ZZ0010' };
+  const b = { ...recordVuoto('b', new Date('2026-01-01T10:00:00Z')), missione: '99ZZ0001', pazienti: 3 };
+  const c = collegaScheda({ ...a, missione: '99ZZ0001' }, [a, b], null);
+  assert.deepEqual([c.record.pazienti, c.collegataA], [3, 'b']);
+});

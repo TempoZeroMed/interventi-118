@@ -1,7 +1,7 @@
 // Regole del form di inserimento, senza DOM.
 import { CAMPI, normalizzaRecord, normalizzaManovre, normalizzaNumero, isElicottero } from './campi.js';
 import { MEZZI_A_ORARIO, tipologiaDelMezzo } from './controlli.js';
-import { ordinaSchede, isCollegato, schedeDi } from './pazienti.js';
+import { ordinaSchede, isCollegato, schedeDi, chiaveMissione } from './pazienti.js';
 
 const due = (n) => String(n).padStart(2, '0');
 
@@ -68,7 +68,10 @@ export function prontoPerSalvare(r, adesso, { nuovo = false } = {}) {
  */
 export function collegaScheda(r, records, eraCollegata) {
   const altre = schedeDi(records, r.missione, { escludi: r.id });
-  const laPrima = records.some((x) => x.id === r.id) && ordinaSchede([...altre, r])[0].id === r.id;
+  // come al salvataggio: l'ordine conta solo per una scheda già nel gruppo; chi vi entra cambiando MISSIONE si collega
+  const salvata = records.find((x) => x.id === r.id);
+  const laPrima = Boolean(salvata) && chiaveMissione(salvata.missione) === chiaveMissione(r.missione)
+    && ordinaSchede([...altre, r])[0].id === r.id;
   if (isCollegato(altre) && !laPrima) {
     const pazienti = altre[0].pazienti;
     return { record: r.pazienti === pazienti ? r : { ...r, pazienti }, collegataA: altre[0].id };

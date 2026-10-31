@@ -261,11 +261,13 @@ const contaValutati = (righe) => righe.filter(({ r }) => !ANNULLATI.includes(r.e
 
 /** Valore della misura su un insieme di righe; `selezione` è tutta la selezione (base delle percentuali). */
 function misura(nome, righe, selezione) {
-  const durate = righe.map(({ c }) => c.durata).filter((d) => d !== null);
+  // un'uscita vale 1: un intervento con più pazienti conta una volta, e la sua durata con lui (dalla prima scheda)
+  const unaPerUscita = new Set(unaPerMissione(righe.map(({ r }) => r)));
+  const durate = righe.filter(({ r }) => unaPerUscita.has(r)).map(({ c }) => c.durata).filter((d) => d !== null);
   const eta = righe.map(({ r }) => numeroONull(r.eta)).filter((e) => e !== null);
   const div = (a, b) => (b ? a / b : 0);
   switch (nome) {
-    case 'interventi': return unaPerMissione(righe.map(({ r }) => r)).length; // un'uscita vale 1, anche con più pazienti
+    case 'interventi': return unaPerUscita.size;
     case 'valutati': return contaValutati(righe);
     case 'trasportati': return righe.filter(({ r }) => r.esito === 'Trasportato').length;
     case 'durataMedia': return durate.length ? arrotondaExcel(media(durate), 0) : null;
@@ -278,6 +280,9 @@ function misura(nome, righe, selezione) {
     default: throw new Error(`Misura sconosciuta: ${nome}`);
   }
 }
+
+/** Gli interventi di una selezione: le schede di un intervento con più pazienti contano una volta (`base` conta le schede). */
+const interventiDi = (righe) => unaPerMissione(righe.map(({ r }) => r)).length;
 
 /** Ordina per valore (a parità resta l'ordine naturale; i valori vuoti in fondo) e taglia ai primi N. */
 function classifica(righe, ordine, primi) {
@@ -297,7 +302,10 @@ export function eseguiQuery(records, liste, query, periodoPagina) {
   if (query.confronto) {
     const lato = (periodo) => {
       const selezione = seleziona(records, periodo, filtri);
-      return { periodo, descrizionePeriodo: descriviPeriodo(periodo), valore: misura(nome, selezione, selezione), n: selezione.length };
+      return {
+        periodo, descrizionePeriodo: descriviPeriodo(periodo), valore: misura(nome, selezione, selezione), n: selezione.length,
+        interventi: interventiDi(selezione),
+      };
     };
     const a = lato(query.confronto.periodoA);
     const b = lato(query.confronto.periodoB);
@@ -328,7 +336,7 @@ export function eseguiQuery(records, liste, query, periodoPagina) {
     }), ordine, primi);
   }
   return {
-    periodo, descrizionePeriodo: descriviPeriodo(periodo), base: selezione.length, righe,
+    periodo, descrizionePeriodo: descriviPeriodo(periodo), base: selezione.length, interventi: interventiDi(selezione), righe,
     colonne: colonne && colonne.map((c) => c.chiave), etichetteColonne: colonne && colonne.map((c) => c.etichetta),
     evidenziata: ordine === 'nessuno' || !righe.length ? null : 0, confronto: null, misura: nome,
   };

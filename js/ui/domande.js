@@ -182,6 +182,10 @@ export function montaDomande(contenitore, { periodoCorrente }) {
     return disegnaRisposta(esito.risultato, esito.query);
   }
 
+  /** "su 6 interventi", e "su 6 interventi · 7 schede" quando un intervento ha più pazienti. */
+  const suInterventi = (schede, interventi = schede) => `su ${conteggio(interventi)} ${interventi === 1 ? 'intervento' : 'interventi'}`
+    + (schede !== interventi ? ` · ${conteggio(schede)} schede` : '');
+
   function disegnaRisposta(r, query) {
     const { misura } = r;
     if (r.confronto) {
@@ -189,7 +193,7 @@ export function montaDomande(contenitore, { periodoCorrente }) {
       const casella = (lato) => {
         const [cifra, u] = formatta(misura, lato.valore);
         return voceKpi(lato.descrizionePeriodo, [cifra, u ? unita(u) : null].filter(Boolean),
-          `su ${conteggio(lato.n)} ${lato.n === 1 ? 'intervento' : 'interventi'}`);
+          suInterventi(lato.n, lato.interventi));
       };
       return h('div', { class: 'risposta' },
         h('dl', { class: 'kpi due' }, casella(a), casella(b)),
@@ -197,7 +201,7 @@ export function montaDomande(contenitore, { periodoCorrente }) {
         h('p', { class: 'nota-domande' }, `Inteso come: ${query.interpretazione}`));
     }
     const nota = h('p', { class: 'nota-domande' },
-      `Inteso come: ${query.interpretazione} · ${r.descrizionePeriodo} · su ${conteggio(r.base)} ${r.base === 1 ? 'intervento' : 'interventi'}`);
+      `Inteso come: ${query.interpretazione} · ${r.descrizionePeriodo} · ${suInterventi(r.base, r.interventi)}`);
     if (!query.gruppi.length) return h('div', { class: 'risposta' }, cifra(null, misura, r.righe[0].valore), nota);
     const primo = r.evidenziata === null ? null : r.righe[r.evidenziata];
     const pari = primo ? r.righe.filter((x) => x !== primo && x.valore === primo.valore && x.valore !== null) : [];

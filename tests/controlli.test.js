@@ -214,3 +214,12 @@ test('TIPI_AVVISO nell\'ordine della colonna CONTROLLI', () => {
   assert.deepEqual(TIPI_AVVISO.slice(4, 9), ['Missione duplicata', 'Numero pazienti non valido', 'Schede in più rispetto ai pazienti', 'Mancano schede paziente', 'Numero pazienti diverso tra le schede']);
   assert.equal(TIPI_AVVISO.at(-1), 'Tempo volo diverso tra le schede');
 });
+
+test('salvataggio: una scheda già salvata e più vecchia che corregge la MISSIONE entra nel gruppo collegato', () => {
+  // A salvata per prima con un refuso nella MISSIONE; B (con la spunta) e C sono l'intervento giusto
+  const a = rec({ id: 'a', createdAt: '2025-12-31T09:00:00.000Z', missione: '99ZZ0010' });
+  const b = rec({ id: 'b', pazienti: 3 });
+  const c = rec({ id: 'c', createdAt: T1, pazienti: 3 });
+  const v = verificaSalvataggio({ ...a, missione: '99ZZ0101', pazienti: 3 }, [a, b, c], a);
+  assert.deepEqual([v.ok, v.collegataA, v.duplicatoDi, v.errori], [true, 'b', null, []]);
+});

@@ -106,8 +106,11 @@ export function verificaSalvataggio(record, records, originale = null) {
   let collegataA = null;
   const altre = schedeDi(records, missione, { escludi: record.id });
   if (altre.length) {
-    // una scheda nuova è sempre l'ultima del gruppo: prende createdAt al salvataggio
-    const sarebbePrima = originale !== null && ordinaSchede([...altre, record])[0].id === record.id;
+    // la guardia sull'ordine vale per chi è già nel gruppo: una scheda nuova è sempre l'ultima (prende createdAt al
+    // salvataggio), e una scheda che vi entra cambiando MISSIONE si collega anche se è più vecchia, e ne diventa la prima
+    // con il numero ereditato
+    const giaNelGruppo = originale !== null && chiaveMissione(originale.missione) === missione;
+    const sarebbePrima = giaNelGruppo && ordinaSchede([...altre, record])[0].id === record.id;
     if (isCollegato(altre) && !sarebbePrima) collegataA = altre[0].id;
     else if (!originale || chiaveMissione(originale.missione) !== missione) {
       duplicatoDi = altre[0].id;

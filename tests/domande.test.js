@@ -212,3 +212,11 @@ test('domande: una missione con due pazienti vale un intervento, la base resta s
   assert.equal(ris.righe[0].valore, 6);
   assert.equal(ris.base, 7);
 });
+
+test('domande: la durata di un intervento con più pazienti conta una volta, come nelle statistiche; il risultato dice anche gli interventi', () => {
+  const ris = esegui({ misura: 'durataMedia', gruppi: [] }, TUTTO, MULTI);
+  assert.equal(ris.righe[0].valore, 43, '(60+40+10+45+60)/5, non 46 contando la seconda scheda');
+  assert.deepEqual([ris.base, ris.interventi], [7, 6]);
+  const confronto = esegui({ gruppi: [], confronto: { periodoA: { tipo: 'anno', anno: 2026 }, periodoB: { tipo: 'anno', anno: 2027 } } }, TUTTO, MULTI);
+  assert.deepEqual([confronto.confronto.a.n, confronto.confronto.a.interventi], [5, 4]);
+});
