@@ -127,3 +127,19 @@ test('un tempo di volo non numerico non entra in somme e medie', () => {
   assert.deepEqual(s.basi, { missioni: 3, conTempo: 1 });
   assert.deepEqual([s.kpi.minutiVolo, s.tempo.media], [40, 40]);
 });
+
+// --- Intervento con più pazienti ---
+
+const DUE_PAZIENTI = [
+  r({ id: 'p1', data: '2026-05-01', oraAllert: '09:00', missione: '99ZZ0500', pazienti: 2, mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: 40, manovre: ['VD'] }),
+  r({ id: 'p2', createdAt: '2026-01-01T00:05:00.000Z', data: '2026-05-01', oraAllert: '09:00', missione: '99ZZ0500', pazienti: 2, mezzo: 'V-ECHO', tipoMissione: 'HEMS', tempoVolo: 40, manovre: ['VD', 'VS'] }),
+];
+
+test('intervento con due pazienti in elicottero: tempo una volta, manovre sommate', () => {
+  const s = calcolaStatisticheVolo(DUE_PAZIENTI, LISTE_PREDEFINITE, TUTTO);
+  assert.equal(s.kpi.missioni, 1);
+  assert.equal(s.tempo.totaleMinuti, 40);
+  assert.deepEqual(s.manovre.voci.filter((m) => m.n).map((m) => [m.codice, m.n]), [['VD', 2], ['VS', 1]]);
+  assert.deepEqual([s.manovre.almenoUna.n, s.manovre.piuDiUna.n, s.manovre.nessuna.n], [1, 1, 0]);
+  assert.equal(s.mesi.find((m) => m.chiave === '2026-05').conManovre, 1);
+});

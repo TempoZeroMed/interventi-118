@@ -3,12 +3,12 @@
 // che riportano i numeri delle scritte della dashboard.
 import { MANOVRE, MEZZI_ELICOTTERO, isDataValida, isElicottero } from './campi.js';
 import { arrotondaExcel, filtraPeriodo, media, mediana, mesiDelPeriodo, NOMI_MESI, vociTabella } from './statistiche.js';
+import { unaPerMissione, gruppiMissione, isCollegato } from './pazienti.js';
 
 const div = (a, b) => (b ? a / b : 0);
 const somma = (v) => v.reduce((s, x) => s + x, 0);
 /** COUNT(TEMPO VOLO): solo i tempi numerici; un record salvato prima dei campi di volo non ne ha. */
 const tempi = (missioni) => missioni.map((r) => r.tempoVolo).filter(Number.isFinite);
-const numeroManovre = (r) => (r.manovre ?? []).length;
 
 /** Colonne "Ore volo", "Volo medio" e "Con tempo" di un gruppo di missioni. */
 function volo(missioni) {
@@ -16,8 +16,17 @@ function volo(missioni) {
   return { minutiVolo: somma(t), voloMedio: media(t), conTempo: t.length };
 }
 
+/**
+ * Un intervento con più pazienti è una missione sola: tempo di volo, mezzo, tipo e mese dalla prima scheda; le manovre
+ * di tutte le sue schede si sommano (due pazienti portati su col verricello sono due verricelli).
+ */
 export function calcolaStatisticheVolo(records, liste, periodo = { tipo: 'tutto' }) {
-  const missioni = filtraPeriodo(records, periodo).filter((r) => isElicottero(r.mezzo));
+  const schede = filtraPeriodo(records, periodo).filter((r) => isElicottero(r.mezzo));
+  const missioni = unaPerMissione(schede);
+  // prima scheda di un gruppo collegato -> tutte le schede del gruppo
+  const gruppi = new Map([...gruppiMissione(schede).values()].filter(isCollegato).map((g) => [g[0].id, g]));
+  const manovreDi = (m) => (gruppi.get(m.id) ?? [m]).flatMap((s) => s.manovre ?? []);
+  const numeroManovre = (m) => manovreDi(m).length;
   const totali = missioni.length;
   const t = tempi(missioni);
   const quota = (n) => ({ n, pct: div(n, totali) });
@@ -65,7 +74,7 @@ export function calcolaStatisticheVolo(records, liste, periodo = { tipo: 'tutto'
     tipi: { voci: tipi, nonCompilato: totali - compilati },
     manovre: {
       voci: MANOVRE.map(({ codice, nome }) => ({
-        codice, nome, ...quota(missioni.filter((r) => (r.manovre ?? []).includes(codice)).length),
+        codice, nome, ...quota(somma(missioni.map((m) => manovreDi(m).filter((c) => c === codice).length))),
       })),
       almenoUna: quota(conManovre),
       piuDiUna: quota(missioni.filter((r) => numeroManovre(r) > 1).length),
