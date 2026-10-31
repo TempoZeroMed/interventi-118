@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
-  recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra, collegaScheda, nuovaSchedaPaziente,
+  recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra, collegaScheda, nuovaSchedaPaziente, bozzaConDati,
 } from '../js/core/modulo.js';
 import { tipologiaDelMezzo } from '../js/core/controlli.js';
 
@@ -161,4 +161,13 @@ test('salvataggio di una scheda nuova: createdAt diventa l\'istante del salvatag
   const adesso = new Date('2026-01-01T09:30:00.000Z');
   assert.equal(prontoPerSalvare(r, adesso, { nuovo: true }).createdAt, '2026-01-01T09:30:00.000Z');
   assert.equal(prontoPerSalvare(r, adesso).createdAt, '2026-01-01T08:00:00.000Z');
+});
+
+test('bozzaConDati: la bozza che il modulo lascia da solo (solo la data di oggi) non conta', () => {
+  const vuota = recordVuoto('x', new Date());
+  assert.equal(bozzaConDati(vuota), false);
+  assert.equal(bozzaConDati(null), false);
+  assert.equal(bozzaConDati({ ...vuota, missione: '99ZZ0001' }), true);
+  assert.equal(bozzaConDati({ ...vuota, eta: 30 }), true);
+  assert.equal(bozzaConDati({ ...vuota, manovre: ['VD'] }), true);
 });

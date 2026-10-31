@@ -155,3 +155,31 @@ export function coppiaCodici(invio, rientro) {
   return h('span', { class: 'mini-strappo', role: 'img', 'aria-label': `Codice invio ${invio || 'non indicato'}, rientro ${rientro || 'non indicato'}` },
     segmento(invio, 'invio'), segmento(rientro, 'rientro'));
 }
+
+// ---------------------------------------------------------------- MISSIONE già in archivio
+
+/**
+ * Il riquadro rosso di una MISSIONE già registrata, nel modulo e nel pannello della foto del tablet: data e comune
+ * dell'intervento salvato (`dup`, con id `id`), la riga `nota` (come collegare un altro paziente) e il link.
+ */
+export function messaggioDuplicato(missione, dup, id, { nota = null, link = 'Apri il duplicato' } = {}) {
+  return h('div', { class: 'messaggio errore', role: 'alert' }, icona('avviso'),
+    h('div', {},
+      h('p', {}, h('strong', {}, `La missione ${missione} è già registrata`),
+        dup?.data ? ` (${dataBreve(dup.data)}${dup.comune ? `, ${dup.comune}` : ''}).` : '.'),
+      nota && h('p', {}, nota),
+      h('div', { class: 'azioni-mess' }, h('a', { class: 'bottone piccolo', href: `#/intervento/${encodeURIComponent(id)}` }, link))));
+}
+
+/**
+ * Il riquadro verde di una scheda collegata a un intervento con più pazienti: data e comune della prima scheda, così un
+ * refuso nella MISSIONE si vede subito, e il link alla prima scheda.
+ */
+export function messaggioCollegata(prima) {
+  const dove = `${prima.data ? ` del ${dataBreve(prima.data)}` : ''}${prima.comune ? `, ${prima.comune}` : ''}`;
+  return h('div', { class: 'messaggio collegata', role: 'status' }, icona('spunta'),
+    h('div', {},
+      h('p', {}, `Collegata all'intervento${dove}: paziente multiplo (${prima.pazienti} pazienti)`),
+      h('div', { class: 'azioni-mess' },
+        h('a', { class: 'bottone piccolo', href: `#/intervento/${encodeURIComponent(prima.id)}` }, 'Apri la prima scheda'))));
+}

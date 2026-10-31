@@ -44,7 +44,7 @@ async function naviga() {
   else if (nome === 'statistiche') vistaCorrente = statistiche.mostra(main);
   else if (nome === 'impostazioni') vistaCorrente = impostazioni.mostra(main);
   else if (nome === 'intervento' && parametro) vistaCorrente = inserimento.mostraModifica(main, parametro);
-  else vistaCorrente = await inserimento.mostraNuovo(main);
+  else vistaCorrente = await inserimento.mostraNuovo(main, nome === 'nuovo' ? parametro : null); // #/nuovo/<id>: Aggiungi paziente
   aggiornaPromemoria();
 }
 

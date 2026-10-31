@@ -15,6 +15,13 @@ export function recordVuoto(id, adesso) {
   return r;
 }
 
+/** Una bozza con qualcosa di scritto: la data di oggi la mette il modulo da solo, e non conta. */
+export function bozzaConDati(r) {
+  if (!r) return false;
+  return CAMPI.some(({ chiave }) => chiave !== 'data' && r[chiave] !== null && r[chiave] !== undefined && r[chiave] !== '')
+    || (r.manovre ?? []).length > 0;
+}
+
 /** Imposta un campo applicando le regole del form. */
 export function impostaCampo(r, campo, valore) {
   const nuovo = { ...r };

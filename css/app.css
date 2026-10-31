@@ -22,6 +22,8 @@
   --avviso-testo: #6b4300;
   --errore-fondo: #f6d9d5;
   --errore-testo: #8e1612;
+  --ok-fondo: #dcebdc;   /* scheda collegata a un intervento con più pazienti: il verde del codice, schiarito */
+  --ok-testo: #1d5a32;
   --selezione: #f2c230;
   --selezione-testo: #1d1705;
   --chip-fondo: #dedad0;
@@ -59,6 +61,8 @@
     --avviso-testo: #f0c97a;
     --errore-fondo: #3d1714;
     --errore-testo: #ffb4ab;
+    --ok-fondo: #173322;
+    --ok-testo: #9fdcb4;
     --chip-fondo: #302b24;
     --chip-fondo-hover: #3a342c;
     --verde: #26914d;  --verde-strappo: #5cc283;
@@ -191,6 +195,8 @@ main#vista.con-barra { padding-bottom: calc(var(--h-schede) + env(safe-area-inse
 }
 .messaggio.avviso { background: var(--avviso-fondo); color: var(--avviso-testo); }
 .messaggio.errore { background: var(--errore-fondo); color: var(--errore-testo); }
+.messaggio.collegata { background: var(--ok-fondo); color: var(--ok-testo); }
+.messaggio p + p { margin-top: 4px; }
 .messaggio ul { margin: 0; padding-left: 18px; }
 .messaggio .azioni-mess { margin-top: 8px; }
 
@@ -435,6 +441,7 @@ dialog.foto-intera img { display: block; width: 100%; height: 100%; object-fit: 
 @media (min-width: 960px) { .filtri .griglia-filtri { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 .interruttore { display: flex; align-items: center; gap: 10px; min-height: 44px; font-weight: 600; }
 .interruttore input { width: 22px; height: 22px; accent-color: var(--inchiostro); }
+.nota-interruttore { margin: -8px 0 8px 32px; font-size: .875rem; color: var(--inchiostro-2); }
 .riepilogo-elenco { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 0 8px; color: var(--inchiostro-2); font-size: .875rem; font-weight: 600; }
 
 .mese-titolo {

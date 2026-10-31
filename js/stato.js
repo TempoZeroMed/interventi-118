@@ -45,11 +45,12 @@ function sostituisci(r) {
 
 const modifiche = (n = 1) => ({ modificheNonEsportate: (stato.meta.modificheNonEsportate ?? 0) + n });
 
-export async function salvaIntervento(r, { bozza = undefined } = {}) {
-  const meta = modifiche();
+/** Salva una scheda e, nella stessa transazione, le `altri` schede che cambiano con lei (stesso intervento). */
+export async function salvaIntervento(r, { bozza = undefined, altri = [] } = {}) {
+  const meta = modifiche(1 + altri.length);
   if (bozza !== undefined) meta.bozza = bozza;
-  await db.scrivi({ record: [r], meta });
-  sostituisci(r);
+  await db.scrivi({ record: [r, ...altri], meta });
+  [r, ...altri].forEach(sostituisci);
   Object.assign(stato.meta, meta);
   notifica();
 }

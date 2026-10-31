@@ -2,21 +2,44 @@
 import { stato, trova, salvaIntervento, eliminaIntervento, impostaMeta } from '../stato.js';
 import { calcolati } from '../core/calcolati.js';
 import { avvisi, indiceMissioni, verificaSalvataggio } from '../core/controlli.js';
-import { recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, dataLocale, prontoPerSalvare } from '../core/modulo.js';
+import {
+  recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, dataLocale, prontoPerSalvare, collegaScheda, nuovaSchedaPaziente,
+  bozzaConDati,
+} from '../core/modulo.js';
 import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
+import { primaScheda, propagaPazienti, isMultiplo } from '../core/pazienti.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
 import { applicaLettura } from '../core/tablet.js';
-import { h, icona, impostaBanda, toast, conferma, dataLunga, dataBreve, numero, coppiaCodici } from './dom.js';
+import {
+  h, icona, impostaBanda, toast, conferma, dataLunga, dataBreve, numero, coppiaCodici, messaggioDuplicato, messaggioCollegata,
+} from './dom.js';
 import { creaFotoTablet } from './fototablet.js';
 
 // voci più usate mostrate come pulsanti nelle liste lunghe: 3 sul telefono, così il menu "Altro…" sta nella stessa riga
 const scorciatoie = () => (matchMedia('(min-width: 480px)').matches ? 4 : 3);
 
-export async function mostraNuovo(main) {
-  const bozza = stato.meta.bozza;
-  const r = bozza && !trova(bozza.id) ? bozza : recordVuoto(crypto.randomUUID(), new Date());
-  return costruisci(main, r, null);
+/** Nuovo intervento; con `daId` (#/nuovo/<id>, "Aggiungi paziente") la scheda di un altro paziente dello stesso intervento. */
+export async function mostraNuovo(main, daId = null) {
+  const bozza = stato.meta.bozza && !trova(stato.meta.bozza.id) ? stato.meta.bozza : null;
+  const scheda = daId && trova(daId);
+  if (scheda && !scheda.deleted && isMultiplo(scheda)) {
+    const daSostituire = bozzaConDati(bozza);
+    if (daSostituire) {
+      const ok = await conferma({
+        titolo: 'Sostituire la bozza?', testo: 'La scheda del nuovo paziente prende il posto dei dati non salvati.', si: 'Sostituisci', pericolo: true,
+      });
+      if (!ok) {
+        location.hash = `#/intervento/${encodeURIComponent(daId)}`;
+        return null;
+      }
+    }
+    // i campi condivisi vengono dalla prima scheda dell'intervento
+    const nuova = nuovaSchedaPaziente(primaScheda(stato.record, scheda.missione) ?? scheda, crypto.randomUUID(), new Date());
+    if (daSostituire) await impostaMeta({ bozza: nuova });
+    return costruisci(main, nuova, null);
+  }
+  return costruisci(main, bozza ?? recordVuoto(crypto.randomUUID(), new Date()), null);
 }
 
 export function mostraModifica(main, id) {
@@ -38,6 +61,13 @@ function costruisci(main, iniziale, originale) {
   const aggiornatori = [];
   const modifica = Boolean(originale);
   main.classList.add('con-barra');
+
+  // intervento con più pazienti: l'id della prima scheda se questa scheda è collegata, e le regole di salvataggio
+  // (bloccata: quante altre schede ha la prima scheda), ricalcolate a ogni modifica
+  let collegataA = null;
+  let verifica = null;
+  const collega = () => ({ record: r, collegataA } = collegaScheda(r, stato.record, collegataA));
+  collega();
 
   // la banda è condivisa: un aggiornamento in ritardo (es. dopo "Svuota") non deve toccarla se il form è già stato lasciato
   const titoloBanda = () => modulo.isConnected && (modifica
@@ -62,6 +92,7 @@ function costruisci(main, iniziale, originale) {
     if (campo === '_copia') r = copiaDaInvio(r);
     else if (campo === '_manovra') r = alternaManovra(r, valore);
     else r = impostaCampo(r, campo, valore);
+    collega();
     // il campo toccato non è più "dalla foto", e nemmeno uno che una regola del form ha cambiato (es. l'ospedale svuotato)
     const toccati = campo === '_copia' ? RIENTRO : [campo];
     for (const k of evidenziati) if (toccati.includes(k) || r[k] !== prima[k]) evidenziati.delete(k);
@@ -76,12 +107,14 @@ function costruisci(main, iniziale, originale) {
    */
   function daFoto({ valori }) {
     r = applicaLettura(r, valori);
+    collega();
     for (const k of Object.keys(valori)) evidenziati.add(k);
     modificato = true;
     aggiorna();
     salvaBozza();
   }
   function aggiorna() {
+    verifica = verificaSalvataggio(r, stato.record, originale);
     for (const fn of aggiornatori) fn(r);
     titoloBanda();
   }
@@ -122,6 +155,7 @@ function costruisci(main, iniziale, originale) {
     quando((x) => {
       if (input.value !== x.missione) input.value = x.missione;
       contatore.textContent = x.missione ? `${x.missione.length}/8` : '';
+      input.readOnly = verifica.bloccata > 0; // la prima scheda di un intervento con più pazienti tiene la MISSIONE
     });
     const c = campo('missione', 'Missione', input);
     c.querySelector('label').append(' ', contatore);
@@ -156,6 +190,42 @@ function costruisci(main, iniziale, originale) {
     });
     return campo(chiave, etichetta, input);
   }
+
+  /**
+   * "Paziente multiplo" e il numero di pazienti (2 proposto). Una scheda collegata li eredita dalla prima scheda, bloccati;
+   * la prima scheda tiene la spunta finché ha altre schede. Il numero cancellato lascia la spunta accesa. Nel dettaglio di
+   * una scheda salvata con la spunta, "Aggiungi paziente" apre la scheda di un altro paziente con i dati dell'intervento
+   * (qui e non nella barra delle azioni: sul telefono tre pulsanti spingono "Salva modifiche" fuori dallo schermo).
+   */
+  function pazienti() {
+    const spunta = h('input', { type: 'checkbox', onchange: (e) => cambia('pazienti', e.target.checked ? 2 : null) });
+    const nota = h('p', { class: 'nota-interruttore' });
+    const numeroPazienti = campoNumerico('pazienti', 'Numero pazienti');
+    const riga = h('div', { class: 'riga-campi' }, numeroPazienti);
+    const aggiungi = modifica && isMultiplo(originale)
+      ? h('a', { class: 'bottone', href: `#/nuovo/${encodeURIComponent(originale.id)}` }, icona('piu'), 'Aggiungi paziente')
+      : null;
+    quando((x) => {
+      if (aggiungi) aggiungi.hidden = !isMultiplo(x);
+      const altre = verifica.bloccata;
+      spunta.checked = isMultiplo(x);
+      spunta.disabled = Boolean(collegataA) || altre > 0;
+      numeroPazienti.querySelector('input').disabled = Boolean(collegataA);
+      riga.hidden = !isMultiplo(x);
+      nota.hidden = !altre;
+      nota.textContent = altre === 1 ? 'Collegata a 1 altra scheda' : `Collegata a ${altre} altre schede`;
+    });
+    return h('div', { class: 'campo', 'data-campo': 'pazienti' },
+      h('label', { class: 'interruttore' }, spunta, 'Paziente multiplo'), nota, riga, aggiungi);
+  }
+
+  /** Il riquadro verde sotto la MISSIONE quando la scheda è collegata a un intervento con più pazienti. */
+  const collegataEl = h('div', { class: 'campo' });
+  quando(() => {
+    const prima = collegataA && trova(collegataA);
+    collegataEl.hidden = !prima;
+    collegataEl.replaceChildren(...(prima ? [messaggioCollegata(prima)] : []));
+  });
 
   /** Etichetta visibile, oppure solo per i lettori di schermo quando il titolo della sezione dice già cos'è. */
   const intestazione = (etichetta, nascosta) => h('span', { class: nascosta ? 'sr' : 'etichetta' }, etichetta);
@@ -260,18 +330,12 @@ function costruisci(main, iniziale, originale) {
   const controlliEl = h('div', { class: 'esiti-controlli', 'aria-live': 'polite' });
   quando((x) => {
     const altri = stato.record.filter((y) => y.id !== x.id);
-    const lista = avvisi(x, indiceMissioni([...altri, x]));
-    const v = verificaSalvataggio(x, stato.record, originale);
+    // una scheda nuova si salva con createdAt di adesso: negli avvisi è l'ultima del suo intervento, come sarà salvata
+    const comeSalvata = modifica ? x : { ...x, createdAt: new Date().toISOString() };
+    const lista = avvisi(comeSalvata, indiceMissioni([...altri, comeSalvata]));
+    const v = verifica;
     const blocchi = [];
-    if (v.duplicatoDi) {
-      const dup = trova(v.duplicatoDi);
-      blocchi.push(h('div', { class: 'messaggio errore', role: 'alert' }, icona('avviso'),
-        h('div', {},
-          h('p', {}, h('strong', {}, `La missione ${x.missione} è già registrata`),
-            dup?.data ? ` (${dataBreve(dup.data)}${dup.comune ? `, ${dup.comune}` : ''}).` : '.'),
-          h('div', { class: 'azioni-mess' },
-            h('a', { class: 'bottone piccolo', href: `#/intervento/${encodeURIComponent(v.duplicatoDi)}` }, 'Apri il duplicato')))));
-    }
+    if (v.duplicatoDi) blocchi.push(messaggioDuplicato(x.missione, trova(v.duplicatoDi), v.duplicatoDi, { nota: v.errori[1] }));
     const altriAvvisi = lista.filter((a) => !(v.duplicatoDi && a === 'Missione duplicata'));
     if (altriAvvisi.length) {
       blocchi.push(h('div', { class: 'messaggio avviso' }, icona('avviso'),
@@ -299,7 +363,9 @@ function costruisci(main, iniziale, originale) {
     foto?.elemento,
     sezione('Identificazione',
       data('data', 'Data'),
-      h('div', { class: 'riga-campi' }, missione(), ora('oraAllert', 'Ora allert.'))),
+      h('div', { class: 'riga-campi' }, missione(), ora('oraAllert', 'Ora allert.')),
+      collegataEl,
+      pazienti()),
     sezione('Mezzo',
       comune(),
       chipsConMenu('mezzo', 'Mezzo', 'mezzo', ['mezzo'], { senzaEtichetta: true }),
@@ -344,10 +410,15 @@ function costruisci(main, iniziale, originale) {
       return;
     }
     salvaBtn.disabled = true;
+    clearTimeout(timerBozza); // una bozza in ritardo non deve tornare dopo il salvataggio
     try {
-      const daSalvare = prontoPerSalvare(r, new Date());
+      const adesso = new Date();
+      const daSalvare = prontoPerSalvare(r, adesso, { nuovo: !modifica });
       if (modifica) {
-        await salvaIntervento(daSalvare);
+        // la prima scheda porta il numero di pazienti sulle altre schede della MISSIONE (anche quando la spunta si accende
+        // sulla prima scheda di un duplicato: le altre schede si collegano)
+        const prima = isMultiplo(daSalvare) && primaScheda(stato.record, daSalvare.missione)?.id === daSalvare.id;
+        await salvaIntervento(daSalvare, { altri: prima ? propagaPazienti(daSalvare, stato.record, adesso) : [] });
         modificato = false;
         toast('Modifiche salvate');
         location.hash = '#/elenco';
@@ -359,7 +430,10 @@ function costruisci(main, iniziale, originale) {
         toast(`Intervento ${daSalvare.missione || 'senza missione'} salvato`, {
           etichetta: 'Apri', fai: () => { location.hash = `#/intervento/${encodeURIComponent(daSalvare.id)}`; },
         });
+        // aperta da "Aggiungi paziente" (#/nuovo/<id>): ricaricare la pagina non deve riproporre la stessa scheda
+        if (location.hash.startsWith('#/nuovo/')) history.replaceState(null, '', '#/nuovo');
         r = recordVuoto(crypto.randomUUID(), new Date());
+        collegataA = null;
         aggiorna();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -388,7 +462,9 @@ function costruisci(main, iniziale, originale) {
       const ok = await conferma({ titolo: 'Svuotare il modulo?', testo: 'I dati inseriti e non salvati andranno persi.', si: 'Svuota', pericolo: true });
       if (!ok) return;
     }
+    clearTimeout(timerBozza);
     r = recordVuoto(crypto.randomUUID(), new Date());
+    collegataA = null;
     modificato = false;
     evidenziati.clear();
     foto.chiudiPannello();
