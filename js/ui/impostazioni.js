@@ -56,7 +56,7 @@ async function esportaExcel() {
 }
 
 function spiegazioneBackup() {
-  if (isIOS()) return 'Esporta: si apre la condivisione, scegli "Salva su File" e la stessa cartella di iCloud Drive dell\'altra volta: iOS chiede di sostituire interventi118_iPhone.json. Sul Mac importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
+  if (isIOS()) return 'Esporta: si apre la condivisione, tocca il Comando rapido "Salva backup 118": riscrive interventi118_iPhone.json nella cartella di iCloud Drive. "Salva su File" invece non sostituisce: aggiunge ogni volta un file con un numero. Il Comando rapido si crea una volta, nell\'app Comandi Rapidi: un comando "Salva backup 118" con due azioni, "Ricevi File da Condivisione" e "Salva Input comando rapido in" la cartella di iCloud Drive del backup; nelle opzioni di Salva (freccia ›) accendi "Sovrascrivi se il file esiste". Se Comandi Rapidi chiede di descriverlo, scrivi: riceve un file dalla condivisione e lo salva in quella cartella, sovrascrivendolo. Sul Mac importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
   if (haFinestraSalvataggio()) return 'Esporta: la prima volta scegli dove salvare interventi118_Mac.json, per esempio in iCloud Drive; le volte dopo l\'app lo riscrive lì da sola. Sull\'iPhone importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
   return 'Esporta: il file si chiama interventi118_Mac.json e finisce nei Download. In Safari attiva Impostazioni → Generali → Posizione download → "Chiedi per ogni download": così scegli la cartella di iCloud Drive e il Mac chiede di sostituirlo. Sull\'iPhone importa quel file: i dati si uniscono, nessuno viene sovrascritto.';
 }
@@ -287,7 +287,7 @@ export function mostra(main) {
 
   const info = h('section', { class: 'blocco' },
     h('h2', {}, 'Informazioni'),
-    h('p', {}, 'Interventi 118, versione 1.5.2. I dati restano solo su questo dispositivo: nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file; per le domande all\'archivio partono solo la domanda, le voci delle liste e i nomi dei comuni.'));
+    h('p', {}, 'Interventi 118, versione 1.5.3. I dati restano solo su questo dispositivo: nessun account, nessuna statistica d\'uso. Escono solo quando esporti un file; per le domande all\'archivio partono solo la domanda, le voci delle liste e i nomi dei comuni.'));
 
   function disegnaTutto() {
     disegnaDati();

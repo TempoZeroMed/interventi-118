@@ -47,6 +47,15 @@ test('normalizzazione: i campi mancanti diventano vuoti', () => {
   assert.equal(r.deleted, false);
 });
 
+test('normalizzazione: una scheda Annullato da CO o Non Raggiungibile salvata con il rientro lo perde, l\'invio resta', () => {
+  const valutata = { id: 'a', codiceInvio: 'ROSSO', codiceRientro: 'ROSSO', patologiaRientro: '04 - Neuro', luogoRientro: 'S - Sierra' };
+  for (const esito of ['Annullato da CO', 'Non Raggiungibile']) {
+    const r = normalizzaRecord({ ...valutata, esito });
+    assert.deepEqual([r.codiceInvio, r.codiceRientro, r.patologiaRientro, r.luogoRientro], ['ROSSO', '', '', ''], esito);
+  }
+  assert.equal(normalizzaRecord({ ...valutata, esito: 'Trasportato' }).codiceRientro, 'ROSSO');
+});
+
 test('le liste predefinite dell\'app sono quelle del foglio "Liste"', { skip: !existsSync(IMPORT) && 'manca data/interventi_import.json: esegui tools/xlsx_to_json.py' }, () => {
   const daExcel = JSON.parse(readFileSync(IMPORT, 'utf8')).liste;
   // tipoMissione viene dall'Excel HEMS e C-ECHO e A-ECHO sono arrivati dopo: nel foglio "Liste" del 118 non ci sono.

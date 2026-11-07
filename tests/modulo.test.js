@@ -4,6 +4,7 @@ import {
   recordVuoto, impostaCampo, copiaDaInvio, dataLocale, prontoPerSalvare, alternaManovra, collegaScheda, nuovaSchedaPaziente, bozzaConDati,
 } from '../js/core/modulo.js';
 import { tipologiaDelMezzo } from '../js/core/controlli.js';
+import { applicaLettura } from '../js/core/tablet.js';
 
 const ADESSO = new Date(2026, 9, 29, 7, 5); // 29 ottobre 2026, 07:05 ora locale
 
@@ -38,6 +39,18 @@ test('cambiare ESITO da Trasportato svuota l\'OSPEDALE, che resta nascosto', () 
   const trasportato = { ...recordVuoto('x', ADESSO), esito: 'Trasportato', ospedale: 'Biella' };
   assert.equal(impostaCampo(trasportato, 'esito', 'Rifiuto Trasporto').ospedale, '');
   assert.equal(impostaCampo(trasportato, 'esito', 'Trasportato').ospedale, 'Biella');
+});
+
+test('ESITO Annullato da CO o Non Raggiungibile: niente rientro, nemmeno dalla foto che arriva dopo', () => {
+  const rientro = (x) => [x.codiceRientro, x.patologiaRientro, x.luogoRientro];
+  const valutato = { ...recordVuoto('x', ADESSO), codiceInvio: 'GIALLO', codiceRientro: 'GIALLO', patologiaRientro: '02 - Cardio', luogoRientro: 'K - Casa' };
+  for (const esito of ['Annullato da CO', 'Non Raggiungibile']) {
+    const annullato = impostaCampo(valutato, 'esito', esito);
+    assert.deepEqual(rientro(annullato), ['', '', ''], esito);
+    assert.equal(annullato.codiceInvio, 'GIALLO', 'l\'invio resta');
+    assert.deepEqual(rientro(applicaLettura(annullato, { codiceRientro: 'ROSSO', patologiaRientro: '04 - Neuro' })), ['', '', ''], `${esito}, poi la foto`);
+  }
+  assert.deepEqual(rientro(impostaCampo(valutato, 'esito', 'Trasportato')), ['GIALLO', '02 - Cardio', 'K - Casa']);
 });
 
 test('ETÀ: numero, oppure null se vuota', () => {

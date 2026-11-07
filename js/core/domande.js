@@ -1,8 +1,8 @@
 // Domande all'archivio: schema della query che Claude produce dalla domanda scritta, validazione ed esecuzione.
 // Condiviso tra l'app (che calcola la risposta sul dispositivo) e il Worker (che valida ciò che Claude risponde).
-import { CAMPI, isDataValida } from './campi.js';
+import { CAMPI, isDataValida, ANNULLATI } from './campi.js';
 import { calcolati } from './calcolati.js';
-import { filtraPeriodo, vociTabella, FASCE_ETA, ANNULLATI, media, mediana, arrotondaExcel } from './statistiche.js';
+import { filtraPeriodo, vociTabella, FASCE_ETA, media, mediana, arrotondaExcel } from './statistiche.js';
 import { unaPerMissione } from './pazienti.js';
 import { meseLungo, dataBreve } from '../ui/dom.js';
 

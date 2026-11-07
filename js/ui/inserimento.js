@@ -6,7 +6,7 @@ import {
   recordVuoto, impostaCampo, copiaDaInvio, alternaManovra, dataLocale, prontoPerSalvare, collegaScheda, nuovaSchedaPaziente,
   bozzaConDati,
 } from '../core/modulo.js';
-import { MANOVRE, isElicottero, normalizzaNumero } from '../core/campi.js';
+import { MANOVRE, ANNULLATI, isElicottero, normalizzaNumero } from '../core/campi.js';
 import { primaScheda, propagaPazienti, isMultiplo, puoAggiungerePaziente } from '../core/pazienti.js';
 import { vociPerScelta } from '../core/liste.js';
 import { piuUsate, suggerimentiComuni } from '../core/elenco.js';
@@ -314,6 +314,12 @@ function costruisci(main, iniziale, originale) {
   quando((x) => { ospedale.hidden = x.esito !== 'Trasportato'; });
 
   const copia = h('button', { type: 'button', class: 'bottone piccolo', onclick: () => cambia('_copia') }, icona('copia'), 'Copia da invio');
+  const rientro = h('section', { class: 'sezione' },
+    h('h2', {}, 'Rientro', copia),
+    striscia('codiceRientro', 'Codice', 'codiceRientro'),
+    chipsConMenu('patologiaRientro', 'Patologia', 'patologia', ['patologiaRientro', 'patologiaInvio']),
+    chips('luogoRientro', 'Luogo', 'luogo'));
+  quando((x) => { rientro.hidden = ANNULLATI.includes(x.esito); });
 
   const calcolatiEl = h('dl', { class: 'calcolati' });
   quando((x) => {
@@ -380,11 +386,7 @@ function costruisci(main, iniziale, originale) {
     sezione('Esito',
       chips('esito', 'Esito', 'esito', { senzaEtichetta: true }),
       ospedale),
-    h('section', { class: 'sezione' },
-      h('h2', {}, 'Rientro', copia),
-      striscia('codiceRientro', 'Codice', 'codiceRientro'),
-      chipsConMenu('patologiaRientro', 'Patologia', 'patologia', ['patologiaRientro', 'patologiaInvio']),
-      chips('luogoRientro', 'Luogo', 'luogo')),
+    rientro,
     tempi,
     volo,
   );

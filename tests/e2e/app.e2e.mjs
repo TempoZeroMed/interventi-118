@@ -217,7 +217,11 @@ for (const nomeBrowser of BROWSER) {
           if (foto) await scattaSchermata(page, `${vp.nome}-inserimento`, { inCima: true });
           await scegli(page, 'Esito', 'Rifiuto Trasporto');
           assert.equal(await page.getByRole('group', { name: 'Ospedale' }).isVisible(), false, 'ospedale nascosto se non trasportato');
+          await scegli(page, 'Esito', 'Annullato da CO');
+          assert.equal(await page.getByRole('heading', { name: 'Rientro' }).isVisible(), false, 'rientro nascosto se annullato');
           await scegli(page, 'Esito', 'Trasportato');
+          assert.equal(await page.getByRole('radio', { name: 'GIALLO' }).nth(1).getAttribute('aria-checked'), 'false', 'e svuotato');
+          await page.getByRole('button', { name: 'Copia da invio' }).click();
           await scegli(page, 'Ospedale', 'Biella');
           await page.getByRole('button', { name: 'Salva intervento' }).click();
           await attendiTesto(page.locator('#toast'), 'E2E00001 salvato');

@@ -29,6 +29,9 @@ export const CAMPI = [
 export const MEZZI_ELICOTTERO = ['V-ECHO', 'T-ECHO', 'C-ECHO', 'A-ECHO'];
 export const isElicottero = (mezzo) => MEZZI_ELICOTTERO.includes(mezzo);
 
+/** Esiti senza valutazione sul posto: non contano tra i valutati e non hanno rientro. */
+export const ANNULLATI = ['Annullato da CO', 'Non Raggiungibile'];
+
 /** Colonne HD…VSB del foglio "Voli", nello stesso ordine. */
 export const MANOVRE = [
   { codice: 'HD', nome: 'Hovering discesa' },
@@ -159,5 +162,7 @@ export function normalizzaRecord(r) {
     out[chiave] = chiave === 'comune' || chiave === 'missione' ? testo.toUpperCase() : testo;
   }
   out.manovre = normalizzaManovre(r.manovre);
+  // anche le schede annullate salvate o importate con il rientro, prima della regola: lo perdono al caricamento
+  if (ANNULLATI.includes(out.esito)) Object.assign(out, { codiceRientro: '', patologiaRientro: '', luogoRientro: '' });
   return out;
 }

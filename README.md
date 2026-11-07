@@ -168,7 +168,7 @@ Gli esempi usano valori inventati.
 | Ora allert. | il riquadro **Allarme** | `21:05` |
 | Libero operativo | il riquadro **Operativo** | `22:10` |
 | Comune | il testo dopo il numero civico dell'indirizzo, fino a dove comincia la colonna Valutazione | `VIA DELLE PROVE, 12 NOVARA` → `NOVARA` |
-| Codice, Patologia, Luogo | il codice del riquadro Valutazione, che è quello di rientro: va sia nell'invio sia nel rientro, il NERO solo nel rientro (l'invio non ce l'ha) | `V 09 L` → VERDE, `09 - …`, `L - …`; `N 19 Z` → NERO nel rientro |
+| Codice, Patologia, Luogo | il codice del riquadro Valutazione, che è quello di rientro: va sia nell'invio sia nel rientro, il NERO solo nel rientro (l'invio non ce l'ha). Con esito Annullato da CO o Non Raggiungibile il rientro non c'è: la sezione si nasconde e resta vuota, anche se la foto si legge dopo aver scelto l'esito | `V 09 L` → VERDE, `09 - …`, `L - …`; `N 19 Z` → NERO nel rientro |
 | Età | la riga "Data di nascita", con "N anni": il tablet conta un anno indietro, quindi N + 1 | `40 anni` → `41` |
 | Sesso | la riga "Sesso", riletta ingrandita insieme a "Data di nascita" | `M` → Maschio |
 | Esito | **Trasportato** se sotto **Arrivo H** c'è un orario | `21:52` → Trasportato |
@@ -382,17 +382,28 @@ In **Impostazioni → Archiviazione sul dispositivo** vedi se iOS ha concesso l'
 
 Non c'è sincronizzazione automatica né backup in rete, per scelta: l'app la useranno anche colleghi e nessun archivio comune è accettabile. I dati passano da un dispositivo all'altro con un **file di backup JSON** salvato su iCloud Drive.
 
-Il file ha un **nome fisso per dispositivo**: `interventi118_iPhone.json` dall'iPhone, `interventi118_Mac.json` dal Mac. Salvandolo sempre nella stessa cartella, il sistema chiede di sostituire il file: il backup resta uno solo per dispositivo e non ci sono file vecchi da cancellare. I due file sono anche i file di scambio: ogni dispositivo importa quello dell'altro.
+Il file ha un **nome fisso per dispositivo**: `interventi118_iPhone.json` dall'iPhone, `interventi118_Mac.json` dal Mac. Salvato sempre nella stessa cartella, il file nuovo prende il posto del vecchio: il backup resta uno solo per dispositivo e non ci sono file vecchi da cancellare. Sull'iPhone serve un Comando rapido (vedi sotto), perché "Salva su File" non sostituisce. I due file sono anche i file di scambio: ogni dispositivo importa quello dell'altro.
 
 ### Dall'iPhone al Mac
 
-1. iPhone: **Impostazioni → Esporta backup**. Si apre la condivisione: scegli **Salva su File**, poi la cartella di **iCloud Drive** (ad esempio "Interventi 118"), poi **Salva**. Dalla seconda volta iOS chiede di sostituire `interventi118_iPhone.json`: tocca **Sostituisci**.
+1. iPhone: **Impostazioni → Esporta backup**. Si apre la condivisione: tocca il Comando rapido **Salva backup 118**, che riscrive `interventi118_iPhone.json` nella cartella di **iCloud Drive** (ad esempio "Interventi 118").
 2. Mac: apri l'app, **Impostazioni → Importa backup** e scegli `interventi118_iPhone.json` da iCloud Drive.
 
 ### Dal Mac all'iPhone
 
 1. Mac: **Impostazioni → Esporta backup**. Il file si chiama `interventi118_Mac.json` (vedi sotto dove finisce).
 2. iPhone, dall'app installata: **Impostazioni → Importa backup → Sfoglia → iCloud Drive** e scegli `interventi118_Mac.json`.
+
+### Sull'iPhone: il Comando rapido
+
+**Salva su File** non sostituisce mai un file con lo stesso nome: ne aggiunge uno nuovo con un numero nel nome. Safari non dà alle app web la finestra di salvataggio, quindi l'app non può evitarlo. Il Comando rapido sì: si crea una volta sola.
+
+1. Apri l'app **Comandi Rapidi** e tocca **+**. Se chiede di descrivere il comando, scrivi per esempio: *Voglio un comando nel foglio di condivisione che riceve un file e lo salva nella cartella «Interventi 118» di iCloud Drive con il suo nome, sovrascrivendo il file se esiste già, senza chiedere dove salvarlo.* Non scrivere "backup": lo prende per il backup dei comandi rapidi.
+2. Il comando deve avere due azioni: **Ricevi File da Condivisione** e **Salva Input comando rapido in** con la cartella di iCloud Drive del backup. Se mancano, aggiungile a mano.
+3. Tocca la freccia **›** dell'azione Salva e accendi **Sovrascrivi se il file esiste**.
+4. Tocca il nome in alto e chiama il comando **Salva backup 118**.
+
+Prova: esporta due volte con il comando. In File deve restare un solo `interventi118_iPhone.json`, senza numeri. Da allora il comando compare nella condivisione. Vale anche per l'Excel (`interventi118_iPhone.xlsx`) e per la copia con data. Un file numerato salvato prima non fa danni: l'import unisce i dati, quindi basta cancellarlo.
 
 ### Sul Mac: Safari o Chrome
 
@@ -489,6 +500,7 @@ Le definizioni sono quelle del foglio "Istruzioni" e delle formule del foglio "S
 
 - **Interventi totali:** righe con DATA o MISSIONE. Le schede di un [intervento con più pazienti](#interventi-con-più-pazienti) contano una volta: un'uscita vale 1.
 - **Pazienti valutati:** schede − "Annullato da CO" − "Non Raggiungibile".
+- **Rientro degli annullati:** con quei due esiti non c'è valutazione sul posto, quindi niente rientro. Una scheda annullata salvata o importata con il rientro (prima della 1.5.3, per esempio dalla foto del tablet) lo perde quando l'app la carica; l'invio resta.
 - **Percentuali degli ospedali:** sui soli trasportati.
 - **Codici VERDE < GIALLO < ROSSO:** il NERO, presente solo al rientro, è escluso dal confronto invio/rientro.
 - **Durata:** libero operativo − ora di allertamento. Se il libero operativo è dopo la mezzanotte, si conta il giorno dopo.
@@ -533,7 +545,7 @@ docs/screenshots/   schermate delle prove end-to-end
 ## Limiti noti
 
 - **Nessuna sincronizzazione automatica:** il passaggio tra Mac e iPhone avviene solo con il file di backup. Il conflitto si risolve automaticamente tenendo la modifica più recente; non c'è un'unione campo per campo.
-- **Condivisione "Salva su File" su iPhone:** le prove automatiche la sostituiscono con il download. Va verificata a mano sul telefono, la prima volta che esporti.
+- **Backup sull'iPhone:** "Salva su File" non sostituisce un file con lo stesso nome e Safari non dà alle app web la finestra di salvataggio: per un file solo serve il Comando rapido "Salva backup 118". Le prove automatiche sostituiscono la condivisione con il download: il Comando rapido si prova solo a mano, sul telefono (provato il 7/11/2026: resta un file solo).
 - **Prove in WebKit, non su iPhone:** le prove automatiche girano nel motore di Safari su Mac, non su un iPhone vero. Data e ora usano i selettori nativi di iOS, che le prove non possono vedere.
 - **Archivi separati:** Safari, l'app nella schermata Home e l'app nel Dock del Mac hanno archivi separati, anche sullo stesso dispositivo.
 - **Pulizia di Safari:** cancellare i dati di navigazione di Safari cancella i dati dell'app aperta nel browser. Il backup regolare resta la protezione principale.

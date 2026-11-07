@@ -1,5 +1,5 @@
 // Regole del form di inserimento, senza DOM.
-import { CAMPI, normalizzaRecord, normalizzaManovre, normalizzaNumero, isElicottero } from './campi.js';
+import { CAMPI, ANNULLATI, normalizzaRecord, normalizzaManovre, normalizzaNumero, isElicottero } from './campi.js';
 import { MEZZI_A_ORARIO, tipologiaDelMezzo } from './controlli.js';
 import { ordinaSchede, isCollegato, schedeDi, chiaveMissione } from './pazienti.js';
 
@@ -34,6 +34,8 @@ export function impostaCampo(r, campo, valore) {
   if (campo === 'mezzo' && valore) nuovo.tipologia = tipologiaDelMezzo(valore, r.oraAllert);
   if (campo === 'oraAllert' && Object.hasOwn(MEZZI_A_ORARIO, r.mezzo)) nuovo.tipologia = tipologiaDelMezzo(r.mezzo, valore);
   if (campo === 'esito' && valore !== 'Trasportato') nuovo.ospedale = '';
+  // annullato o non raggiungibile: nessuna valutazione sul posto, quindi niente rientro, anche dalla foto letta dopo l'esito
+  if (ANNULLATI.includes(nuovo.esito)) Object.assign(nuovo, { codiceRientro: '', patologiaRientro: '', luogoRientro: '' });
   if (campo === 'mezzo' && !isElicottero(valore)) Object.assign(nuovo, { tipoMissione: '', tempoVolo: null, manovre: [] });
   return nuovo;
 }

@@ -2,7 +2,8 @@
 import { isIOS, stato, impostaMeta } from '../stato.js';
 
 /**
- * Su iPhone apre il foglio di condivisione (da lì "Salva su File" → iCloud Drive).
+ * Su iPhone apre il foglio di condivisione: da lì il Comando rapido "Salva backup 118" sovrascrive il file in
+ * iCloud Drive ("Salva su File" non sostituisce, e Safari non dà alle app web la finestra di salvataggio).
  * Dove il browser offre la finestra di salvataggio (Chrome, Edge) la usa e, con `ricordo`
  * (chiave dei metadati: 'fileBackup', 'fileExcel'), ricorda il file per riscriverlo le volte dopo.
  * Altrove scarica il file. Risolve 'condiviso', 'salvato', 'scaricato' o 'annullato'.
