@@ -252,9 +252,10 @@ export function scritteSulRiquadro(punti, larghezza, altezza, colore) {
 
 /** Le etichette delle righe della colonna Valutazione, sotto il codice; 'Data di nascita' si riconosce da 'DATA' + 'DI'. */
 const ETICHETTE_VALUTAZIONE = ['COSCIENZA', 'RESPIRO', 'MOTILITA', 'EMORRAGIA', 'DOLORE', 'DURATA', 'SESSO'];
-const sembraValutazione = (testo) => /AL[A-Z]{1,4}ZI{1,2}ONE/.test(maiuscolo(testo).replace(/[^A-Z]/g, ''));
+// lo spazio resta: in una riga letta come una sola parola, 'DELLA STAZIONE' non deve sembrarla
+const sembraValutazione = (testo) => /A[A-Z]{2,5}ZI{1,2}ONE/.test(maiuscolo(testo).replace(/[^A-Z ]/g, ''));
 
-/** L'etichetta "VALUTAZIONE", anche letta male ('vaLurazione', 'vaLutTazione', 'vaLutTaziIone'); null se non c'è. */
+/** L'etichetta "VALUTAZIONE", anche letta male ('vaLurazione', 'vaLutTazione', 'vaLutTaziIone', 'vawurazione'); null se non c'è. */
 export function etichettaValutazione(lettura) {
   return paroleDi(lettura).find((q) => sembraValutazione(q.testo)) ?? null;
 }
@@ -344,7 +345,8 @@ function leggiMezzo(testi, liste) {
  * con la lettera il codice resta non letto; senza lettera basta lui, ma non il nero, che può essere solo una foto buia.
  */
 function leggiCodice(testi, liste, colore) {
-  const trovati = testi.flatMap((t) => [...t.matchAll(/\b([VGRBN])\s*(\d{2})\s*([KSLPQYZ])\b/g)]);
+  // tra le parti anche segni sparsi: la scritta bianca sul rosso si legge 'R 04 $S'
+  const trovati = testi.flatMap((t) => [...t.matchAll(/\b([VGRBN])[^A-Z0-9]*(\d{2})[^A-Z0-9]*([KSLPQYZ])\b/g)]);
   const m = new Set(trovati.map((x) => x.slice(1).join(''))).size === 1 ? trovati[0] : null;
   const daLettera = m ? CODICI[m[1]] ?? null : null;
   const codice = daLettera && colore && daLettera !== colore ? null
@@ -399,14 +401,17 @@ function comuneDelCivico(indirizzo, comuniNoti) {
 }
 
 /**
- * L'indirizzo sta nelle righe prima di "SCALA … PIANO …": la più vicina con un civico, perché il lettore a volte mette
- * in mezzo una riga di segni. Il comune segue il civico; senza civico è un comune già in archivio con cui finisce la riga.
+ * L'indirizzo sta nelle righe prima di "SCALA … PIANO …" (se manca, di "Chiamante:"): la più vicina con un civico,
+ * perché il lettore a volte mette in mezzo una riga di segni. Il comune segue il civico; senza civico è un comune già in
+ * archivio con cui finisce la riga.
  * Sulla stessa riga, a destra, c'è la prima riga della colonna Valutazione ('Coscienza Si'), spesso letta male
  * ('oscienza'): le parole oltre il bordo della colonna non fanno parte dell'indirizzo, e nemmeno il testo da 'Coscienza'.
  */
 function leggiComune(lettura, comuniNoti) {
   const { righe } = lettura;
-  const i = righe.findIndex((r) => /\b(SCALA|PIANO)\b/.test(maiuscolo(r.testo)));
+  // in strada al posto di scala e piano c'è a volte una riga di note: allora l'indirizzo finisce al Chiamante
+  const scala = righe.findIndex((r) => /\b(SCALA|PIANO)\b/.test(maiuscolo(r.testo)));
+  const i = scala >= 0 ? scala : righe.findIndex((r) => /\bCHIAMANTE\b/.test(maiuscolo(r.testo)));
   if (i < 1) return null;
   const bordo = bordoColonnaValutazione(lettura);
   // la prima parola resta sempre: nelle letture senza colonne il bordo può cadere a sinistra di tutto
@@ -435,7 +440,8 @@ function leggiOspedale(testi, liste) {
  * a oggi o prima. Vale solo se il giorno della settimana torna, così un giorno letto male non passa; altrimenti null.
  */
 function leggiBarraDiStato(testi, adesso) {
-  const barra = new RegExp(`(\\S+)\\s+(${GIORNI.join('|')})\\s+(\\S{1,2})\\s+(${MESI.join('|')})\\b`);
+  // giorno e mese anche attaccati: il lettore scrive spesso 'Dom 1Nov'
+  const barra = new RegExp(`(\\S+)\\s+(${GIORNI.join('|')})\\s+(\\S{1,2})\\s*(${MESI.join('|')})\\b`);
   const m = primaCorrispondenza(testi, barra);
   const ora = m ? orarioDa(m[1]) : null;
   const giorno = m ? cifre(m[3]) : '';

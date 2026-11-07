@@ -81,6 +81,8 @@ test('data: quella della barra di stato del tablet, o il giorno prima se l\'alla
   assert.equal(leggi({ barra: ['23:30', 'Sab 31 Ott'] }, DOPO).valori.data, '2026-10-31');
   const tempi = ['23:55', '23:57', '00:05', '00:10', '00:12', '00:18'];
   assert.equal(leggi({ tempi, barra: ['00:20', 'Dom 1 Nov'] }, DOPO).valori.data, '2026-10-31');
+  assert.equal(leggi({ tempi, barra: ['00:20', 'Dom 1Nov'] }, DOPO).valori.data, '2026-10-31'); // giorno e mese attaccati
+  assert.equal(leggi({ barra: ['06:15', 'Sab 31Ott'] }, DOPO).valori.data, '2026-10-30');
   assert.equal(leggi({ barra: ['O6.l5', 'sab 3l ott'] }, DOPO).valori.data, '2026-10-30'); // O e l dove vanno cifre
   const senzaOrari = leggi({ tempi: SENZA_ORARI }, DOPO);
   assert.equal(senzaOrari.valori.data, '2026-10-31');
@@ -230,6 +232,7 @@ test('codice: il riquadro Valutazione e la zona alla sua destra da rileggere, an
   assert.equal(etichettaValutazione(schermata({ codice: '' })).y0, 100);
   assert.equal(etichettaValutazione({ righe: [riga(p('vaLutTazione', 1300, 100))] }).x0, 1300); // una lettera in più
   assert.equal(etichettaValutazione({ righe: [riga(p('vaLutTaziIone', 1300, 100))] }).x0, 1300); // due, anche nella I
+  assert.equal(etichettaValutazione({ righe: [riga(p('vawurazione', 1300, 100))] }).x0, 1300); // anche la L sbagliata
   assert.equal(etichettaValutazione({ righe: [frase('VIA DELLA STAZIONE, 4', 100)] }), null);
   assert.equal(etichettaValutazione({ righe: [riga(p('VALUTA', 1300, 100), p('ZIONE', 1400, 100))] }), null); // spezzata
 });
@@ -320,6 +323,8 @@ test('codice in invio e rientro; B lascia vuoto il codice', () => {
   assert.deepEqual([v.codiceInvio, v.codiceRientro], ['VERDE', 'VERDE']);
   assert.deepEqual([v.patologiaInvio, v.patologiaRientro], ['09 - Gastro', '09 - Gastro']);
   assert.deepEqual([v.luogoInvio, v.luogoRientro], ['L - Lavoro', 'L - Lavoro']);
+  const s = leggi({ codice: 'R 04 $S' }).valori; // un segno sparso, come la scritta bianca sul rosso
+  assert.deepEqual([s.codiceRientro, s.patologiaRientro, s.luogoRientro], ['ROSSO', '04 - Neuro', 'S - Sierra']);
   const b = leggi({ codice: 'B 19 Z' });
   assert.deepEqual([b.valori.codiceInvio, b.valori.codiceRientro], [undefined, undefined]);
   assert.ok(b.nonLetti.includes('Codice'));
@@ -364,6 +369,17 @@ test('comune: una riga di segni tra l\'indirizzo e "SCALA" non lo nasconde', () 
   const noto = schermata({ indirizzo: 'STRADA PROVINCIALE TRECATE' });
   assert.equal(leggiSchermata({ righe: [...noto.righe.slice(0, 5), frase('v =', 175), ...noto.righe.slice(5)] }, OPZ)
     .valori.comune, 'TRECATE');
+});
+
+test('comune: senza la riga "SCALA … PIANO" l\'indirizzo finisce alla riga del Chiamante', () => {
+  // in strada al posto di scala e piano il tablet scrive a volte una riga di note
+  const senzaScala = (indirizzo) => {
+    const { righe } = schermata({ indirizzo });
+    return { righe: [...righe.slice(0, 5), frase('VICINO AL PONTE', 175), frase('Chiamante: PROVA PROVA', 190),
+      ...righe.slice(6)] };
+  };
+  assert.equal(leggiSchermata(senzaScala('STRADA PROVINCIALE TRECATE'), OPZ).valori.comune, 'TRECATE');
+  assert.equal(leggiSchermata(senzaScala('VIA DELLE PROVE, 7 GALLIATE'), OPZ).valori.comune, 'GALLIATE');
 });
 
 test('comune: in fondo si tolgono i segni di un carattere e quelli senza lettere', () => {
