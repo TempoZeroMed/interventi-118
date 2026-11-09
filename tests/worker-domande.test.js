@@ -141,11 +141,32 @@ test('risposta non conforme: secondo tentativo con Sonnet', async () => {
   assert.deepEqual(chiamate.map((c) => c.corpo.model), MODELLI);
 });
 
-test('due risposte non conformi: 502', async () => {
+test('Sonnet ragiona sempre e il ragionamento conta in max_tokens: spazio largo, Haiku resta stretto', async () => {
+  const { fetchAnthropic, chiamate } = claudeFinto('niente JSON', JSON.stringify(QUERY));
+  await creaGestore({ fetchAnthropic })(richiesta(CORPO), ENV);
+  const [haiku, sonnet] = chiamate.map((c) => c.corpo);
+  assert.deepEqual([haiku.max_tokens, haiku.thinking], [600, { type: 'disabled' }]);
+  assert.equal(sonnet.max_tokens, 16000);
+  assert.equal('thinking' in sonnet, false);
+});
+
+const NON_TRADOTTA = 'Non sono riuscito a tradurre la domanda. Riscrivila con più dettagli.';
+
+test('due risposte non conformi: 502 che dice cosa fare', async () => {
   const { fetchAnthropic, chiamate } = claudeFinto('niente JSON', '{"tipo":"query"}');
   const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta(CORPO), ENV));
   assert.equal(stato, 502);
-  assert.equal(corpo.errore, 'Non sono riuscito a tradurre la domanda.');
+  assert.equal(corpo.errore, NON_TRADOTTA);
+  assert.equal(chiamate.length, 2);
+});
+
+test('seconda controdomanda da tutti e due i modelli: 502 che dice cosa fare', async () => {
+  const controdomanda = { testo: 'Intendi l\'ora di allertamento?', risposta: 'non so' };
+  const altra = JSON.stringify({ tipo: 'controdomanda', testo: 'Sei sicuro?' });
+  const { fetchAnthropic, chiamate } = claudeFinto(altra, altra);
+  const { stato, corpo } = await leggi(await creaGestore({ fetchAnthropic })(richiesta({ ...CORPO, controdomanda }), ENV));
+  assert.equal(stato, 502);
+  assert.equal(corpo.errore, NON_TRADOTTA);
   assert.equal(chiamate.length, 2);
 });
 

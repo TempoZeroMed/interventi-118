@@ -121,9 +121,10 @@ async function traduci(fetchAnthropic, env, modello, corpo) {
     signal: AbortSignal.timeout(ATTESA_MASSIMA),
     body: JSON.stringify({
       model: modello,
-      // Haiku senza ragionamento: tutti i token vanno al JSON. Sonnet ragiona poco (sforzo basso), con più spazio.
+      // Haiku senza ragionamento: tutti i token vanno al JSON. Sonnet 5.5 ragiona sempre (sforzo basso) e il ragionamento
+      // conta in max_tokens: spazio largo per non troncare il JSON (si pagano solo i token usati).
       ...(sonnet
-        ? { max_tokens: 2000, output_config: { effort: 'low' }, fallbacks: 'default' }
+        ? { max_tokens: 16000, output_config: { effort: 'low' }, fallbacks: 'default' }
         : { max_tokens: 600, thinking: { type: 'disabled' }, output_config: { effort: 'low' } }),
       system: promptCompleto(corpo),
       messages: [{ role: 'user', content: messaggioUtente(corpo) }],
@@ -166,7 +167,7 @@ async function rispondiDomanda(richiesta, env, fetchAnthropic, attesa) {
       const query = await traduci(fetchAnthropic, env, modello, corpo);
       if (query) return json({ ...query, modello });
     }
-    return errore(502, 'Non sono riuscito a tradurre la domanda.');
+    return errore(502, 'Non sono riuscito a tradurre la domanda. Riscrivila con più dettagli.');
   } catch (e) {
     if (e.name === 'TimeoutError' || e.name === 'AbortError') return errore(504, 'Claude non ha risposto in tempo. Riprova.');
     if (e.stato === 401 || e.stato === 403) return errore(502, 'Claude ha rifiutato la chiave: controlla CHIAVE_ANTHROPIC su Cloudflare.');

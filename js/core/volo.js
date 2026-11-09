@@ -74,7 +74,9 @@ export function calcolaStatisticheVolo(records, liste, periodo = { tipo: 'tutto'
     tipi: { voci: tipi, nonCompilato: totali - compilati },
     manovre: {
       voci: MANOVRE.map(({ codice, nome }) => ({
-        codice, nome, ...quota(somma(missioni.map((m) => manovreDi(m).filter((c) => c === codice).length))),
+        codice, nome, n: somma(missioni.map((m) => manovreDi(m).filter((c) => c === codice).length)),
+        // la % conta le missioni: due pazienti col verricello sono due verricelli ma una missione, mai oltre il 100%
+        pct: div(missioni.filter((m) => manovreDi(m).includes(codice)).length, totali),
       })),
       almenoUna: quota(conManovre),
       piuDiUna: quota(missioni.filter((r) => numeroManovre(r) > 1).length),

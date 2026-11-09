@@ -143,3 +143,8 @@ test('intervento con due pazienti in elicottero: tempo una volta, manovre sommat
   assert.deepEqual([s.manovre.almenoUna.n, s.manovre.piuDiUna.n, s.manovre.nessuna.n], [1, 1, 0]);
   assert.equal(s.mesi.find((m) => m.chiave === '2026-05').conManovre, 1);
 });
+
+test('intervento con due pazienti: la % di una manovra conta le missioni, mai oltre il 100%', () => {
+  const s = calcolaStatisticheVolo(DUE_PAZIENTI, LISTE_PREDEFINITE, TUTTO);
+  assert.deepEqual(s.manovre.voci.filter((m) => m.n).map((m) => [m.codice, m.n, m.pct]), [['VD', 2, 1], ['VS', 1, 1]]);
+});

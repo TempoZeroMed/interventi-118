@@ -171,6 +171,15 @@ test('numero pazienti non valido, diverso tra le schede, tempo di volo diverso',
   assert.deepEqual(avvisi(v[0], indiceMissioni(v)), []);
 });
 
+test('gruppo collegato in elicottero: tipo missione e tempo di volo servono solo sulla prima scheda', () => {
+  const v = gruppo(2, 2).map((x) => ({ ...x, mezzo: 'V-ECHO' }));
+  assert.deepEqual(avvisi(v[0], indiceMissioni(v)), ['Tipo missione mancante', 'Tempo volo mancante']);
+  assert.deepEqual(avvisi(v[1], indiceMissioni(v)), []);
+  v[0] = { ...v[0], tipoMissione: 'HEMS', tempoVolo: 25 };
+  assert.deepEqual(avvisi(v[0], indiceMissioni(v)), []);
+  assert.deepEqual(avvisi(v[1], indiceMissioni(v)), []);
+});
+
 test('prima scheda eliminata: la seconda diventa prima e il gruppo segue la sua spunta', () => {
   const r = [rec({ id: 'p1', deleted: true, pazienti: 2 }), rec({ id: 'p2', createdAt: T1, pazienti: 2 }), rec({ id: 'p3', createdAt: T1, pazienti: null })];
   assert.deepEqual(avvisi(r[2], indiceMissioni(r)), ['Numero pazienti diverso tra le schede']);

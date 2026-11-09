@@ -90,8 +90,10 @@ export function avvisi(r, indice) {
     out.push('Età non valida');
   }
   const tempo = r.tempoVolo ?? null;
-  if (isElicottero(r.mezzo) && !r.tipoMissione) out.push('Tipo missione mancante');
-  if (isElicottero(r.mezzo) && tempo === null) out.push('Tempo volo mancante');
+  // tipo e tempo di volo contano una volta per missione, dalla prima scheda: sulle altre schede collegate non servono
+  const primaScheda = !prima || prima.id === r.id;
+  if (isElicottero(r.mezzo) && primaScheda && !r.tipoMissione) out.push('Tipo missione mancante');
+  if (isElicottero(r.mezzo) && primaScheda && tempo === null) out.push('Tempo volo mancante');
   if (tempo !== null && !(Number.isInteger(tempo) && tempo >= 0 && tempo <= 600)) out.push('Tempo volo non valido');
   // il tempo di volo conta una volta per missione, dalla prima scheda
   const tempoPrima = prima?.tempoVolo ?? null;

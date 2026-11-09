@@ -165,6 +165,9 @@ export function montaDomande(contenitore, { periodoCorrente }) {
     if (esito.tipo === 'errore') return h('div', { class: 'messaggio avviso', role: 'alert' }, icona('avviso'), h('p', {}, esito.testo));
     if (esito.tipo === 'controdomanda') {
       const campo = h('input', { id: 'risposta-controdomanda', class: 'input', type: 'text', enterkeyhint: 'send' });
+      // la risposta già scritta resta quando il riquadro si ridisegna (rete che va e viene)
+      campo.value = esito.bozza ?? '';
+      campo.addEventListener('input', () => { esito.bozza = campo.value; });
       const rispondi = () => {
         if (campo.value.trim()) invia(esito.domanda, { testo: esito.testo, risposta: campo.value.trim() });
       };

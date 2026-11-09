@@ -362,6 +362,12 @@ for (const nomeBrowser of BROWSER) {
           await attendiTesto(riquadro, 'Intendi l\'ora di allertamento?');
           risposta = { status: 200, body: { ...QUERY_ORA, modello: 'claude-haiku-5-5' } };
           await riquadro.getByLabel('Risposta').fill('sì');
+          // la risposta già scritta resta se la rete va e viene
+          await page.context().setOffline(true);
+          await attendiTesto(riquadro, 'Serve la rete per fare domande.');
+          await page.context().setOffline(false);
+          await attendiTesto(riquadro, 'La domanda, le voci delle liste e i nomi dei comuni');
+          assert.equal(await riquadro.getByLabel('Risposta').inputValue(), 'sì');
           await riquadro.getByRole('button', { name: 'Rispondi' }).click();
           await attendiTesto(riquadro, 'Inteso come');
           assert.deepEqual(richieste.at(-1).controdomanda, { testo: 'Intendi l\'ora di allertamento?', risposta: 'sì' });

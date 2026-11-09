@@ -95,7 +95,7 @@ Per le missioni in elicottero (mezzo **V-ECHO**, **T-ECHO**, **C-ECHO** o **A-EC
 - **Tempo di volo (min):** i minuti totali di volo della missione. Comprende il rientro in base, quindi può superare la durata.
 - **Manovre:** HD Hovering discesa, VD Verricello discesa, HS Hovering salita, VS Verricello salita, VSP Verricello salita pannolone, VSB Verricello salita barella. Un tocco accende la manovra, il secondo la spegne; se ne possono scegliere più di una.
 
-Se passi da un elicottero all'altro i dati di volo restano; se scegli un'ambulanza si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS). In un [intervento con più pazienti](#interventi-con-più-pazienti) il tempo di volo è uno solo: una scheda con un tempo diverso da quello della prima ha l'avviso **Tempo volo diverso tra le schede**.
+Se passi da un elicottero all'altro i dati di volo restano; se scegli un'ambulanza si svuotano. Per le missioni in elicottero ci sono tre avvisi in più: **Tipo missione mancante**, **Tempo volo mancante** e **Tempo volo non valido** (deve essere un numero intero da 0 a 600, come nell'Excel HEMS). In un [intervento con più pazienti](#interventi-con-più-pazienti) tipo missione e tempo di volo sono uno solo, quelli della prima scheda: le altre schede non hanno gli avvisi dei campi mancanti, e una scheda con un tempo diverso da quello della prima ha l'avviso **Tempo volo diverso tra le schede**.
 
 ### Statistiche di volo
 
@@ -107,7 +107,7 @@ In **Statistiche**, sotto il periodo, c'è l'interruttore **Interventi | Volo**.
   - V1 Tempo di volo: totale, media, mediana, minimo, massimo;
   - V2 Per mezzo;
   - V3 Tipo di missione, in % sulle missioni con il tipo compilato;
-  - V4 Manovre, in % sulle missioni (in un intervento con più pazienti le manovre di tutte le schede si sommano);
+  - V4 Manovre, in % sulle missioni (in un intervento con più pazienti il numero somma le manovre di tutte le schede, la % conta la missione una volta);
   - V5 Per mese.
 - **Grafici:** ore di volo per mese, manovre, missioni per mezzo.
 
