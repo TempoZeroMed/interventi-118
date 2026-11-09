@@ -357,7 +357,7 @@ Test, strumenti, documenti e appunti di progetto restano nel repository ma non f
 1. Modifica i file.
 2. In `sw.js` cambia `VERSIONE`, per esempio `interventi118-v1.0.1`: è il segnale che fa scaricare la nuova copia ai dispositivi.
 3. Fai il commit su `main` e lancia `npm run pubblica`.
-4. Sui dispositivi la nuova versione arriva alla seconda apertura dell'app: la prima scarica i file, la seconda li usa.
+4. Sui dispositivi la nuova versione si scarica alla prima apertura dell'app con la rete. Quando è pronta, nella striscia in alto compare «Nuova versione dell'app pronta» con **Aggiorna**, che la carica subito (se stai modificando un intervento, prima chiede se uscire senza salvare; la bozza di un nuovo intervento resta). Senza toccarlo, arriva alla seconda apertura. Il pulsante c'è dalla 1.5.5: un dispositivo con la 1.5.4 o una versione precedente ha ancora bisogno di due aperture.
 
 Se aggiungi un file all'app, inseriscilo nell'elenco `FILE` di `sw.js`; se aggiungi una cartella, anche nella riga `git archive` di `tools/pubblica.sh`. Un test (`tests/pwa.test.js`) segnala se te ne dimentichi.
 
@@ -470,7 +470,7 @@ Lo script crea `data/volo_attese.json`. Da quel momento `npm test` controlla tut
 npm run e2e
 ```
 
-Esegue 109 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
+Esegue 111 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, a 390 e 1440 px:
 
 - inserimento e duplicato bloccante;
 - modifica, eliminazione, filtri e statistiche;
@@ -480,7 +480,8 @@ Esegue 109 prove end-to-end in **WebKit** (il motore di Safari) e **Chromium**, 
 - export e reimport con merge tra due dispositivi simulati;
 - export Excel, copia con data e, in Chromium, riscrittura del file ricordato;
 - parola d'ordine e riquadro delle domande con risposte finte del servizio (query, controdomanda, rifiuto, errore, senza rete);
-- funzionamento offline.
+- funzionamento offline;
+- pulsante **Aggiorna** della nuova versione: non compare alla prima installazione e non perde la bozza o una modifica non salvata.
 
 Le prove avviano da sole un server locale, usano solo dati inventati e salvano gli screenshot in `docs/screenshots/`.
 
@@ -549,10 +550,10 @@ docs/screenshots/   schermate delle prove end-to-end
 - **Prove in WebKit, non su iPhone:** le prove automatiche girano nel motore di Safari su Mac, non su un iPhone vero. Data e ora usano i selettori nativi di iOS, che le prove non possono vedere.
 - **Archivi separati:** Safari, l'app nella schermata Home e l'app nel Dock del Mac hanno archivi separati, anche sullo stesso dispositivo.
 - **Pulizia di Safari:** cancellare i dati di navigazione di Safari cancella i dati dell'app aperta nel browser. Il backup regolare resta la protezione principale.
-- **Backup delle versioni 1.1 e 1.5:** contengono campi nuovi (i dati di volo dalla 1.1, il numero di pazienti dalla 1.5) e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla due volte con la rete.
+- **Backup delle versioni 1.1 e 1.5:** contengono campi nuovi (i dati di volo dalla 1.1, il numero di pazienti dalla 1.5) e un'app non ancora aggiornata li rifiuta, chiedendo di aggiornarla. Aggiorna l'app su entrambi i dispositivi prima di scambiare i backup: basta aprirla con la rete e toccare **Aggiorna** quando compare (fino alla 1.5.4, aprirla due volte).
 - **Export Excel e dati di volo:** l'export contiene le colonne VOLO, ma `tools/xlsx_to_json.py` legge solo le colonne del 118. Per i passaggi tra dispositivi usa sempre il backup JSON.
 - **Lettura della foto non provata su iPhone:** sia le prove automatiche sia la prova su una foto vera girano in WebKit su Mac. Tempi, menu **Scatta foto** / **Libreria foto** e primo scaricamento del lettore vanno verificati a mano sul telefono.
 - **Lettura della foto: un aiuto, non una garanzia.** Il lettore può sbagliare, soprattutto con foto storte, mosse o con riflessi: i campi evidenziati vanno sempre ricontrollati. Quello che non legge o non riconosce resta vuoto.
 - **Lettura degli Excel:** l'app importa solo backup JSON. Per leggere un file Excel si usa `tools/xlsx_to_json.py`, che legge il foglio "Interventi" con la struttura attuale.
 - **Domande all'archivio:** servono la rete, i due segreti su Cloudflare e la parola d'ordine nelle Impostazioni. Claude può fraintendere una domanda: la riga "Inteso come" dice come l'ha capita, e la risposta vale per quella lettura. Le domande coprono i campi dell'intervento (compresi tipo missione e tempo di volo), non le altre statistiche di volo. Le prove automatiche usano risposte finte: la prima domanda vera va provata a mano dopo aver impostato i segreti.
-- **Promemoria sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata. Con anche le missioni registrate più volte da decidere la striscia ha due righe e spinge di più, finché non decidi nelle Impostazioni.
+- **Promemoria sul telefono:** a 390 px, quando è visibile, spinge la striscia dei codici di invio poco sotto la prima schermata. Con anche le missioni registrate più volte da decidere la striscia ha due righe e spinge di più, finché non decidi nelle Impostazioni. Lo stesso fa «Nuova versione dell'app pronta», finché non tocchi **Aggiorna**.

@@ -79,11 +79,15 @@ function costruisci(main, iniziale, originale) {
   const evidenziati = new Set();
   const RIENTRO = ['codiceRientro', 'patologiaRientro', 'luogoRientro'];
 
-  let timerBozza = null;
+  let timerBozza = null; // null quando nessuna bozza aspetta di essere scritta
+  function scriviBozza() {
+    timerBozza = null;
+    return impostaMeta({ bozza: r }).catch(() => {});
+  }
   function salvaBozza() {
     if (modifica) return;
     clearTimeout(timerBozza);
-    timerBozza = setTimeout(() => impostaMeta({ bozza: r }).catch(() => {}), 400);
+    timerBozza = setTimeout(scriviBozza, 400);
   }
 
   /** Ogni modifica passa da qui; campo '_copia' è il pulsante "Copia da invio", '_manovra' un pulsante delle manovre. */
@@ -413,6 +417,7 @@ function costruisci(main, iniziale, originale) {
     }
     salvaBtn.disabled = true;
     clearTimeout(timerBozza); // una bozza in ritardo non deve tornare dopo il salvataggio
+    timerBozza = null;
     try {
       const adesso = new Date();
       const daSalvare = prontoPerSalvare(r, adesso, { nuovo: !modifica });
@@ -465,6 +470,7 @@ function costruisci(main, iniziale, originale) {
       if (!ok) return;
     }
     clearTimeout(timerBozza);
+    timerBozza = null;
     r = recordVuoto(crypto.randomUUID(), new Date());
     collegataA = null;
     modificato = false;
@@ -485,6 +491,12 @@ function costruisci(main, iniziale, originale) {
     /** Prima di cambiare schermata: chiude la foto e il suo lettore. */
     smonta() {
       foto?.smonta();
+    },
+    /** Prima di ricaricare la pagina («Aggiorna»): scrive subito la bozza in attesa, che altrimenti andrebbe persa. */
+    async salvaBozzaOra() {
+      if (!timerBozza) return;
+      clearTimeout(timerBozza);
+      await scriviBozza();
     },
   };
 }

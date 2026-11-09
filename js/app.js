@@ -8,12 +8,15 @@ import * as elenco from './ui/elenco.js';
 import * as statistiche from './ui/statistiche.js';
 import * as impostazioni from './ui/impostazioni.js';
 
-export const VERSIONE_APP = '1.5.4';
+export const VERSIONE_APP = '1.5.5';
 
 const main = document.getElementById('vista');
 let vistaCorrente = null;
 let hashCorrente = '';
 let ignoraProssimo = false;
+let nuovaVersione = false;
+// il service worker che controllava la pagina all'apertura: se poi cambia, è arrivata una nuova versione
+const controllerIniziale = navigator.serviceWorker?.controller ?? null;
 
 function percorso() {
   const [, nome = 'nuovo', parametro] = (location.hash || '#/nuovo').split('/');
@@ -49,7 +52,10 @@ async function naviga() {
   aggiornaPromemoria();
 }
 
-/** La striscia in cima: il backup da fare e le missioni registrate più volte da decidere (fuori dalle Impostazioni). */
+/**
+ * La striscia in cima: la nuova versione da caricare, il backup da fare e le missioni registrate più volte da decidere.
+ * Nelle Impostazioni resta solo la nuova versione: backup e missioni ripetute lì hanno i loro pulsanti.
+ */
 function aggiornaPromemoria() {
   const el = document.getElementById('promemoria');
   const p = promemoriaBackup({
@@ -58,18 +64,26 @@ function aggiornaPromemoria() {
     numeroInterventi: interventi().length,
   });
   const ripetute = gruppiDaDecidere(stato.record, stato.meta.refusiMissione ?? []).length;
+  const inImpostazioni = percorso().nome === 'impostazioni';
   const voci = [
-    p && [p.messaggio, h('button', { type: 'button', class: 'bottone piccolo', onclick: () => impostazioni.esportaBackup() }, 'Esporta backup')],
-    ripetute && [
+    nuovaVersione && ['Nuova versione dell\'app pronta', h('button', { type: 'button', class: 'bottone piccolo', onclick: aggiornaApp }, 'Aggiorna')],
+    !inImpostazioni && p && [p.messaggio, h('button', { type: 'button', class: 'bottone piccolo', onclick: () => impostazioni.esportaBackup() }, 'Esporta backup')],
+    !inImpostazioni && ripetute && [
       `${ripetute === 1 ? '1 missione registrata' : `${ripetute} missioni registrate`} più volte: decidi se sono pazienti multipli`,
       h('a', { class: 'bottone piccolo', href: '#/impostazioni' }, 'Vai alle Impostazioni'),
     ],
   ].filter(Boolean);
-  const inImpostazioni = percorso().nome === 'impostazioni';
-  el.hidden = !voci.length || inImpostazioni;
-  if (voci.length && !inImpostazioni) {
+  el.hidden = !voci.length;
+  if (voci.length) {
     el.replaceChildren(...voci.map(([testo, azione]) => h('div', { class: 'voce-promemoria' }, icona('avviso'), h('p', {}, testo), azione)));
   }
+}
+
+/** «Aggiorna»: ricarica la pagina con i file nuovi, come uscire dalla schermata (una modifica non salvata chiede prima). */
+async function aggiornaApp() {
+  if (vistaCorrente?.puoiUscire && !(await vistaCorrente.puoiUscire())) return;
+  await vistaCorrente?.salvaBozzaOra?.(); // la bozza del nuovo intervento si scrive 400 ms dopo l'ultimo tocco
+  location.reload();
 }
 
 async function chiediPersistenza() {
@@ -83,6 +97,16 @@ async function chiediPersistenza() {
 
 function registraServiceWorker() {
   if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+    // sw.js fa skipWaiting e clients.claim: la nuova versione prende la pagina aperta, che però usa ancora i file vecchi.
+    // Senza un controller all'apertura è la prima installazione, non un aggiornamento.
+    if (controllerIniziale) {
+      const segnala = () => {
+        nuovaVersione = true;
+        aggiornaPromemoria();
+      };
+      navigator.serviceWorker.addEventListener('controllerchange', segnala);
+      if (navigator.serviceWorker.controller !== controllerIniziale) segnala(); // cambiato mentre l'app si avviava
+    }
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
 }

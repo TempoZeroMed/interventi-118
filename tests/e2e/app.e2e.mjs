@@ -1024,6 +1024,40 @@ for (const nomeBrowser of BROWSER) {
       if (foto) await scattaSchermata(page, `${vp.nome}-foto-tablet`, { inCima: true });
       await ctx.close();
     });
+
+    test('nuova versione: «Aggiorna» solo dopo un aggiornamento, senza perdere bozza e modifiche', async () => {
+      const ctx = await nuovoContesto(browser, VIEWPORT[0]);
+      const page = await ctx.newPage();
+      const striscia = page.locator('#promemoria');
+      const avviso = 'Nuova versione dell\'app pronta';
+      await page.goto(server.url);
+      await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 10000 });
+      assert.ok(!(await striscia.textContent()).includes(avviso), 'la prima installazione non è un aggiornamento');
+      await page.reload();
+      await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, { timeout: 10000 });
+      // un service worker nuovo che prende la pagina: l'evento è finto, quello che l'app ne fa è vero
+      const nuovaVersione = () => page.evaluate(() => navigator.serviceWorker.dispatchEvent(new Event('controllerchange')));
+
+      // nuovo intervento: la bozza aspetta 400 ms prima di essere scritta, «Aggiorna» la scrive subito
+      await page.getByLabel(/^Missione/).fill('99ZZ0042');
+      await nuovaVersione();
+      await attendiTesto(striscia, avviso);
+      await Promise.all([page.waitForEvent('load'), striscia.getByRole('button', { name: 'Aggiorna' }).click()]);
+      await attendiTesto(page.locator('#banda h1'), 'Nuovo intervento');
+      assert.equal(await page.getByLabel(/^Missione/).inputValue(), '99ZZ0042', 'la bozza è sopravvissuta alla ricarica');
+      assert.ok(!(await striscia.textContent()).includes(avviso), 'dopo la ricarica l\'avviso sparisce');
+
+      // modifica non salvata: «Aggiorna» chiede prima, e con «Resta» non ricarica
+      await page.getByRole('button', { name: 'Salva intervento' }).click();
+      await page.locator('#toast').getByRole('button', { name: 'Apri' }).click();
+      await attendiTesto(page.locator('#banda h1'), '99ZZ0042');
+      await page.getByLabel('Comune', { exact: true }).fill('BIELLA');
+      await nuovaVersione();
+      await striscia.getByRole('button', { name: 'Aggiorna' }).click();
+      await page.getByRole('dialog').getByRole('button', { name: 'Resta' }).click();
+      assert.equal(await page.getByLabel('Comune', { exact: true }).inputValue(), 'BIELLA', 'la modifica è ancora lì');
+      await ctx.close();
+    });
   });
 }
 
